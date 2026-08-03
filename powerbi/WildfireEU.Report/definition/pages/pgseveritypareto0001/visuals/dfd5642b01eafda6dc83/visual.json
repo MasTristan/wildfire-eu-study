@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "dfd5642b01eafda6dc83",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 2,
+    "width": 1038.67,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The median European fire burns 24 hectares. The mean burns 121. That gap is the whole story: a thin tail of very large fires, those above 500 hectares, drives the totals, so counting incidents measures activity, never consequence.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

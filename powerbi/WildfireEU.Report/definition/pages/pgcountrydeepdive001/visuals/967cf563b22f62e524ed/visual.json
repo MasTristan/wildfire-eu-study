@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "967cf563b22f62e524ed",
+  "position": {
+    "x": 644.0,
+    "y": 68,
+    "z": 2,
+    "width": 620.0,
+    "height": 96
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Pick a country and a period in the left rail. Rank, anomaly against that country's own five-year normal, trend and vegetation mix all follow the selection. With no selection the page reads the whole EFFIS scope, North Africa and the Middle East included.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

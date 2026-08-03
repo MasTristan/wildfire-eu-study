@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "8407d571cf2c364f43e7",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 2,
+    "width": 1038.67,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "July and August concentrate 49.6% of European burnt area, and June to September 66.2%. March is the surprise: 11.2% of the annual total, a distinct spring peak that behaves nothing like the summer one.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

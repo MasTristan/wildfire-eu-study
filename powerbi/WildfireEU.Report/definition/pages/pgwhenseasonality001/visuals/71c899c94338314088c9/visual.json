@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "71c899c94338314088c9",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 10,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The METRIC selector switches the monthly chart between burnt area, number of fires and average fire size: the seasonal shape is not the same depending on what you count. Source: EFFIS perimeters (Copernicus EMS / JRC), aggregated to country and month. The March peak is agricultural stubble and steppe burning in eastern Europe, chiefly Ukraine: a different phenomenon from the Mediterranean summer, never averaged in with it.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

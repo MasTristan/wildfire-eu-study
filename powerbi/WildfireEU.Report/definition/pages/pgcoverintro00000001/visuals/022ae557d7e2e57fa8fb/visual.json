@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "022ae557d7e2e57fa8fb",
+  "position": {
+    "x": 16.0,
+    "y": 276,
+    "z": 2,
+    "width": 934.0,
+    "height": 96
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "A data investigation into where Europe burns, when in the year, which fires actually matter, and what the fire weather was doing at the time. Every figure on every page traces back to a public source, and every limit of that source is stated rather than hidden.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "13pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

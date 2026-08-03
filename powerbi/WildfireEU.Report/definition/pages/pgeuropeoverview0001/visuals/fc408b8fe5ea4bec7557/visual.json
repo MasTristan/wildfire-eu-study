@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "fc408b8fe5ea4bec7557",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 9,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Source: EFFIS burnt-area perimeters (Copernicus EMS / JRC), European countries, 2016 to 2026. The five-year normal is a trailing mean of the previous five years, excluding the year plotted. The season anomaly truncates both the current year and the baseline at the last month carrying data, so a season in progress is compared like for like. EFFIS under-counts small fires: totals are a floor.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

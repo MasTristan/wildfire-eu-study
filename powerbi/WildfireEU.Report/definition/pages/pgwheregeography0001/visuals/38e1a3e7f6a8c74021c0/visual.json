@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "38e1a3e7f6a8c74021c0",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 2,
+    "width": 1038.67,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Ukraine, Portugal, Spain, Turkey and Italy account for 67% of the European total. Rank the same countries per 1,000 hectares of forest they actually have, and smaller Mediterranean and Balkan states move to the front.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

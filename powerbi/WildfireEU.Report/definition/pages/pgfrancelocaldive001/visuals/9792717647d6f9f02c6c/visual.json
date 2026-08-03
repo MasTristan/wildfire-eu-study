@@ -1,0 +1,134 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "9792717647d6f9f02c6c",
+  "position": {
+    "x": 16.0,
+    "y": 484,
+    "z": 9,
+    "width": 1248.0,
+    "height": 252
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_fireevent"
+                    }
+                  },
+                  "Property": "Fire date"
+                }
+              },
+              "queryRef": "fact_fireevent.Fire date",
+              "nativeQueryRef": "Fire date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_commune"
+                    }
+                  },
+                  "Property": "Commune"
+                }
+              },
+              "queryRef": "dim_commune.Commune",
+              "nativeQueryRef": "Commune"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_commune"
+                    }
+                  },
+                  "Property": "Department"
+                }
+              },
+              "queryRef": "dim_commune.Department",
+              "nativeQueryRef": "Department"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_fireevent"
+                    }
+                  },
+                  "Property": "Area (ha)"
+                }
+              },
+              "queryRef": "fact_fireevent.Area (ha)",
+              "nativeQueryRef": "Area (ha)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_firecause"
+                    }
+                  },
+                  "Property": "Fire cause"
+                }
+              },
+              "queryRef": "dim_firecause.Fire cause",
+              "nativeQueryRef": "Fire cause"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_fireevent"
+                  }
+                },
+                "Property": "Area (ha)"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {},
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Largest fires on record, with their commune and cause'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

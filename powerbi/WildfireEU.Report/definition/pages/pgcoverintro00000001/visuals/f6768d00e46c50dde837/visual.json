@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "f6768d00e46c50dde837",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 7,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Scope: EFFIS burnt-area perimeters (Copernicus EMS / JRC), European countries only (EU and non-EU Europe), 2016 to 2026. 2026 is a season in progress. Figures exclude the North African and Middle Eastern countries also present in the source.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "76be828e1aff66f444be",
+  "position": {
+    "x": 644.0,
+    "y": 536,
+    "z": 5,
+    "width": 620.0,
+    "height": 200
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "ATTRIBUTION   ///   Copernicus Emergency Management Service (EFFIS), Copernicus Climate Change Service (CDS / EWDS, ERA5), Copernicus European Drought Observatory (SPEI), Global Wildfire Information System (GFAS emissions), European Commission Joint Research Centre, NASA FIRMS, bdiff.agriculture.gouv.fr (French ministry of agriculture), geo.api.gouv.fr, Natural Earth, World Bank Open Data. Reuse of each dataset is subject to its own licence. This is an exploratory analytical tool: correlations shown are descriptive and do not establish causation.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "9pt",
+                      "color": "#7D8794"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

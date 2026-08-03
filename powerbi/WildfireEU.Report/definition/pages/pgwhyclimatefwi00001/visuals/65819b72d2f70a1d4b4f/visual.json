@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "65819b72d2f70a1d4b4f",
+  "position": {
+    "x": 16.0,
+    "y": 692,
+    "z": 11,
+    "width": 1248.0,
+    "height": 96
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Sources: Copernicus EWDS cems-fire-historical-v1 (fire weather index), Copernicus CDS ERA5 (temperature, precipitation, humidity), Copernicus European Drought Observatory SPEI-3, EFFIS (burnt area). Read as association, not causation. Three limits stand. The country mean spans the whole territory rather than only forested land, which depresses the index for large countries. The coefficient pools country-years, so it describes the pattern across Europe rather than any one country: pick a country in the slicer to read it within that country. And it is withheld entirely below ten country-years rather than computed on a handful.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

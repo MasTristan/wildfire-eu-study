@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "WildfireEU"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "ce1773ca-7c6f-4e97-9d23-9e032e4649d4"
+  }
+}

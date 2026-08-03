@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "1c4324956b6377c6cb6f",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 4,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The Fire Weather Index summarises how readily fuel ignites and spreads, from temperature, wind, humidity and rainfall; SPEI-3 measures the water balance of the preceding three months. Both now run over the same years as the burnt-area series. Nearly every European fire is started by a person: weather and drought govern how far it then runs.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

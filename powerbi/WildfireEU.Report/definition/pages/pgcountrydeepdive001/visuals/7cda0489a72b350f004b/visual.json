@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "7cda0489a72b350f004b",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 13,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Source: EFFIS burnt-area perimeters (Copernicus EMS / JRC), 2016 to 2026. Rank and share are computed within the current slicer selection, so filtering to a region re-ranks inside that region. The anomaly compares the latest year in the selection against the mean of the five years before it.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "85f46861905a73c138c6",
+  "position": {
+    "x": 16.0,
+    "y": 536,
+    "z": 4,
+    "width": 620.0,
+    "height": 200
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "WHAT THE NUMBERS CANNOT DO   ///   EFFIS maps perimeters above a detection floor and therefore under-counts small fires: every European total here is a floor. BDIFF counts declared fires in France including very small ones, so French counts are not comparable with EFFIS counts and the two are never added. Satellite hotspots index thermal detections, not area, and are never converted into hectares. Emissions come from GFAS, which sees the fire from space and therefore counts agricultural and sub-threshold burning that EFFIS never maps: emissions and burnt area are not two views of one number and are never divided into each other. Fire weather and burnt area now share the 2016 onward window, so they can be read together; the fire weather series stops a few months short of today because the reanalysis is consolidated with a lag.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "9pt",
+                      "color": "#7D8794"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "388e05ef0281ec3b4eef",
+  "position": {
+    "x": 16.0,
+    "y": 224,
+    "z": 3,
+    "width": 1248.0,
+    "height": 304
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_source"
+                    }
+                  },
+                  "Property": "source_key"
+                }
+              },
+              "queryRef": "dim_source.source_key",
+              "nativeQueryRef": "source_key"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_source"
+                    }
+                  },
+                  "Property": "measure_type"
+                }
+              },
+              "queryRef": "dim_source.measure_type",
+              "nativeQueryRef": "measure_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_source"
+                    }
+                  },
+                  "Property": "spatial_resolution"
+                }
+              },
+              "queryRef": "dim_source.spatial_resolution",
+              "nativeQueryRef": "spatial_resolution"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_source"
+                    }
+                  },
+                  "Property": "min_year"
+                }
+              },
+              "queryRef": "dim_source.min_year",
+              "nativeQueryRef": "min_year"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_source"
+                    }
+                  },
+                  "Property": "method_note"
+                }
+              },
+              "queryRef": "dim_source.method_note",
+              "nativeQueryRef": "method_note"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {},
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Sources in the model'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

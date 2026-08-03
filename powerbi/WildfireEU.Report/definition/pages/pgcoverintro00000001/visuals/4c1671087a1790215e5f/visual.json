@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "4c1671087a1790215e5f",
+  "position": {
+    "x": 16.0,
+    "y": 588,
+    "z": 6,
+    "width": 1143.33,
+    "height": 96
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The route: I Scale, how much burns and how that has moved.  II Where, and why the ranking flips once you account for how much forest a country has.  III When, the two months that carry the year.  IV Severity, the small tail of fires that does most of the damage.  V Why, fire weather alongside burnt area. Then two deep dives, country and France, and the method page.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#6E7A8A"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json",
+  "pageOrder": [
+    "pgeuropeoverview0001",
+    "pglivecurrentseason1",
+    "pgcountrydeepdive001",
+    "pgfrancelocaldive001",
+    "pgwhyclimatefwi00001",
+    "pgaboutsourcesnote01",
+    "pgcoverintro00000001",
+    "pgwheregeography0001",
+    "pgwhenseasonality001",
+    "pgseveritypareto0001",
+    "ttcountryprofile0001"
+  ],
+  "activePageName": "pgaboutsourcesnote01"
+}

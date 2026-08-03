@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "bf3247ad3cce2ca1d37d",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 2,
+    "width": 1038.67,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Each line accumulates one year's burnt area from January onward. Reading the current year against the bundle below it shows whether the season is early, late, or simply worse. Hotspot counts come from a different instrument and measure detections, never hectares.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

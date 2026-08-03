@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "a12148ad6e5d8454d273",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 9,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Sources: EFFIS fire perimeters (Copernicus EMS / JRC); emissions from GWIS/GFAS. Fire sizes are computed at perimeter grain and inherit the EFFIS detection floor, so the true median is lower than shown. Natura 2000 area comes from each perimeter's recorded overlap percentage; perimeters lacking it are skipped, never treated as zero. Emissions are measured independently, from satellite radiative power, over 2006-2025: they include burning EFFIS never maps and are not divisible by the area shown here.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

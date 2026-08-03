@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "16dc288359f62c0b4760",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 8,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Source: EFFIS perimeters (Copernicus EMS / JRC) for the curves, NASA FIRMS VIIRS_SNPP for hotspots. Facts are aggregated by month, so each curve rises in monthly steps and the horizontal axis is day of year. The dashed marker is today: past years continue to its right because their season is over, while the current year stops at its last consolidated month rather than running flat, and that gap is the reporting lag. Hotspots are thermal detections, never convertible into hectares.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

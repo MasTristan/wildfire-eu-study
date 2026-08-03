@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "2a7e78b2827c0a962905",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 6,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Source: EFFIS perimeters (Copernicus EMS / JRC) and World Bank forest area. Normalisation divides burnt hectares by total forest area, so it overstates a strict rate wherever fires burn non-forest land (cropland, steppe, scrub), common in the east: read it as exposure relative to forest endowment, not forest lost. Russia is excluded from the map only, for viewport legibility; it remains in both rankings.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
