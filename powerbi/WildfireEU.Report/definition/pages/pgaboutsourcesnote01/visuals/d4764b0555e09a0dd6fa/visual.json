@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Built as a PBIP project from a Python data layer; the semantic model and every report page are generated from versioned specifications rather than authored by hand.",
+                    "value": "Built as a PBIP project: a Python data layer feeding a hand-built Power BI semantic model.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",
