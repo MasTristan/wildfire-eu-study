@@ -1,0 +1,82 @@
+/// Calculation group: one definition of "previous year", "year over year" and
+/// "five-year normal" that applies to ANY measure put next to it, instead of a
+/// hand-written variant per measure. The model already carried Burnt Area PY,
+/// YoY % and 5Y avg; those stay because report pages bind them by name, but
+/// every new metric now inherits the same time logic for free rather than
+/// growing a fourth, fifth and sixth near-duplicate.
+/// 
+/// The five-year item is the one that earns its keep. Written per measure it
+/// had to average over dim_date at DAY grain while the facts sit at MONTH
+/// grain, a trap this repo hit once already (see [Burnt Area, 5Y avg]).
+table 'Time calculation'
+	lineageTag: 9a3e5b10-000d-4a00-9a01-000000000001
+
+	calculationGroup
+
+		calculationItem Current = SELECTEDMEASURE()
+
+		calculationItem 'Previous year' = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_key] ) )
+
+		calculationItem 'Year over year %' =
+				
+				VAR Cur = SELECTEDMEASURE ()
+				VAR Prev = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_key] ) )
+				RETURN
+				    IF ( NOT ISBLANK ( Cur ) && NOT ISBLANK ( Prev ) && Prev <> 0, DIVIDE ( Cur - Prev, Prev ) )
+
+			formatStringDefinition = "+0.0%;-0.0%"
+
+		calculationItem 'Five-year normal' =
+				
+				// Trailing five annual values, current year excluded. Iterates over
+				// YEARS, never over the day-grain date table: the facts carry a value
+				// only on the first day of each month, so averaging over days would
+				// silently divide by ~30 and return a monthly figure.
+				VAR CurYear = MAX ( dim_date[year] )
+				VAR PriorYears =
+				    FILTER (
+				        ALL ( dim_date[year] ),
+				        dim_date[year] < CurYear && dim_date[year] >= CurYear - 5
+				    )
+				RETURN
+				    AVERAGEX ( PriorYears, CALCULATE ( SELECTEDMEASURE () ) )
+
+		calculationItem 'vs five-year normal %' =
+				
+				VAR Cur = SELECTEDMEASURE ()
+				VAR Baseline =
+				    AVERAGEX (
+				        FILTER (
+				            ALL ( dim_date[year] ),
+				            dim_date[year] < MAX ( dim_date[year] )
+				                && dim_date[year] >= MAX ( dim_date[year] ) - 5
+				        ),
+				        CALCULATE ( SELECTEDMEASURE () )
+				    )
+				RETURN
+				    IF (
+				        NOT ISBLANK ( Cur ) && NOT ISBLANK ( Baseline ) && Baseline <> 0,
+				        DIVIDE ( Cur - Baseline, Baseline )
+				    )
+
+			formatStringDefinition = "+0.0%;-0.0%"
+
+	column 'Time calculation'
+		dataType: string
+		lineageTag: 9a3e5b10-000d-4a00-9a01-000000000002
+		summarizeBy: none
+		sourceColumn: Name
+		sortByColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ordinal
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9a3e5b10-000d-4a00-9a01-000000000003
+		summarizeBy: sum
+		sourceColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+

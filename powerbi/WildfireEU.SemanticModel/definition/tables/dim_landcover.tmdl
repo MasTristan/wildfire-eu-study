@@ -1,0 +1,59 @@
+table dim_landcover
+	lineageTag: 0ed04d67-2ad9-4bbb-bc1e-dd8728240fb3
+
+	column landcover_key
+		dataType: string
+		isHidden
+		lineageTag: 0b2b94db-1211-4086-826c-82a2995f7e7b
+		summarizeBy: none
+		sourceColumn: landcover_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column class_code
+		dataType: string
+		lineageTag: 20714f41-776e-410f-8cf0-7eb3030dc6bc
+		summarizeBy: none
+		sourceColumn: class_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column class_name
+		dataType: string
+		lineageTag: 78aefc07-5bc1-46a8-a8aa-3836205fad50
+		summarizeBy: none
+		sourceColumn: class_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column corine_mapping
+		dataType: string
+		lineageTag: d4efd29a-ef0d-4811-bf01-e04cff81d72a
+		summarizeBy: none
+		sourceColumn: corine_mapping
+
+		annotation SummarizationSetBy = Automatic
+
+	column class_name_en =
+			
+			// English display label; the parquet's class_name is French. Keyed on
+			// class_code, which is stable and language-free.
+			// Labels kept short on purpose: they carry a chart legend and a bar
+			// category axis, where the long CORINE wording truncates to ellipses.
+			SWITCH ( dim_landcover[class_code], "BROADLEA", "Broadleaf", "CONIFER", "Conifer", "MIXED", "Mixed forest", "SCLEROPH", "Sclerophyllous", "TRANSIT", "Transitional", "OTHERNATLC", "Other natural", "AGRIAREAS", "Agricultural", "ARTIFSURF", "Artificial", "Unclassified" )
+		dataType: string
+		lineageTag: d4efd29a-ef0d-4811-bf01-e04cff81d001
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_landcover = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\dim_landcover.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

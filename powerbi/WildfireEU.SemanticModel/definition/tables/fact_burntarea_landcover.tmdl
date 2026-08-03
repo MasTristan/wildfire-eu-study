@@ -1,0 +1,58 @@
+table fact_burntarea_landcover
+	lineageTag: fd43525f-57ab-455b-b6e1-c2f3377b00ee
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 50d92293-34f0-45d7-b73e-89ffc502647b
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 0fb12c1b-e5ce-40b0-9ed7-7505f092121d
+		summarizeBy: none
+		sourceColumn: year_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column landcover_key
+		dataType: string
+		isHidden
+		lineageTag: eea427ff-39a6-49a4-af49-5c5f4c19ce16
+		summarizeBy: none
+		sourceColumn: landcover_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_key
+		dataType: string
+		isHidden
+		lineageTag: 120b3e60-1b67-48bc-9e23-bc62563d8e65
+		summarizeBy: none
+		sourceColumn: source_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column burnt_area_ha
+		dataType: double
+		lineageTag: 75fce686-247b-45d4-a1e7-0cda8bfc2f24
+		summarizeBy: none
+		sourceColumn: burnt_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_burntarea_landcover = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_burntarea_landcover.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

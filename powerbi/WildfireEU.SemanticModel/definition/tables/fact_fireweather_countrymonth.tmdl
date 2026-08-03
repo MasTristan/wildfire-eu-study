@@ -1,0 +1,104 @@
+table fact_fireweather_countrymonth
+	lineageTag: 598877b6-a4bb-4039-8cf4-447281634066
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: bf9e047a-3647-47ba-b5f5-e68071c62b6c
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 8d0a2a06-42f1-4b9f-a635-a0be8741c992
+		summarizeBy: none
+		sourceColumn: month_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column mean_fwi
+		dataType: double
+		lineageTag: cd3fc62d-6bb7-4898-97c5-bd01bfb613cd
+		summarizeBy: none
+		sourceColumn: mean_fwi
+
+		annotation SummarizationSetBy = Automatic
+
+	column max_fwi
+		dataType: double
+		lineageTag: 443838ec-472e-4acf-a7bb-d9b2844090fc
+		summarizeBy: none
+		sourceColumn: max_fwi
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_fwi_high
+		dataType: int64
+		lineageTag: 7feebcc6-4457-4fc3-8873-9a5e87ed93f7
+		summarizeBy: none
+		sourceColumn: days_fwi_high
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_fwi_very_high
+		dataType: int64
+		lineageTag: 1dfd35e4-d88b-4e5b-b4c8-f439395cee8f
+		summarizeBy: none
+		sourceColumn: days_fwi_very_high
+
+		annotation SummarizationSetBy = Automatic
+
+	column mean_temp
+		dataType: double
+		lineageTag: c84c5b3a-657c-444a-ae06-a7f58e5cca65
+		summarizeBy: none
+		sourceColumn: mean_temp
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_precip
+		dataType: double
+		lineageTag: 45b2211c-0b4a-4938-ab85-157870beed40
+		summarizeBy: none
+		sourceColumn: total_precip
+
+		annotation SummarizationSetBy = Automatic
+
+	column precip_anomaly
+		dataType: double
+		lineageTag: b1ae3123-5417-4627-8812-9134d5e048cc
+		summarizeBy: none
+		sourceColumn: precip_anomaly
+
+		annotation SummarizationSetBy = Automatic
+
+	column spei
+		dataType: double
+		lineageTag: fc242420-0c56-4a41-b39d-2edd5a9c5db1
+		summarizeBy: none
+		sourceColumn: spei
+
+		annotation SummarizationSetBy = Automatic
+
+	column mean_rh
+		dataType: double
+		lineageTag: 3c1b7d40-9f22-4c8e-b0a5-6d2e4f18c7a1
+		summarizeBy: none
+		sourceColumn: mean_rh
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_fireweather_countrymonth = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_fireweather_countrymonth.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

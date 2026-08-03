@@ -1,0 +1,80 @@
+relationship 8f2a1a10-0001-4a00-9a01-000000000001
+	fromColumn: fact_fireevent.'Fire date'
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0001-4a00-9a01-000000000002
+	fromColumn: fact_burntarea_countryyear.year_key
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0001-4a00-9a01-000000000003
+	fromColumn: fact_burntarea_countrymonth.month_key
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0001-4a00-9a01-000000000004
+	fromColumn: fact_burntarea_landcover.year_key
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0001-4a00-9a01-000000000005
+	fromColumn: fact_fireweather_countrymonth.month_key
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0001-4a00-9a01-000000000006
+	fromColumn: fact_hotspot_countrymonth.month_key
+	toColumn: dim_date.date_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000001
+	fromColumn: fact_fireevent.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000002
+	fromColumn: fact_burntarea_countryyear.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000003
+	fromColumn: fact_burntarea_countrymonth.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000004
+	fromColumn: fact_burntarea_landcover.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000005
+	fromColumn: fact_fireweather_countrymonth.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0002-4a00-9a01-000000000006
+	fromColumn: fact_hotspot_countrymonth.country_key
+	toColumn: dim_country.country_key
+
+relationship 8f2a1a10-0003-4a00-9a01-000000000001
+	fromColumn: fact_fireevent.commune_key
+	toColumn: dim_commune.commune_key
+
+relationship 8f2a1a10-0004-4a00-9a01-000000000001
+	fromColumn: fact_fireevent.source_key
+	toColumn: dim_source.source_key
+
+relationship 8f2a1a10-0004-4a00-9a01-000000000002
+	fromColumn: fact_burntarea_countryyear.source_key
+	toColumn: dim_source.source_key
+
+relationship 8f2a1a10-0004-4a00-9a01-000000000003
+	fromColumn: fact_burntarea_countrymonth.source_key
+	toColumn: dim_source.source_key
+
+relationship 8f2a1a10-0004-4a00-9a01-000000000004
+	fromColumn: fact_burntarea_landcover.source_key
+	toColumn: dim_source.source_key
+
+relationship 8f2a1a10-0004-4a00-9a01-000000000005
+	fromColumn: fact_hotspot_countrymonth.source_key
+	toColumn: dim_source.source_key
+
+relationship 8f2a1a10-0005-4a00-9a01-000000000001
+	fromColumn: fact_burntarea_landcover.landcover_key
+	toColumn: dim_landcover.landcover_key
+
+relationship 8f2a1a10-0006-4a00-9a01-000000000001
+	fromColumn: fact_fireevent.cause_key
+	toColumn: dim_firecause.cause_key
+

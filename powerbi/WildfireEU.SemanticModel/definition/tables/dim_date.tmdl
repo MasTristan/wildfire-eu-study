@@ -1,0 +1,129 @@
+table dim_date
+	lineageTag: cde4ce17-8116-4924-a023-45a7faf4c687
+	dataCategory: Time
+
+	column date_key
+		dataType: dateTime
+		isHidden
+		isKey
+		formatString: Long Date
+		lineageTag: 2f74a88f-663a-4be2-9273-0b2cfbc78fe0
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		lineageTag: 9c57031b-2a73-4d01-95ed-52524328abb1
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column quarter
+		dataType: int64
+		lineageTag: 8c88f400-4ef5-4166-bc8c-07305dc649be
+		summarizeBy: none
+		sourceColumn: quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column month
+		dataType: int64
+		lineageTag: 2fea6b6a-ebb5-40af-8e0e-273a730bb729
+		summarizeBy: none
+		sourceColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name
+		dataType: string
+		lineageTag: 013780a5-3c31-4e18-9ca8-2e27c7df66a7
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column week_iso
+		dataType: int64
+		lineageTag: 73d422b9-d21f-44a3-83f9-d85169fd45cf
+		summarizeBy: none
+		sourceColumn: week_iso
+
+		annotation SummarizationSetBy = Automatic
+
+	column day_of_year
+		dataType: int64
+		lineageTag: b3a7004a-d930-4a10-b895-66ded5fc5890
+		summarizeBy: none
+		sourceColumn: day_of_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_fire_season
+		dataType: boolean
+		lineageTag: 29312915-c7d4-40a2-a8cb-95ca597a3acb
+		summarizeBy: none
+		sourceColumn: is_fire_season
+
+		annotation SummarizationSetBy = Automatic
+
+	column season_label
+		dataType: string
+		lineageTag: 3666f355-da5a-4bee-b957-885c260aecf9
+		summarizeBy: none
+		sourceColumn: season_label
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name_en =
+			
+			// English display labels. The processed parquets carry French labels
+			// (month_name = "Janvier", season_label = "Hiver"); the report layer is
+			// English, so the translation lives here rather than forcing a
+			// re-ingestion of the whole data layer. Source of truth stays the
+			// parquet's numeric month; these are pure presentation columns.
+			SWITCH ( dim_date[month], 1, "January", 2, "February", 3, "March", 4, "April", 5, "May", 6, "June", 7, "July", 8, "August", 9, "September", 10, "October", 11, "November", 12, "December" )
+		dataType: string
+		lineageTag: 3666f355-da5a-4bee-b957-885c260ae001
+		summarizeBy: none
+		sortByColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_abbr_en = SWITCH(dim_date[month], 1, "Jan", 2, "Feb", 3, "Mar", 4, "Apr", 5, "May", 6, "Jun", 7, "Jul", 8, "Aug", 9, "Sep", 10, "Oct", 11, "Nov", 12, "Dec")
+		dataType: string
+		lineageTag: 3666f355-da5a-4bee-b957-885c260ae002
+		summarizeBy: none
+		sortByColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column season_en = SWITCH(TRUE(), dim_date[month] IN {12, 1, 2}, "Winter", dim_date[month] IN {3, 4, 5}, "Spring", dim_date[month] IN {6, 7, 8}, "Summer", "Autumn")
+		dataType: string
+		lineageTag: 3666f355-da5a-4bee-b957-885c260ae003
+		summarizeBy: none
+		sortByColumn: season_order
+
+		annotation SummarizationSetBy = Automatic
+
+	column season_order = SWITCH(TRUE(), dim_date[month] IN {12, 1, 2}, 1, dim_date[month] IN {3, 4, 5}, 2, dim_date[month] IN {6, 7, 8}, 3, 4)
+		dataType: int64
+		isHidden
+		lineageTag: 3666f355-da5a-4bee-b957-885c260ae004
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\dim_date.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

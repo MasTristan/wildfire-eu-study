@@ -1,0 +1,117 @@
+table fact_fireevent
+	lineageTag: c325efb2-47c1-4918-81cc-e15c4a1d9e6e
+
+	column fire_event_key
+		dataType: string
+		isHidden
+		lineageTag: 51d314e0-0420-43fe-ba31-ca7b90d876d9
+		summarizeBy: none
+		sourceColumn: fire_event_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_key
+		dataType: string
+		isHidden
+		lineageTag: d5bb1eeb-72c4-43ff-8a2a-ccc2e753e999
+		summarizeBy: none
+		sourceColumn: source_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: e747f2bc-4381-4ca5-ae2d-9747d422efd6
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column commune_key
+		dataType: string
+		isHidden
+		lineageTag: 07fdea4c-b139-4498-a44e-dd03d881c618
+		summarizeBy: none
+		sourceColumn: commune_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fire date'
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 831e74a9-68d0-49ec-8acd-a459a5f42ce6
+		summarizeBy: none
+		sourceColumn: firedate_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cause_key
+		dataType: string
+		isHidden
+		lineageTag: 25ebcf43-60e9-4be2-a5c9-aee5a7d7de12
+		summarizeBy: none
+		sourceColumn: cause_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column landcover_dominant_key
+		dataType: string
+		isHidden
+		lineageTag: 748c1a10-6b9c-4bc6-b65d-681b38a637db
+		summarizeBy: none
+		sourceColumn: landcover_dominant_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Area (ha)'
+		dataType: double
+		formatString: #,##0.0
+		lineageTag: 652171fe-a2e0-4251-a1eb-a66863d702c5
+		summarizeBy: none
+		sourceColumn: area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column ba_class
+		dataType: string
+		lineageTag: 46b08708-085b-44cc-b34f-7eceaa26fbb8
+		summarizeBy: none
+		sourceColumn: ba_class
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_natura2000
+		dataType: double
+		lineageTag: 9d0a9f15-bd36-45d6-a809-5c05d0b3133e
+		summarizeBy: none
+		sourceColumn: pct_natura2000
+
+		annotation SummarizationSetBy = Automatic
+
+	column centroid_lat
+		dataType: double
+		lineageTag: 85250521-c547-417d-9fa6-56b7d4b7dcb1
+		summarizeBy: none
+		sourceColumn: centroid_lat
+
+		annotation SummarizationSetBy = Automatic
+
+	column centroid_lon
+		dataType: double
+		lineageTag: 3beefdd1-45aa-457e-8030-f55b63b06232
+		summarizeBy: none
+		sourceColumn: centroid_lon
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_fireevent = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_fireevent.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

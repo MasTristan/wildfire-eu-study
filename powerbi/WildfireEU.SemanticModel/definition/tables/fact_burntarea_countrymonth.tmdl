@@ -1,0 +1,57 @@
+table fact_burntarea_countrymonth
+	lineageTag: 46cfe60a-d7c4-493d-b12b-ba8a2c3df2be
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 416b7697-2c79-459e-92e6-c54279a63fa2
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 0fa4a977-6169-4795-9714-95f079cc9119
+		summarizeBy: none
+		sourceColumn: month_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_key
+		dataType: string
+		isHidden
+		lineageTag: c6fa244d-93f2-407e-a43b-580b6757bc05
+		summarizeBy: none
+		sourceColumn: source_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column burnt_area_ha
+		dataType: double
+		lineageTag: eea45252-9b79-4be3-a04e-4aff36a22630
+		summarizeBy: none
+		sourceColumn: burnt_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column number_of_fires
+		dataType: int64
+		lineageTag: 047c4305-fef7-4b6c-bffa-0dec69550128
+		summarizeBy: none
+		sourceColumn: number_of_fires
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_burntarea_countrymonth = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_burntarea_countrymonth.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

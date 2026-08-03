@@ -1,0 +1,65 @@
+table fact_burntarea_countryyear
+	lineageTag: c66a50ee-a14b-416f-80aa-4379f8165d15
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 23e5c66e-32ee-43d2-a4bf-dc7d6482d678
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 0f7c0f1d-74a5-49e4-81a2-e2cbf5b54e52
+		summarizeBy: none
+		sourceColumn: year_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_key
+		dataType: string
+		isHidden
+		lineageTag: 66c9a5d1-148e-4241-b4a3-0e7e455743c1
+		summarizeBy: none
+		sourceColumn: source_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column burnt_area_ha
+		dataType: double
+		lineageTag: 68db6f53-a1c6-4b5d-8d7c-4a994f9e6ce0
+		summarizeBy: none
+		sourceColumn: burnt_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column number_of_fires
+		dataType: int64
+		lineageTag: f8ef420b-3021-4a30-a22c-08d88f2a2170
+		summarizeBy: none
+		sourceColumn: number_of_fires
+
+		annotation SummarizationSetBy = Automatic
+
+	column co2_emissions_t
+		dataType: double
+		lineageTag: 0f42bcca-15b6-48d8-84c8-5c7bd0bf7add
+		summarizeBy: none
+		sourceColumn: co2_emissions_t
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_burntarea_countryyear = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_burntarea_countryyear.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

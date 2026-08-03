@@ -1,0 +1,593 @@
+table _Measures
+	lineageTag: 9a3e5b10-0000-4a00-9a01-000000000000
+
+	measure 'Burnt Area (ha)' = SUM(fact_burntarea_countrymonth[burnt_area_ha])
+		formatString: #,##0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000001
+
+	measure 'Number of Fires' = SUM(fact_burntarea_countrymonth[number_of_fires])
+		formatString: #,##0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000002
+
+	measure 'CO2 Emissions (t)' =
+			
+			// Emissions come from GWIS/GFAS only, which sits on its own rows in
+			// fact_burntarea_countryyear (source_key = "GWIS_GFAS") so that GFAS
+			// tonnes are never attributed to EFFIS or BDIFF. A page filtered to a
+			// burnt-area source would therefore return blank; REMOVEFILTERS on
+			// dim_source states that this measure has exactly one source and does
+			// not respond to a source selection.
+			CALCULATE (
+			    SUM ( fact_burntarea_countryyear[co2_emissions_t] ),
+			    REMOVEFILTERS ( dim_source )
+			)
+		formatString: #,##0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000003
+
+	measure 'Avg Fire Size (ha)' = DIVIDE([Burnt Area (ha)], [Number of Fires])
+		formatString: #,##0.0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000004
+
+	measure 'Burnt Area, landcover (ha)' = SUM(fact_burntarea_landcover[burnt_area_ha])
+		formatString: #,##0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000005
+
+	measure 'Fire Events' = COUNTROWS(fact_fireevent)
+		formatString: #,##0
+		displayFolder: Grain feu
+		lineageTag: 9a3e5b10-0002-4a00-9a01-000000000001
+
+	measure 'Burnt Area, events (ha)' = SUM(fact_fireevent[Area (ha)])
+		formatString: #,##0
+		displayFolder: Grain feu
+		lineageTag: 9a3e5b10-0002-4a00-9a01-000000000002
+
+	measure 'Median Fire Size (ha)' = MEDIAN(fact_fireevent[Area (ha)])
+		formatString: #,##0.00
+		displayFolder: Grain feu
+		lineageTag: 9a3e5b10-0002-4a00-9a01-000000000003
+
+	measure 'Largest Fire (ha)' = MAX(fact_fireevent[Area (ha)])
+		formatString: #,##0
+		displayFolder: Grain feu
+		lineageTag: 9a3e5b10-0002-4a00-9a01-000000000004
+
+	measure 'Burnt Area PY' = CALCULATE([Burnt Area (ha)], SAMEPERIODLASTYEAR(dim_date[date_key]))
+		formatString: #,##0
+		displayFolder: Time intelligence
+		lineageTag: 9a3e5b10-0003-4a00-9a01-000000000001
+
+	measure 'Burnt Area YoY %' = DIVIDE([Burnt Area (ha)] - [Burnt Area PY], [Burnt Area PY])
+		formatString: +0.0%;-0.0%
+		displayFolder: Time intelligence
+		lineageTag: 9a3e5b10-0003-4a00-9a01-000000000002
+
+	measure 'Burnt Area YTD' = TOTALYTD([Burnt Area (ha)], dim_date[date_key])
+		formatString: #,##0
+		displayFolder: Time intelligence
+		lineageTag: 9a3e5b10-0003-4a00-9a01-000000000003
+
+	measure 'Burnt Area, 5Y avg' =
+			
+			// Trailing 5-year annual baseline, current year excluded, so it reads as
+			// "the normal" against which the current year is judged.
+			// The previous definition averaged over DATESINPERIOD's *daily* table.
+			// Facts sit at month grain (only the month's first day carries a value),
+			// so AVERAGEX skipped ~29 blank days per month and returned a MONTHLY
+			// mean plotted next to ANNUAL totals: an order-of-magnitude mismatch
+			// that flattened the baseline onto the axis.
+			VAR CurYear = MAX ( dim_date[year] )
+			VAR PriorYears =
+			    FILTER (
+			        ALL ( dim_date[year] ),
+			        dim_date[year] < CurYear && dim_date[year] >= CurYear - 5
+			    )
+			RETURN
+			    AVERAGEX ( PriorYears, CALCULATE ( [Burnt Area (ha)] ) )
+		formatString: #,##0
+		displayFolder: Time intelligence
+		lineageTag: 9a3e5b10-0003-4a00-9a01-000000000004
+
+	measure 'Burnt Area, season-to-date' =
+			
+			// Cumulative burnt area from 1 January to the day-of-year in context.
+			//
+			// The curve must STOP at the last month that carries data, not run
+			// flat to day 365. Facts sit at month grain, so without the guard
+			// below every day after the last fact month repeated the year's total
+			// and the running year drew a long horizontal line across the rest of
+			// the calendar: read as "the season finished at this total" when it
+			// means "we have no data yet". Measured 2026-07-31, 2026 plateaued at
+			// 1 106 101 ha from day 211 all the way to day 361.
+			// The guard only applies when day-of-year is actually on an axis, so
+			// the season-to-date CARD (no day-of-year in scope) still returns the
+			// full total rather than going blank.
+			VAR CurYear = MAX ( dim_date[year] )
+			VAR MaxDoY = MAX ( dim_date[day_of_year] )
+			VAR LastFactMonth =
+			    CALCULATE (
+			        MAX ( fact_burntarea_countrymonth[month_key] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_date[year] = CurYear
+			    )
+			VAR LastCoveredDoY =
+			    IF (
+			        NOT ISBLANK ( LastFactMonth ),
+			        DATEDIFF ( DATE ( CurYear, 1, 1 ), EOMONTH ( LastFactMonth, 0 ), DAY ) + 1
+			    )
+			VAR Cumulative =
+			    CALCULATE (
+			        [Burnt Area (ha)],
+			        FILTER ( ALL ( dim_date ), dim_date[year] = CurYear && dim_date[day_of_year] <= MaxDoY )
+			    )
+			RETURN
+			    IF (
+			        NOT ISINSCOPE ( dim_date[day_of_year] ) || MaxDoY <= LastCoveredDoY,
+			        Cumulative
+			    )
+		formatString: #,##0
+		displayFolder: Saisonnalité
+		lineageTag: 9a3e5b10-0004-4a00-9a01-000000000001
+
+	measure 'Mean FWI' = AVERAGE(fact_fireweather_countrymonth[mean_fwi])
+		formatString: #,##0.0
+		displayFolder: Météo-feu
+		lineageTag: 9a3e5b10-0005-4a00-9a01-000000000001
+
+	measure 'Max FWI' = MAX(fact_fireweather_countrymonth[max_fwi])
+		formatString: #,##0.0
+		displayFolder: Météo-feu
+		lineageTag: 9a3e5b10-0005-4a00-9a01-000000000002
+
+	measure 'Days High Danger' = SUM(fact_fireweather_countrymonth[days_fwi_high])
+		formatString: #,##0
+		displayFolder: Météo-feu
+		lineageTag: 9a3e5b10-0005-4a00-9a01-000000000003
+
+	measure 'Hotspot Count' = SUM(fact_hotspot_countrymonth[hotspot_count])
+		formatString: #,##0
+		displayFolder: Hotspots
+		lineageTag: 9a3e5b10-0006-4a00-9a01-000000000001
+
+	measure 'Mean FRP (MW)' = AVERAGE(fact_hotspot_countrymonth[mean_frp])
+		formatString: #,##0.0
+		displayFolder: Hotspots
+		lineageTag: 9a3e5b10-0006-4a00-9a01-000000000002
+
+	measure 'Forest Area (ha)' = SUM(dim_country[forest_area_ha])
+		formatString: #,##0
+		displayFolder: Normalisation
+		lineageTag: 9a3e5b10-0007-4a00-9a01-000000000001
+
+	measure 'Burnt Area, % of forest' = DIVIDE([Burnt Area (ha)], [Forest Area (ha)])
+		formatString: 0.000%;-0.000%
+		displayFolder: Normalisation
+		lineageTag: 9a3e5b10-0007-4a00-9a01-000000000002
+
+	measure 'Burnt Area vs Normal %' =
+			
+			// Anomaly against the trailing 5Y baseline, for use where a year sits in
+			// the filter context (chart axis, matrix row). BLANK-safe on both sides:
+			// a grain with no actuals must stay blank, never read as -100%.
+			VAR Actual = [Burnt Area (ha)]
+			VAR Baseline = [Burnt Area, 5Y avg]
+			RETURN
+			    IF (
+			        NOT ISBLANK ( Actual ) && NOT ISBLANK ( Baseline ) && Baseline <> 0,
+			        DIVIDE ( Actual - Baseline, Baseline ),
+			        BLANK ()
+			    )
+		formatString: +0.0%;-0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000001
+
+	measure 'Latest Year Burnt Area (ha)' = CALCULATE([Burnt Area (ha)], dim_date[year] = MAX(dim_date[year]))
+		formatString: #,##0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000015
+
+	measure 'Latest Year vs Normal %' =
+			
+			// Self-contained variant of [Burnt Area vs Normal %], for KPI cards that
+			// carry no year in their filter context. Without this, a card over the
+			// full 2016-2026 range would compare an eleven-year TOTAL against a
+			// one-year average and report a meaningless several-hundred-percent gap.
+			VAR CurYear = MAX ( dim_date[year] )
+			VAR Actual = CALCULATE ( [Burnt Area (ha)], dim_date[year] = CurYear )
+			VAR Baseline =
+			    AVERAGEX (
+			        FILTER (
+			            ALL ( dim_date[year] ),
+			            dim_date[year] < CurYear && dim_date[year] >= CurYear - 5
+			        ),
+			        CALCULATE ( [Burnt Area (ha)] )
+			    )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( Actual ) && NOT ISBLANK ( Baseline ) && Baseline <> 0,
+			        DIVIDE ( Actual - Baseline, Baseline ),
+			        BLANK ()
+			    )
+		formatString: +0.0%;-0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000016
+
+	measure 'Season vs Normal %' =
+			
+			// Like-for-like anomaly: the current season compared with the same
+			// calendar span of the previous five years.
+			// [Latest Year vs Normal %] compares a year-to-date total against
+			// full-year averages, so mid-season it is negative by construction
+			// (a July 2026 total can never reach a twelve-month mean) and paints a
+			// record season green. This measure truncates BOTH sides at the last
+			// month that actually carries data, which is the only comparison that
+			// means anything before a season closes.
+			VAR CurYear = MAX ( dim_date[year] )
+			VAR LastKey =
+			    CALCULATE (
+			        MAX ( fact_burntarea_countrymonth[month_key] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_date[year] = CurYear
+			    )
+			VAR LastM = IF ( NOT ISBLANK ( LastKey ), MONTH ( LastKey ) )
+			VAR Actual =
+			    CALCULATE (
+			        [Burnt Area (ha)],
+			        REMOVEFILTERS ( dim_date ),
+			        dim_date[year] = CurYear,
+			        dim_date[month] <= LastM
+			    )
+			VAR Baseline =
+			    AVERAGEX (
+			        FILTER (
+			            ALL ( dim_date[year] ),
+			            dim_date[year] < CurYear && dim_date[year] >= CurYear - 5
+			        ),
+			        CALCULATE ( [Burnt Area (ha)], dim_date[month] <= LastM )
+			    )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( LastM ) && NOT ISBLANK ( Actual )
+			            && NOT ISBLANK ( Baseline ) && Baseline <> 0,
+			        DIVIDE ( Actual - Baseline, Baseline ),
+			        BLANK ()
+			    )
+		formatString: +0.0%;-0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000017
+
+	measure 'Country Rank' =
+			
+			// Rank of the selected country against every country in the page's
+			// scope, blank when no single country is selected.
+			// Two bugs fixed here on 2026-07-31. With nothing selected the card
+			// read "Country Rank 1", a real number in the right format that meant
+			// nothing. And the ranking universe was ALLSELECTED, which INCLUDES the
+			// slicer, so picking one country left a one-row table and the rank was
+			// 1 whichever country you picked. ALL on the name column alone drops
+			// the slicer while keeping the page's macro-region and date filters,
+			// which is the universe the card claims to rank against.
+			VAR Universe =
+			    CALCULATETABLE ( VALUES ( dim_country[name_en] ), ALL ( dim_country[name_en] ) )
+			RETURN
+			    IF (
+			        HASONEVALUE ( dim_country[name_en] ) && NOT ISBLANK ( [Burnt Area (ha)] ),
+			        RANKX ( Universe, [Burnt Area (ha)],, DESC, Dense )
+			    )
+		formatString: 0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000002
+
+	measure 'Share of Europe %' =
+			
+			// Share of the whole page scope, not of the selection. Dividing the
+			// selection by itself returned a truthful, useless 100% whatever the
+			// user picked. Same universe as [Country Rank].
+			IF (
+			    HASONEVALUE ( dim_country[name_en] ),
+			    DIVIDE (
+			        [Burnt Area (ha)],
+			        CALCULATE ( [Burnt Area (ha)], ALL ( dim_country[name_en] ) )
+			    )
+			)
+		formatString: 0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000003
+
+	measure 'Top 5 Concentration %' =
+			
+			// Share of the selection's burnt area held by its five worst countries.
+			VAR Countries = ALLSELECTED ( dim_country[name_en] )
+			VAR WithBA = ADDCOLUMNS ( Countries, "@ba", CALCULATE ( [Burnt Area (ha)] ) )
+			VAR Top5 = TOPN ( 5, WithBA, [@ba], DESC )
+			RETURN
+			    DIVIDE ( SUMX ( Top5, [@ba] ), SUMX ( WithBA, [@ba] ) )
+		formatString: 0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000004
+
+	measure 'Burnt Area per 1k ha Forest' =
+			
+			// Normalises absolute hectares by the country's forest endowment, so a
+			// small heavily-burnt country is not hidden behind a large one.
+			DIVIDE ( [Burnt Area (ha)], [Forest Area (ha)] ) * 1000
+		formatString: #,##0.0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000005
+
+	measure 'Large Fires (500 ha+)' = CALCULATE(COUNTROWS(fact_fireevent), KEEPFILTERS(fact_fireevent[Area (ha)] >= 500))
+		formatString: #,##0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000006
+
+	measure 'Large Fire Area Share %' =
+			
+			// The Pareto of wildfire: a handful of events carries most of the area.
+			VAR LargeArea =
+			    CALCULATE ( SUM ( fact_fireevent[Area (ha)] ), KEEPFILTERS ( fact_fireevent[Area (ha)] >= 500 ) )
+			RETURN
+			    DIVIDE ( LargeArea, [Burnt Area, events (ha)] )
+		formatString: 0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000007
+
+	measure 'Countries Affected' = CALCULATE(DISTINCTCOUNT(fact_burntarea_countrymonth[country_key]), KEEPFILTERS(fact_burntarea_countrymonth[burnt_area_ha] > 0))
+		formatString: 0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000008
+
+	measure 'Peak Month' =
+			
+			VAR ByMonth =
+			    ADDCOLUMNS ( ALLSELECTED ( dim_date[month_name_en] ), "@ba", CALCULATE ( [Burnt Area (ha)] ) )
+			RETURN
+			    MAXX ( TOPN ( 1, ByMonth, [@ba], DESC ), dim_date[month_name_en] )
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000009
+
+	measure 'Worst Year' =
+			
+			VAR ByYear =
+			    ADDCOLUMNS ( ALLSELECTED ( dim_date[year] ), "@ba", CALCULATE ( [Burnt Area (ha)] ) )
+			RETURN
+			    MAXX ( TOPN ( 1, ByYear, [@ba], DESC ), dim_date[year] )
+		formatString: 0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000010
+
+	measure 'Fire Season Share %' =
+			
+			VAR InSeason = CALCULATE ( [Burnt Area (ha)], KEEPFILTERS ( dim_date[is_fire_season] = TRUE () ) )
+			VAR AnySeason = CALCULATE ( [Burnt Area (ha)], ALL ( dim_date[is_fire_season] ) )
+			RETURN
+			    DIVIDE ( InSeason, AnySeason )
+		formatString: 0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000011
+
+	measure 'Natura 2000 Burnt (ha)' =
+			
+			// Area burnt inside EU protected sites, reconstructed from each EFFIS
+			// perimeter's overlap percentage. Events with no coverage figure stay
+			// blank and are skipped, they are not counted as zero.
+			SUMX ( fact_fireevent, fact_fireevent[Area (ha)] * DIVIDE ( fact_fireevent[pct_natura2000], 100 ) )
+		formatString: #,##0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000012
+
+	measure 'Natura 2000 Share %' = DIVIDE([Natura 2000 Burnt (ha)], [Burnt Area, events (ha)])
+		formatString: 0.0%
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000013
+
+	measure 'Latest Year' = MAX(dim_date[year])
+		formatString: 0
+		displayFolder: Narrative
+		lineageTag: 9a3e5b10-0009-4a00-9a01-000000000014
+
+	measure 'Days Very High Danger' = SUM(fact_fireweather_countrymonth[days_fwi_very_high])
+		formatString: #,##0
+		displayFolder: Météo-feu
+		lineageTag: 9a3e5b10-0005-4a00-9a01-000000000004
+
+	measure 'CO2 Emissions (Mt)' = DIVIDE([CO2 Emissions (t)], 1000000)
+		formatString: #,##0.0
+		displayFolder: Surfaces et feux
+		lineageTag: 9a3e5b10-0001-4a00-9a01-000000000006
+
+	measure 'Today Day of Year' =
+			
+			// Drives the "today" reference line on the Live season page. Evaluated at
+			// query time, so the marker moves on its own and the page never needs a
+			// yearly edit. Day 1 = 1 January.
+			DATEDIFF ( DATE ( YEAR ( TODAY () ), 1, 1 ), TODAY (), DAY ) + 1
+		formatString: 0
+		displayFolder: Saisonnalité
+		lineageTag: 9a3e5b10-000b-4a00-9a01-000000000001
+
+	measure 'Mean Temp (C)' = AVERAGE(fact_fireweather_countrymonth[mean_temp])
+		formatString: #,##0.0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000001
+
+	measure 'Total Precip (mm)' =
+			
+			// Monthly total in millimetres, averaged (never summed) across the
+			// country-months in context: summing a depth over several countries
+			// would add rainfall that fell in different places.
+			AVERAGE ( fact_fireweather_countrymonth[total_precip] )
+		formatString: #,##0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000002
+
+	measure 'Precip Anomaly %' =
+			
+			// Deviation from the 1991-2020 ERA5 normal for the same calendar
+			// month, already expressed in percent by the ingest, so this only
+			// averages. Null where the normal is under 5 mm (arid climates).
+			AVERAGE ( fact_fireweather_countrymonth[precip_anomaly] )
+		formatString: +0.0"%";-0.0"%";0.0"%"
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000003
+
+	measure 'Mean Humidity %' = AVERAGE(fact_fireweather_countrymonth[mean_rh])
+		formatString: #,##0.0"%"
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000004
+
+	measure 'Drought Index (SPEI-3)' =
+			
+			// EDO SPEI-3: standardized 3-month water balance, centred on zero.
+			// Below -1 is moderate drought, below -1.5 severe, below -2 extreme.
+			AVERAGE ( fact_fireweather_countrymonth[spei] )
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000005
+
+	measure 'Months in Drought' =
+			
+			CALCULATE (
+			    COUNTROWS ( fact_fireweather_countrymonth ),
+			    KEEPFILTERS ( fact_fireweather_countrymonth[spei] < -1 )
+			)
+		formatString: #,##0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000006
+
+	measure 'Common horizon' =
+			
+			// The years for which BOTH series exist. Phase 3 extended fire weather
+			// back to 2016 precisely so this window stops being a caveat; the
+			// measure recomputes it from the data so the page can never claim a
+			// horizon the tables do not have.
+			VAR FwYears =
+			    DISTINCT (
+			        SELECTCOLUMNS (
+			            ALLSELECTED ( fact_fireweather_countrymonth ),
+			            "Y", YEAR ( fact_fireweather_countrymonth[month_key] )
+			        )
+			    )
+			VAR BaYears =
+			    DISTINCT (
+			        SELECTCOLUMNS (
+			            ALLSELECTED ( fact_burntarea_countrymonth ),
+			            "Y", YEAR ( fact_burntarea_countrymonth[month_key] )
+			        )
+			    )
+			VAR Common = INTERSECT ( FwYears, BaYears )
+			VAR N = COUNTROWS ( Common )
+			RETURN
+			    IF (
+			        N > 0,
+			        MINX ( Common, [Y] ) & "-" & MAXX ( Common, [Y] )
+			            & ", " & N & " yrs"
+			    )
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000007
+
+	measure 'Complete Climate Year' =
+			
+			// 1 when the year in context is fully covered by the fire-weather
+			// series, blank otherwise. The current year is always partial (the
+			// EWDS consolidation lags real time by several months), and a SUM
+			// over a partial year plots as a collapse rather than as missing
+			// data. Derived from the data, so it needs no yearly maintenance.
+			VAR LastMonth =
+			    CALCULATE ( MAX ( fact_fireweather_countrymonth[month_key] ), REMOVEFILTERS () )
+			VAR Y = SELECTEDVALUE ( dim_date[year] )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( Y ) && ( Y < YEAR ( LastMonth ) || MONTH ( LastMonth ) = 12 ),
+			        1
+			    )
+		formatString: 0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000010
+
+	measure 'Days High Danger (full years)' = IF([Complete Climate Year] = 1, [Days High Danger])
+		formatString: #,##0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000011
+
+	measure 'Burnt Area (full climate years)' = IF([Complete Climate Year] = 1, [Burnt Area (ha)])
+		formatString: #,##0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000012
+
+	measure 'Correlation Points' =
+			
+			COUNTROWS (
+			    FILTER (
+			        ADDCOLUMNS (
+			            SUMMARIZE (
+			                fact_fireweather_countrymonth,
+			                dim_country[country_key],
+			                dim_date[year]
+			            ),
+			            "@x", CALCULATE ( [Days High Danger] ),
+			            "@y", CALCULATE ( [Burnt Area per 1k ha Forest] )
+			        ),
+			        NOT ISBLANK ( [@x] ) && NOT ISBLANK ( [@y] )
+			    )
+			)
+		formatString: #,##0
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000008
+
+	measure 'Correlation, danger vs area' =
+			
+			// Pearson correlation over country-year points: x = days of high fire
+			// danger, y = burnt area per 1000 ha of forest. Both sides are
+			// normalised, y by forest cover and x by being a day count, so the
+			// coefficient is not simply reading country size.
+			// It is descriptive. A correlation is not a cause: nearly every
+			// European fire is ignited by a person, and fire weather governs how
+			// far it then runs.
+			// Returns blank under 10 points rather than a coefficient computed on
+			// a handful of country-years.
+			VAR Points =
+			    FILTER (
+			        ADDCOLUMNS (
+			            SUMMARIZE (
+			                fact_fireweather_countrymonth,
+			                dim_country[country_key],
+			                dim_date[year]
+			            ),
+			            "@x", CALCULATE ( [Days High Danger] ),
+			            "@y", CALCULATE ( [Burnt Area per 1k ha Forest] )
+			        ),
+			        NOT ISBLANK ( [@x] ) && NOT ISBLANK ( [@y] )
+			    )
+			VAR N = COUNTROWS ( Points )
+			VAR MeanX = AVERAGEX ( Points, [@x] )
+			VAR MeanY = AVERAGEX ( Points, [@y] )
+			VAR Cov = SUMX ( Points, ( [@x] - MeanX ) * ( [@y] - MeanY ) )
+			VAR SsX = SUMX ( Points, ( [@x] - MeanX ) ^ 2 )
+			VAR SsY = SUMX ( Points, ( [@y] - MeanY ) ^ 2 )
+			RETURN
+			    IF ( N >= 10, DIVIDE ( Cov, SQRT ( SsX * SsY ) ) )
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Climat
+		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000009
+
+	column Column
+		isHidden
+		formatString: 0
+		lineageTag: 9a3e5b10-0008-4a00-9a01-000000000001
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 9a3e5b1000004a009a01000000000000
+

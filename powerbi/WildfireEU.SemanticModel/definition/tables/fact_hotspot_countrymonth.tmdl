@@ -1,0 +1,65 @@
+table fact_hotspot_countrymonth
+	lineageTag: 9f01696a-b7db-4097-b036-904af39e0608
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 1e36f426-b901-475c-9450-7322c379c965
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 82d71a01-81a0-4fc8-96fd-6a059fe14ef4
+		summarizeBy: none
+		sourceColumn: month_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_key
+		dataType: string
+		isHidden
+		lineageTag: 9f977df8-e0c0-4bb7-b1cf-a996e63aad7d
+		summarizeBy: none
+		sourceColumn: source_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column hotspot_count
+		dataType: int64
+		lineageTag: 298b91dc-18ee-4807-9627-26e84e69ff5b
+		summarizeBy: none
+		sourceColumn: hotspot_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column mean_frp
+		dataType: double
+		lineageTag: 4fd4e21b-7edc-460c-bc1b-c3260bba93af
+		summarizeBy: none
+		sourceColumn: mean_frp
+
+		annotation SummarizationSetBy = Automatic
+
+	column max_frp
+		dataType: double
+		lineageTag: 0e9a7ac9-f2f3-4814-8be4-c9b7af1bf866
+		summarizeBy: none
+		sourceColumn: max_frp
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_hotspot_countrymonth = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\fact_hotspot_countrymonth.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

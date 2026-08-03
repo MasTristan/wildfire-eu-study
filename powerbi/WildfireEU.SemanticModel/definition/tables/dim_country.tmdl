@@ -1,0 +1,102 @@
+table dim_country
+	lineageTag: b65204c8-926d-4a1e-9ed2-b0d0696d5dac
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 3383fc1b-8928-4e58-a4b8-e3e84cec6117
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column effis_raw_code
+		dataType: string
+		lineageTag: fcbaac40-d30b-4bcc-acbe-14ac6cbf613e
+		summarizeBy: none
+		sourceColumn: effis_raw_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column iso2
+		dataType: string
+		lineageTag: a135e9f7-319c-4296-9d3a-7e44e8a492f4
+		summarizeBy: none
+		sourceColumn: iso2
+
+		annotation SummarizationSetBy = Automatic
+
+	column iso3
+		dataType: string
+		lineageTag: 9bd0d16a-5e07-48a0-a648-8eb50dc4fd5d
+		summarizeBy: none
+		sourceColumn: iso3
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_en
+		dataType: string
+		lineageTag: 9f70edfb-7932-4692-b324-5b31b1bff5f7
+		summarizeBy: none
+		sourceColumn: name_en
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_fr
+		dataType: string
+		lineageTag: d16f0ec4-9471-482e-ad89-8a171292f5a2
+		summarizeBy: none
+		sourceColumn: name_fr
+
+		annotation SummarizationSetBy = Automatic
+
+	column macro_region
+		dataType: string
+		lineageTag: 413f2f9f-601d-4036-8f8e-cab7d711bbaf
+		summarizeBy: none
+		sourceColumn: macro_region
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_eu
+		dataType: boolean
+		lineageTag: 95dd2994-9775-4b48-bd06-7d68046370b2
+		summarizeBy: none
+		sourceColumn: is_eu
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_mediterranean
+		dataType: boolean
+		lineageTag: df6d6736-6cf6-4171-af4a-2ec3c1b82315
+		summarizeBy: none
+		sourceColumn: is_mediterranean
+
+		annotation SummarizationSetBy = Automatic
+
+	column land_area_km2
+		dataType: double
+		lineageTag: e185c5bf-5f6a-46e0-8e31-20a27696c519
+		summarizeBy: none
+		sourceColumn: land_area_km2
+
+		annotation SummarizationSetBy = Automatic
+
+	column forest_area_ha
+		dataType: double
+		lineageTag: ff06aa46-b0c2-486c-8a87-e51d665cbdb4
+		summarizeBy: none
+		sourceColumn: forest_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_country = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\dim_country.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

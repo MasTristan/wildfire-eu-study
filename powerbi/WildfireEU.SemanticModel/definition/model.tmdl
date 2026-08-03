@@ -1,0 +1,35 @@
+model Model
+	culture: en-GB
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-GB
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["dim_date","dim_country","dim_commune","dim_landcover","dim_firecause","dim_source","fact_fireevent","fact_burntarea_countrymonth","fact_burntarea_countryyear","fact_burntarea_landcover","fact_fireweather_countrymonth","fact_hotspot_countrymonth","_Measures"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref expression DataFolder
+
+ref table dim_date
+ref table dim_country
+ref table dim_commune
+ref table dim_landcover
+ref table dim_firecause
+ref table dim_source
+ref table fact_fireevent
+ref table fact_burntarea_countrymonth
+ref table fact_burntarea_countryyear
+ref table fact_burntarea_landcover
+ref table fact_fireweather_countrymonth
+ref table fact_hotspot_countrymonth
+ref table _Measures
+ref table Metric
+ref table 'Time calculation'
+
+ref cultureInfo en-GB
+

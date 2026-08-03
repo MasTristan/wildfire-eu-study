@@ -1,0 +1,56 @@
+table dim_firecause
+	lineageTag: 3b8e6a03-9b37-4d86-9d25-4b248f31cb01
+
+	column cause_key
+		dataType: string
+		isHidden
+		lineageTag: 71d93d79-5310-4d6c-9d70-58db6c0a80ef
+		summarizeBy: none
+		sourceColumn: cause_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cause_group
+		dataType: string
+		lineageTag: 76f0d6fe-feca-4fcf-a252-280ceb07e0e5
+		summarizeBy: none
+		sourceColumn: cause_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column cause_detail
+		dataType: string
+		lineageTag: ad5f7d75-6e0b-4efa-84e6-bebf1e086e63
+		summarizeBy: none
+		sourceColumn: cause_detail
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fire cause' =
+			
+			// English display labels; the parquet's cause_detail is French and
+			// cause_group is a lowercase slug. Keyed on cause_key (language-free).
+			SWITCH ( dim_firecause[cause_key], "unknown", "Not recorded", "accidentelle", "Accidental", "involontaire_particulier", "Unintentional (individual)", "involontaire_travaux", "Unintentional (works)", "malveillance", "Arson", "naturelle", "Natural", "Other" )
+		dataType: string
+		lineageTag: ad5f7d75-6e0b-4efa-84e6-bebf1e086001
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column cause_group_en = SWITCH(dim_firecause[cause_group], "unknown", "Unknown", "accidental", "Accidental", "involuntary", "Unintentional", "malicious", "Arson", "natural", "Natural", "Other")
+		dataType: string
+		lineageTag: ad5f7d75-6e0b-4efa-84e6-bebf1e086002
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_firecause = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\dim_firecause.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

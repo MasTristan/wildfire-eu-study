@@ -1,0 +1,87 @@
+table dim_commune
+	lineageTag: e0e2ac75-5364-44f4-a322-ed6a333ec3e5
+
+	column commune_key
+		dataType: string
+		isHidden
+		lineageTag: 6ed41081-38b0-4c11-b817-8aece7968391
+		summarizeBy: none
+		sourceColumn: commune_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column Commune
+		dataType: string
+		lineageTag: 470f7b64-5ebe-410d-98df-7fc7bd5532b3
+		summarizeBy: none
+		sourceColumn: name
+
+		annotation SummarizationSetBy = Automatic
+
+	column department_code
+		dataType: string
+		lineageTag: 3a172ef2-f425-4e03-928c-0b76cc9dc037
+		summarizeBy: none
+		sourceColumn: department_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column Department
+		dataType: string
+		lineageTag: 78a9be0a-f7cf-4c01-9928-10945a4da67a
+		summarizeBy: none
+		sourceColumn: department_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column region_code
+		dataType: string
+		lineageTag: 1880ac06-68c6-40bb-ae53-092da344c36d
+		summarizeBy: none
+		sourceColumn: region_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column Region
+		dataType: string
+		lineageTag: 59d4dcd9-c45f-44c7-87a4-ab81b83d670c
+		summarizeBy: none
+		sourceColumn: region_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 02394c60-262c-417c-b771-66bf084c7de8
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column centroid_lon
+		dataType: double
+		lineageTag: 02e4302d-94e9-449b-ab95-13972f5fddeb
+		summarizeBy: none
+		sourceColumn: centroid_lon
+
+		annotation SummarizationSetBy = Automatic
+
+	column centroid_lat
+		dataType: double
+		lineageTag: da703f20-9b25-45b5-80e8-6be3b5807061
+		summarizeBy: none
+		sourceColumn: centroid_lat
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_commune = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(DataFolder & "\dim_commune.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

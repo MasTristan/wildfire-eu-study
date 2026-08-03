@@ -1,0 +1,61 @@
+/// Field parameter: lets the reader swap the measure a visual plots, rather
+/// than stacking one visual per metric. It earns its place on the When page
+/// because the seasonal shape of Europe's fire year genuinely changes with what
+/// you count: August dominates burnt AREA, while the spring peak is far larger
+/// in fire COUNT, since eastern European stubble burning is many small fires.
+table Metric
+	lineageTag: 9a3e5b10-000c-4a00-9a01-000000000001
+
+	column Metric
+		dataType: string
+		lineageTag: 9a3e5b10-000c-4a00-9a01-000000000002
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Metric Order'
+
+		relatedColumnDetails
+			groupByColumn: 'Metric Fields'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Metric Fields'
+		dataType: string
+		isHidden
+		lineageTag: 9a3e5b10-000c-4a00-9a01-000000000003
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Metric Order'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Metric Order'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9a3e5b10-000c-4a00-9a01-000000000004
+		summarizeBy: sum
+		sourceColumn: [Value3]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Metric = calculated
+		mode: import
+		source =
+				{
+				    ("Burnt area (ha)", NAMEOF('_Measures'[Burnt Area (ha)]), 0),
+				    ("Number of fires", NAMEOF('_Measures'[Number of Fires]), 1),
+				    ("Average fire size (ha)", NAMEOF('_Measures'[Avg Fire Size (ha)]), 2)
+				}
+

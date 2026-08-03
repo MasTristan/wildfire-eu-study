@@ -1,0 +1,16 @@
+/// Folder holding the parquet tables produced by the Python layer
+/// (data/processed at the repository root).
+/// 
+/// This exists so the path appears ONCE. Every partition used to carry its own
+/// absolute path, so a clone of this repository landed with twelve broken
+/// queries and twelve edits to make. Power Query has no reliable notion of "the
+/// folder this project lives in", so a parameter is the portable answer: set it
+/// once after cloning, in Power BI Desktop under Home > Transform data >
+/// Manage parameters, or by editing the single line below.
+expression DataFolder = "C:\Users\User\dev\wildfire-eu-study\data\processed" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 9a3e5b10-000e-4a00-9a01-000000000001
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
