@@ -1,0 +1,26 @@
+# Pinned versions. CI validates installability (pip install -r requirements.txt).
+# Core data
+requests==2.32.3
+pandas==2.2.3
+pyarrow==17.0.0
+openpyxl==3.1.5          # read EFFIS statistics .xls/.xlsx
+python-dotenv==1.0.1
+requests-cache==1.2.1    # polite caching for repeated API pulls
+tqdm==4.67.1
+pip-system-certs==5.3    # Windows: some corporate networks inject a root CA
+                          # into the OS trust store but not into certifi;
+                          # this patches ssl to use the OS store (verified
+                          # certs, not a bypass) -- fixes SSLCertVerificationError
+
+# Geospatial (EFFIS perimeters, FIRMS points)
+geopandas==1.0.1
+shapely==2.0.6
+
+# Climate covariates (Copernicus CDS, gridded FWI / ERA5)
+cdsapi==0.7.7          # new CDS/EWDS API needs >=0.7.7
+xarray==2024.11.0
+netCDF4==1.7.2
+
+# Dev
+pytest==8.3.4
+ruff==0.8.4
