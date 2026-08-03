@@ -1,0 +1,60 @@
+# Data: raw and interim never versioned; processed parquet excluded, keep folders
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# Secrets and credentials
+.env
+.env.*
+.cdsapirc
+secrets/
+**/map_key.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Power BI
+powerbi/**/.pbi/
+powerbi/**/cache.abf
+*.tmp
+# Render captures: regenerable, and they include the Desktop window chrome
+powerbi/.render/
+
+# Report-generation tooling: kept private, deliberately. This is the personal
+# compiler/lint/render pipeline that builds powerbi/WildfireEU.Report from
+# YAML specs. Only the two folders it produces (WildfireEU.Report,
+# WildfireEU.SemanticModel) and the .pbip are published; the machinery that
+# builds them is not shared or documented publicly.
+powerbi/scripts/
+powerbi/specs/
+powerbi/.claude/
+docs/powerbi-spec.md
+docs/specs/
+
+# AI instruction files: never commit if the repo becomes public.
+CLAUDE.md
+CLAUDE.local.md
+docs/internal/
+PLAN.md
+IMPROVEMENTS.md
+.claude/rules/
+**/.claude/skills/**/SKILL.md
+**/.claude/settings.local.json
+
+# Personal publishing tooling: not part of the ETL pipeline or the Power BI
+# project, stays local.
+scripts/build_carousel.py
+
+# Build artefacts: regenerable locally.
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,12 @@
+# Normalise line endings so a checkout on Windows and one on Linux produce the
+# same blobs. Without this, every PBIR JSON the Windows-only Power BI Desktop
+# rewrites shows up as a whole-file diff.
+* text=auto eol=lf
+
+# Binary, never diffed or line-ending converted.
+*.png binary
+*.parquet binary
+*.abf binary
+*.pbix binary
+*.nc binary
+*.zip binary
