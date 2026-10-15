@@ -152,7 +152,7 @@ GOLD_TABLES: dict[str, GoldTable] = {
                     "source_key": _string(unique=True, checks=Check.isin(_SOURCE_KEYS)),
                     "measure_type": _string(),
                     "spatial_resolution": _string(nullable=True),
-                    "min_year": Column(int, Check.in_range(1990, 2100), coerce=True),
+                    "min_year": Column(int, Check.in_range(1940, 2100), coerce=True),
                     "method_note": _string(nullable=True),
                 },
                 strict=False,
@@ -197,7 +197,7 @@ GOLD_TABLES: dict[str, GoldTable] = {
                     "landcover_dominant_key": _string(nullable=True, checks=Check.isin(_LANDCOVER_KEYS)),
                     "area_ha": Column(float, Check.ge(0), coerce=True),
                     "ba_class": _string(nullable=True),
-                    "pct_natura2000": Column(float, Check.in_range(0, 100), nullable=True, coerce=True),
+                    "pct_natura2000": Column(float, Check.in_range(0, 100.5), nullable=True, coerce=True),  # EFFIS PERCNA2K overshoots 100 (float noise, one polygon at 100.2456)
                     "centroid_lat": Column(float, Check.in_range(-90, 90), nullable=True, coerce=True),
                     "centroid_lon": Column(float, Check.in_range(-180, 180), nullable=True, coerce=True),
                 },
