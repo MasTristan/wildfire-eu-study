@@ -54,13 +54,14 @@ def main() -> None:
                         f"{config.FIRMS_AREA_CSV_URL}/{config.FIRMS_MAP_KEY}/{SOURCE}/"
                         f"{_bbox(area)}/{days}/{cur.isoformat()}"
                     )
-                    for attempt in range(5):
+                    for attempt in range(40):
                         r = sess.get(url, timeout=120)
                         if r.status_code == 200 and r.text.startswith("latitude"):
                             target.write_text(r.text)
                             break
                         print(f"  retry {name} {cur} ({r.status_code}: {r.text[:80]!r})")
-                        time.sleep(10 * (attempt + 1))
+                        # 'Exceeding allowed transaction limit': the quota is per 10 minutes
+                        time.sleep(300 if "limit" in r.text else 10 * (attempt + 1))
                     else:
                         raise RuntimeError(f"FIRMS failed for {name} {cur}")
                 cur = win_end + timedelta(days=1)

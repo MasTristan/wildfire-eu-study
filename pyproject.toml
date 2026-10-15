@@ -33,6 +33,7 @@ dev = [
     "lightgbm>=4.7.0",
     "duckdb>=1.5.6",
     "scikit-learn>=1.9.1",
+    "matplotlib>=3.11.2",
 ]
 
 [tool.uv]
