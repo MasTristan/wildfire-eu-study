@@ -1,0 +1,11 @@
+# dbt-duckdb profile. The database is a scratch file: the deliverable is the
+# Parquet gold/star folder written by the external materialisation, so the
+# DuckDB file can be deleted at any time.
+wildfire:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('WILDFIRE_DUCKDB', 'target/wildfire.duckdb') }}"
+      external_root: "{{ env_var('WILDFIRE_GOLD_STAR', '../data/lake/gold/star') }}"
+      threads: 4

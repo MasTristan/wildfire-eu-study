@@ -1,0 +1,24 @@
+name: wildfire
+version: "2.0.0"
+config-version: 2
+profile: wildfire
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  # Years the GWIS/GFAS emission rows cover in fact_burntarea_countryyear,
+  # identical to config.BASE_YEAR_MIN / BASE_YEAR_MAX in src/config.py.
+  base_year_min: 2006
+  base_year_max: 2025
+
+models:
+  wildfire:
+    gold:
+      # Every gold model is a Parquet file in gold/star (profiles.yml:
+      # external_root): the contract Power BI reads, one file per table.
+      +materialized: external
+      +format: parquet

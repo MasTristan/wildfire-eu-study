@@ -26,7 +26,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from src import config, contracts
+from src import config, contracts, lake
+from src.parity import canonical
 
 REFERENCE = Path(config.ROOT) / "data" / "reference" / "v1"
 MANIFEST = REFERENCE / "manifest.json"
@@ -39,9 +40,12 @@ def _manifest() -> dict:
 
 
 def _current(name: str) -> pd.DataFrame:
-    path = config.DATA_PROCESSED / f"{name}.parquet"
+    """The table under test: gold/star once dbt has produced it, else the v1 output."""
+    path = lake.GOLD_STAR / f"{name}.parquet"
     if not path.exists():
-        pytest.skip(f"{path} not built")
+        path = config.DATA_PROCESSED / f"{name}.parquet"
+    if not path.exists():
+        pytest.skip(f"{name} not built in {lake.GOLD_STAR} nor {config.DATA_PROCESSED}")
     return pd.read_parquet(path)
 
 
@@ -50,23 +54,6 @@ def _reference(name: str) -> pd.DataFrame:
     if not path.exists():
         pytest.skip(f"{path} not downloaded (release asset gold-v1.zip on tag v1.0)")
     return pd.read_parquet(path)
-
-
-def _canonical(df: pd.DataFrame, keys: tuple[str, ...], columns: list[str]) -> pd.DataFrame:
-    out = df[columns].sort_values(list(keys), kind="mergesort").reset_index(drop=True)
-    # Normalise representations that carry no information for Power BI:
-    # datetime resolution, nullable-int vs float with NaN, object vs string.
-    for col in out.columns:
-        s = out[col]
-        if pd.api.types.is_datetime64_any_dtype(s):
-            out[col] = s.astype("datetime64[ns]")
-        elif pd.api.types.is_integer_dtype(s) or pd.api.types.is_float_dtype(s):
-            out[col] = s.astype("float64")
-        elif pd.api.types.is_bool_dtype(s):
-            out[col] = s.astype("bool")
-        else:
-            out[col] = s.astype("object").where(s.notna(), None)
-    return out
 
 
 @pytest.mark.parametrize("name", sorted(contracts.GOLD_TABLES))
@@ -90,8 +77,8 @@ def test_values_equal_v1_reference(name: str):
     missing = set(columns) - set(cur.columns)
     assert not missing, f"{name}: v1 columns missing in v2 output: {sorted(missing)}"
     assert_frame_equal(
-        _canonical(ref, keys, columns),
-        _canonical(cur, keys, columns),
+        canonical(ref, keys, columns),
+        canonical(cur, keys, columns),
         check_dtype=False,
         check_exact=False,
         rtol=1e-9,
