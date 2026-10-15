@@ -130,7 +130,7 @@ def normalise(zip_path: Path) -> pd.DataFrame:
         )
 
     ref = pd.read_csv(REFERENCE_DIR / "country_reference.csv")
-    iso3_to_key = dict(zip(ref["iso3"], ref["country_key"]))
+    iso3_to_key = dict(zip(ref["iso3"], ref["country_key"], strict=False))
     df = df[df["gid_0"].isin(iso3_to_key)].copy()
     df["country_key"] = df["gid_0"].map(iso3_to_key)
 

@@ -109,7 +109,7 @@ def fetch_year_to_date(year: int) -> pd.DataFrame:
 
 def assign_country(points: pd.DataFrame) -> pd.DataFrame:
     countries = geo_ref.load_country_polygons()
-    geom = [Point(xy) for xy in zip(points["longitude"], points["latitude"])]
+    geom = [Point(xy) for xy in zip(points["longitude"], points["latitude"], strict=False)]
     gpts = gpd.GeoDataFrame(points, geometry=geom, crs="EPSG:4326")
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)

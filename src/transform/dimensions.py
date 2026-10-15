@@ -62,10 +62,8 @@ def _worldbank_indicator(iso3_codes: list[str], indicator: str) -> dict[str, flo
     while True:
         for attempt in range(4):
             try:
-                resp = requests.get(
-                    url, params={"format": "json", "per_page": 500, "mrv": 10, "page": page},
-                    timeout=90,
-                )
+                params: dict[str, str | int] = {"format": "json", "per_page": 500, "mrv": 10, "page": page}
+                resp = requests.get(url, params=params, timeout=90)
                 break
             except requests.exceptions.Timeout:
                 if attempt == 3:

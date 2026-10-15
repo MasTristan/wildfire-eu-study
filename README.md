@@ -44,16 +44,17 @@ docs/             modèle de données, catalogue de sources
 
 ## Démarrage
 
-```bash
-pip install -r requirements.txt
-```
+Les versions sont verrouillées dans `uv.lock` ; `requirements.txt` en est un
+export pour qui préfère pip.
 
 ```bash
-pytest -q
+uv sync          # ou : pip install -r requirements.txt
+make check       # ruff, mypy, pytest
 ```
 
 Les tests passent sans réseau et sans données : ceux qui ont besoin des parquets
-se sautent proprement.
+se sautent proprement. `make validate` applique les contrats pandera de
+`src/contracts.py` aux parquets produits.
 
 Pour reconstruire la couche données de bout en bout, dans cet ordre :
 
