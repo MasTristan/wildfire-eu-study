@@ -44,7 +44,9 @@ FWI_VARS = {
     "build_up_index": "fbupinx",
     "fire_daily_severity_rating": "fdsrte",
 }
-# NetCDF short name -> model column\nFWI_RENAME = dict(zip(FWI_VARS.values(), ["fwi", "ffmc", "dmc", "dc", "isi", "bui", "dsr"], strict=True))\nFWI_COLS = list(FWI_RENAME.values())
+# NetCDF short name -> model column
+FWI_RENAME = dict(zip(FWI_VARS.values(), ["fwi", "ffmc", "dmc", "dc", "isi", "bui", "dsr"], strict=True))
+FWI_COLS = list(FWI_RENAME.values())
 
 
 def ensure_dirs() -> None:
@@ -77,7 +79,8 @@ def timed(label: str):
         yield
     finally:
         dt = time.perf_counter() - t0
-        data = json.loads(TIMINGS.read_text()) if TIMINGS.exists() else {}
-        data[label] = round(dt, 1)
-        TIMINGS.write_text(json.dumps(data, indent=2))
+        # one small file per label: several download workers run in parallel
+        tdir = TIMINGS.parent / "timings"
+        tdir.mkdir(exist_ok=True)
+        (tdir / f"{label}.json").write_text(json.dumps({label: round(dt, 1)}))
         print(f"[time] {label}: {dt:.1f}s")

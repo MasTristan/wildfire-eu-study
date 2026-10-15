@@ -6,12 +6,13 @@ aggregation is done server side in UTC, and it avoids moving 24x the volume for
 five variables. One request per (statistic, year, month, area), resumable (a full
 year exceeds the CDS cost limit).
 
-    uv run python notebooks/spike_q1/s02_download_era5.py
+    uv run python notebooks/spike_q1/s02_download_era5.py [year ...]   # default: all years
 """
 
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -31,10 +32,27 @@ GROUPS = {
 }
 
 
+def _retrieve(client, request: dict, target: Path) -> None:
+    """The CDS caps queued requests per dataset: back off and retry when rejected."""
+    for attempt in range(60):
+        try:
+            client.retrieve(DATASET, request, str(target))
+            return
+        except Exception as exc:  # cdsapi raises bare HTTPError/Exception
+            msg = str(exc)
+            if "limited" in msg or "rejected" in msg or "queued" in msg:
+                print(f"  queue full, retry {attempt + 1} in 120 s", flush=True)
+                time.sleep(120)
+                continue
+            raise
+    raise RuntimeError(f"gave up on {target.name}")
+
+
 def main() -> None:
     common.ensure_dirs()
     client = config.cds_client("cds")
-    for year in common.YEARS:
+    years = [int(a) for a in sys.argv[1:]] or common.YEARS
+    for year in years:
         for month in range(1, 13):
             for area_name, area in common.AREAS.items():
                 for tag, (stat, variables) in GROUPS.items():
@@ -43,8 +61,8 @@ def main() -> None:
                         continue
                     print(f"request {target.name} ...", flush=True)
                     with common.timed(f"download_era5_{tag}_{area_name}_{year}_{month:02d}"):
-                        client.retrieve(
-                            DATASET,
+                        _retrieve(
+                            client,
                             {
                                 "product_type": "reanalysis",
                                 "variable": variables,
@@ -58,7 +76,7 @@ def main() -> None:
                                 "grid": "0.25/0.25",
                                 "data_format": "netcdf",
                             },
-                            str(target),
+                            target,
                         )
 
 
