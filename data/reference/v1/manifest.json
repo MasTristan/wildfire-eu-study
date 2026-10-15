@@ -1,0 +1,164 @@
+{
+  "frozen_at": "2026-10-15T09:41:24+00:00",
+  "tag": "v1.0",
+  "tables": {
+    "dim_date": {
+      "rows": 9862,
+      "columns": [
+        "date_key",
+        "year",
+        "quarter",
+        "month",
+        "month_name",
+        "week_iso",
+        "day_of_year",
+        "is_fire_season",
+        "season_label"
+      ],
+      "sha256": "a117b1b174daf04a79aea8a71f4802656781d0bb20de66b064490afc48f0dac9"
+    },
+    "dim_country": {
+      "rows": 50,
+      "columns": [
+        "country_key",
+        "effis_raw_code",
+        "iso2",
+        "iso3",
+        "name_en",
+        "name_fr",
+        "macro_region",
+        "is_eu",
+        "is_mediterranean",
+        "land_area_km2",
+        "forest_area_ha"
+      ],
+      "sha256": "24ec36a6520404601896ef4c19204deae59905a80f3daa8985fad17e69f64ca0"
+    },
+    "dim_commune": {
+      "rows": 34969,
+      "columns": [
+        "commune_key",
+        "name",
+        "department_code",
+        "department_name",
+        "region_code",
+        "region_name",
+        "country_key",
+        "centroid_lon",
+        "centroid_lat"
+      ],
+      "sha256": "9ab1d3229414742b4f83f5acd65665bedbf2be9f7ddbf0e9c758ab966520ac47"
+    },
+    "dim_source": {
+      "rows": 8,
+      "columns": [
+        "source_key",
+        "measure_type",
+        "spatial_resolution",
+        "min_year",
+        "method_note"
+      ],
+      "sha256": "ae4b50e5e5a4190021bf5675fdfafae15ac0cb4078f24a0869d83e060488493c"
+    },
+    "dim_landcover": {
+      "rows": 9,
+      "columns": [
+        "landcover_key",
+        "class_code",
+        "class_name",
+        "corine_mapping"
+      ],
+      "sha256": "fc386898b2fdcb6ac20acc1431d690969b03745c3bc6ac6750761b5c457b056b"
+    },
+    "dim_firecause": {
+      "rows": 6,
+      "columns": [
+        "cause_key",
+        "cause_group",
+        "cause_detail"
+      ],
+      "sha256": "c768c2f6625c495d413ff36ae668d1c21d81dee015b879b66d2165c6294bc9e8"
+    },
+    "fact_fireevent": {
+      "rows": 155225,
+      "columns": [
+        "fire_event_key",
+        "source_key",
+        "country_key",
+        "commune_key",
+        "firedate_key",
+        "cause_key",
+        "landcover_dominant_key",
+        "area_ha",
+        "ba_class",
+        "pct_natura2000",
+        "centroid_lat",
+        "centroid_lon"
+      ],
+      "sha256": "94edd43c3bd56197a9e363b8a66afda26694e9aba5c39802e177f8c5ec247dd7"
+    },
+    "fact_burntarea_countrymonth": {
+      "rows": 2943,
+      "columns": [
+        "country_key",
+        "month_key",
+        "source_key",
+        "burnt_area_ha",
+        "number_of_fires"
+      ],
+      "sha256": "9e88e25f10f3bf9b89cb8c213d244b9f7d602ac8d40b0ccd5dc2e65a84f860ef"
+    },
+    "fact_burntarea_countryyear": {
+      "rows": 1432,
+      "columns": [
+        "country_key",
+        "year_key",
+        "source_key",
+        "burnt_area_ha",
+        "number_of_fires",
+        "co2_emissions_t"
+      ],
+      "sha256": "9a724332ec197f9656e58d979b34dbe9be77862f29cb497475c27d9d891854f8"
+    },
+    "fact_burntarea_landcover": {
+      "rows": 1982,
+      "columns": [
+        "country_key",
+        "year_key",
+        "landcover_key",
+        "source_key",
+        "burnt_area_ha"
+      ],
+      "sha256": "c7c52cf988b6fd08c60f8d64ce4570e4b393e9d7af589803c33fae672b8c2a30"
+    },
+    "fact_hotspot_countrymonth": {
+      "rows": 338,
+      "columns": [
+        "country_key",
+        "month_key",
+        "source_key",
+        "hotspot_count",
+        "mean_frp",
+        "max_frp"
+      ],
+      "sha256": "517149b733b888721b693be9a86fde9a01268afc575e11b0d2b5cc769f0119fb"
+    },
+    "fact_fireweather_countrymonth": {
+      "rows": 6076,
+      "columns": [
+        "country_key",
+        "month_key",
+        "mean_fwi",
+        "max_fwi",
+        "days_fwi_high",
+        "days_fwi_very_high",
+        "mean_temp",
+        "total_precip",
+        "precip_anomaly",
+        "mean_rh",
+        "spei"
+      ],
+      "sha256": "3656b41ed17cc3ef03097391509072b1799b059c6ce55c6c79ce31adb27e3c3f"
+    }
+  }
+}
