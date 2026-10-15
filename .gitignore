@@ -58,3 +58,9 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# v2: parity reference (downloaded from the v1.0 release asset) and uv venv
+data/reference/*
+!data/reference/.gitkeep
+.venv/
+.mypy_cache/

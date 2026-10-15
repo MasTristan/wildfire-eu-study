@@ -56,16 +56,13 @@ def _session_search(annee_deb: int, annee_fin: int) -> tuple[requests.Session, i
     whether the range needs splitting before hitting /zip (30k row cap)."""
     sess = requests.Session()
     sess.get(f"{config.BDIFF_HOST}/incendies", timeout=_TIMEOUT)
-    resp = sess.get(
-        f"{config.BDIFF_HOST}/incendies",
-        params={
-            "if[periodeAnnees][anneeDeb]": annee_deb,
-            "if[periodeAnnees][anneeFin]": annee_fin,
-            "if[fr]": 1,
-            "if[submit]": "",
-        },
-        timeout=_TIMEOUT,
-    )
+    params: dict[str, str | int] = {
+        "if[periodeAnnees][anneeDeb]": annee_deb,
+        "if[periodeAnnees][anneeFin]": annee_fin,
+        "if[fr]": 1,
+        "if[submit]": "",
+    }
+    resp = sess.get(f"{config.BDIFF_HOST}/incendies", params=params, timeout=_TIMEOUT)
     resp.raise_for_status()
     m = re.search(r"(\d[\d\s]*) incendies", resp.text)
     count = int(m.group(1).replace(" ", "")) if m else -1
@@ -122,7 +119,7 @@ def parse_incendies_csv(raw_bytes: bytes) -> list[dict]:
             continue
         if len(row) != len(_COLUMNS):
             continue  # malformed/trailing line, skip rather than guess
-        rows.append(dict(zip(_COLUMNS, row)))
+        rows.append(dict(zip(_COLUMNS, row, strict=False)))
     return rows
 
 

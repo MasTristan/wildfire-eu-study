@@ -74,7 +74,7 @@ def _dominant_landcover(row: pd.Series) -> str | None:
     vals = {k: v for k, v in vals.items() if pd.notna(v)}
     if not vals or max(vals.values()) <= 0:
         return None
-    return max(vals, key=vals.get)
+    return max(vals, key=lambda k: vals[k])
 
 
 def build_effis_events() -> pd.DataFrame:
@@ -98,7 +98,7 @@ def build_effis_events() -> pd.DataFrame:
         df = df.dropna(subset=["centroid_lat"])
 
     ref = pd.read_csv(REFERENCE_DIR / "country_reference.csv")
-    code_map = dict(zip(ref["effis_raw_code"], ref["country_key"]))
+    code_map = dict(zip(ref["effis_raw_code"], ref["country_key"], strict=False))
     df["country_key"] = df["COUNTRY"].map(code_map)
     unmapped = df["country_key"].isna().sum()
     if unmapped:
