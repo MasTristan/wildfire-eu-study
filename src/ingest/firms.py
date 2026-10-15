@@ -60,16 +60,26 @@ def _data_availability(source: str) -> tuple[date, date]:
     return date.fromisoformat(min_d), date.fromisoformat(max_d)
 
 
-def _fetch_window(source: str, end_date: date, day_range: int) -> pd.DataFrame:
+def window_url(source: str, start_date: date, day_range: int, map_key: str | None = None) -> str:
+    """Area CSV URL for `day_range` days STARTING at `start_date`.
+
+    The FIRMS area API path is .../{SOURCE}/{bbox}/{DAY_RANGE}/{DATE} where
+    DATE is the first day of the window, not the last. Until 2026-10-15 the
+    caller passed the window end, which shifted every window forward by
+    day_range - 1 days: the first days of each year were never fetched and the
+    source choice (SP vs NRT) was made on the wrong dates. fact_hotspot_countrymonth
+    built before that date carries the defect; see docs/data-model.md.
+    """
     w, s, e, n = _BBOX
-    url = (
-        f"{config.FIRMS_AREA_CSV_URL}/{config.FIRMS_MAP_KEY}/{source}/"
-        f"{w},{s},{e},{n}/{day_range}/{end_date.isoformat()}"
-    )
-    resp = requests.get(url, timeout=_TIMEOUT)
+    key = config.FIRMS_MAP_KEY if map_key is None else map_key
+    return f"{config.FIRMS_AREA_CSV_URL}/{key}/{source}/{w},{s},{e},{n}/{day_range}/{start_date.isoformat()}"
+
+
+def _fetch_window(source: str, start_date: date, day_range: int) -> pd.DataFrame:
+    resp = requests.get(window_url(source, start_date, day_range), timeout=_TIMEOUT)
     resp.raise_for_status()
     if resp.text.startswith("Invalid") or resp.text.startswith("Error"):
-        raise RuntimeError(f"FIRMS API error for {source} {end_date}: {resp.text[:200]}")
+        raise RuntimeError(f"FIRMS API error for {source} {start_date}: {resp.text[:200]}")
     return pd.read_csv(io.StringIO(resp.text))
 
 
@@ -90,7 +100,7 @@ def fetch_year_to_date(year: int) -> pd.DataFrame:
         source = "VIIRS_SNPP_SP" if window_end <= sp_max else "VIIRS_SNPP_NRT"
         day_range = (window_end - cursor).days + 1
         try:
-            df = _fetch_window(source, window_end, day_range)
+            df = _fetch_window(source, cursor, day_range)
         except RuntimeError as exc:
             print(f"    {cursor}..{window_end} ({source}): SKIPPED ({exc})")
             cursor = window_end + timedelta(days=1)

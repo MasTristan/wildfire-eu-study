@@ -38,3 +38,15 @@ def test_parse_rda_payload():
         "est_sum_total_ha",
         "sum_rda_total_ha",
     }
+
+
+def test_firms_window_url_starts_at_the_window_start():
+    """Regression guard for the v1 defect: the FIRMS area API wants the first
+    day of the window in the path, and v1 passed the last one."""
+    from datetime import date
+
+    from src.ingest.firms import window_url
+
+    url = window_url("VIIRS_SNPP_SP", date(2023, 7, 1), 10, map_key="KEY")
+    assert url.endswith("/VIIRS_SNPP_SP/-25,34,45,72/10/2023-07-01") or url.endswith("/10/2023-07-01")
+    assert "KEY" in url
