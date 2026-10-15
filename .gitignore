@@ -67,3 +67,7 @@ data/reference/*
 !data/reference/v1/
 data/reference/v1/*
 !data/reference/v1/manifest.json
+
+# v2 lake and orchestration state
+data/lake/
+.dagster/

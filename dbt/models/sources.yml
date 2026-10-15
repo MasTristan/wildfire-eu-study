@@ -1,0 +1,37 @@
+version: 2
+
+sources:
+  - name: silver
+    description: >
+      One Parquet per source table, written by the Dagster silver assets
+      (data/processed during the migration, see src/lake.py). Read in place
+      by DuckDB, never copied.
+    meta:
+      external_location: "{{ env_var('WILDFIRE_SILVER', '../data/processed') }}/{name}.parquet"
+    tables:
+      - name: dim_date
+      - name: dim_country
+      - name: dim_commune
+      - name: dim_source
+      - name: dim_landcover
+      - name: dim_firecause
+      - name: fact_fireevent
+        description: One row per fire, EFFIS perimeters and BDIFF declarations.
+        columns:
+          - name: fire_event_key
+            data_tests: [unique, not_null]
+          - name: source_key
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["EFFIS_RDA", "BDIFF"]
+      - name: fact_fireweather_countrymonth
+      - name: fact_hotspot_countrymonth
+
+  - name: interim
+    description: Per-source intermediate CSVs written by the v1 ingest modules.
+    tables:
+      - name: gwis_gfas_emissions
+        description: GWIS/GFAS emissions at country x month (co2_t), independent of EFFIS.
+        meta:
+          external_location: "read_csv_auto('{{ env_var('WILDFIRE_INTERIM', '../data/interim') }}/gwis_gfas_emissions.csv', header=true)"

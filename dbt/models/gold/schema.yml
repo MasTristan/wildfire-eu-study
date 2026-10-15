@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: fact_burntarea_countrymonth
+    description: Burnt area and fire count at country x month x source, rolled up from fact_fireevent.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [country_key, month_key, source_key]
+    columns:
+      - name: burnt_area_ha
+        data_tests:
+          - not_null
+          - non_negative
+      - name: number_of_fires
+        data_tests: [not_null, non_negative]
+
+  - name: fact_burntarea_countryyear
+    description: Country x year x source; GWIS/GFAS emissions on their own rows.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [country_key, year_key, source_key]
+      - no_source_mixing
+    columns:
+      - name: source_key
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["EFFIS_RDA", "BDIFF", "GWIS_GFAS"]
+      - name: burnt_area_ha
+        data_tests: [non_negative]
+      - name: co2_emissions_t
+        data_tests: [non_negative]
+
+  - name: fact_burntarea_landcover
+    description: Country x year x dominant land cover, EFFIS only.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [country_key, year_key, landcover_key, source_key]
+    columns:
+      - name: source_key
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["EFFIS_RDA"]
+      - name: landcover_key
+        data_tests: [not_null]
+      - name: burnt_area_ha
+        data_tests: [not_null, non_negative]
