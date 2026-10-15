@@ -56,6 +56,36 @@ def main() -> None:
     out = pd.DataFrame(rows)
     out.to_csv(common.OUT / "concordance.csv", index=False)
     print(out.round(4).to_string(index=False))
+    offsets = day_offsets(df, b_pos)
+    offsets.to_csv(common.OUT / "concordance_offsets.csv", index=False)
+    print("\nday offset of the nearest VIIRS start (3x3 cells, +/-5 d) relative to the EFFIS firedate:")
+    print(offsets.to_string(index=False))
+
+
+def day_offsets(df: pd.DataFrame, b_pos: pd.DataFrame, max_days: int = 5) -> pd.DataFrame:
+    """For each EFFIS start, the signed day offset of the nearest VIIRS cluster
+    start in the 3x3 neighbourhood within +/- max_days. Negative = VIIRS saw it
+    first. A mass at -1 or -2 means EFFIS `firedate` lags ignition, which
+    misaligns label (a) with day-J features for every model alike."""
+    a_pos = df[df["y_a"] > 0][["cell", "date"]].reset_index(drop=True)
+    a_pos["key"] = np.arange(len(a_pos))
+    exp = []
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            exp.append(pd.DataFrame({"key": a_pos["key"], "cell": a_pos["cell"] + dy * 10_000 + dx,
+                                     "a_date": a_pos["date"]}))
+    nb = pd.concat(exp, ignore_index=True)
+    m = nb.merge(b_pos.rename(columns={"date": "b_date"}), on="cell", how="inner")
+    m["offset"] = (m["b_date"] - m["a_date"]).dt.days
+    m = m[m["offset"].abs() <= max_days]
+    best = m.loc[m.groupby("key")["offset"].apply(lambda s: s.abs().idxmin())]
+    counts = best["offset"].value_counts().sort_index()
+    res = counts.rename("n").reset_index().rename(columns={"index": "offset_days", "offset": "offset_days"})
+    res["share_of_a"] = res["n"] / max(len(a_pos), 1)
+    unmatched = len(a_pos) - int(counts.sum())
+    res = pd.concat([res, pd.DataFrame({"offset_days": ["none"], "n": [unmatched],
+                                        "share_of_a": [unmatched / max(len(a_pos), 1)]})], ignore_index=True)
+    return res
 
 
 if __name__ == "__main__":

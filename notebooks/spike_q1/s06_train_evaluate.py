@@ -37,20 +37,28 @@ EFFIS_BREAKS = [5.2, 11.2, 21.3, 38.0, 50.0]  # official EFFIS FWI danger classe
 GRID = {"num_leaves": [15, 63], "min_data_in_leaf": [50, 300]}  # same for models 3 and 4
 
 
+def space_features(tag: str) -> list[str]:
+    """Model 3b: FWI components plus where/when (static fields, calendar, past ignitions),
+    no ERA5 weather and no drought. Separates "knowing the place" from "knowing more weather"."""
+    return [*FWI_FEATS, *STATIC, "doy", f"lag{tag}_7", f"lag{tag}_30", "clim"]
+
+
 def full_features(tag: str) -> list[str]:
     return [*FWI_FEATS, *WEATHER, *STATIC, "doy", f"lag{tag}_7", f"lag{tag}_30", "clim"]
 
 
 # ------------------------------------------------------------------- climatology
-def add_climatology(df: pd.DataFrame, y: str) -> pd.DataFrame:
-    """Per cell and calendar day (+/-15 d) ignition rate from TRAIN years only.
+def add_climatology(df: pd.DataFrame, y: str, years: list[int]) -> pd.DataFrame:
+    """Per cell and calendar day (+/-15 d) ignition rate from `years` only.
 
-    Training rows leave their own year out, so the feature never contains the
-    row's own label; test rows use all training years.
+    Rows belonging to one of `years` leave their own year out, so the feature
+    never contains the row's own label; other rows use all of `years`.
+    `years` must never include the year being scored: during tuning it is
+    2019-2020 (2021 is the validation year), for the final fit 2019-2021.
     """
+    df = df.copy()
     cells = np.sort(df["cell"].unique())
     cpos = pd.Series(np.arange(len(cells)), index=cells)
-    years = common.TRAIN_YEARS
     cnt = np.zeros((len(years), len(cells), 366), dtype="float32")
     tr = df[df["year"].isin(years) & (df[y] > 0)]
     np.add.at(cnt, (tr["year"].map({yr: i for i, yr in enumerate(years)}).to_numpy(),
@@ -108,13 +116,20 @@ def run(tag: str) -> None:
     with common.timed(f"load_{tag}"):
         df = pd.read_parquet(common.INTERIM / "daily.parquet")
     with common.timed(f"features_{tag}"):
-        df = add_climatology(df, y)
+        # final fit and test: climatology from all three training years
+        df = add_climatology(df, y, common.TRAIN_YEARS)
+        # tuning: climatology from 2019-2020 only, so the 2021 validation labels
+        # never enter a training feature (leak found in review, REVIEW.md)
+        df_tune = add_climatology(df.drop(columns=["clim"]), y, [2019, 2020])
     feats = full_features(tag)
+    feats_space = space_features(tag)
     train = df[df["year"].isin(common.TRAIN_YEARS)]
     print(f"[{tag}] rows train={len(train):,} positives={int(train[y].sum()):,}; "
           f"test positives={ {yr: int(df.loc[df.year == yr, y].sum()) for yr in common.TEST_YEARS} }")
 
-    preds: dict[str, dict[int, np.ndarray]] = {m: {} for m in ("danger_class", "logit_fwi", "lgbm_fwi", "lgbm_full")}
+    preds: dict[str, dict[int, np.ndarray]] = {
+        m: {} for m in ("danger_class", "logit_fwi", "lgbm_fwi", "lgbm_fwi_space", "lgbm_full")
+    }
     importance = {}
     tuned = {}
 
@@ -127,11 +142,11 @@ def run(tag: str) -> None:
         lr = LogisticRegression(C=1e6, max_iter=1000)
         lr.fit(np.log1p(sub[["fwi"]]), sub[y], sample_weight=w)
         # 3 and 4. LightGBM: tune on 2021 (fit 2019-2020), refit on 2019-2021
-        fit_part = df[df["year"].isin([2019, 2020])]
-        val = df[df["year"] == 2021]
+        fit_part = df_tune[df_tune["year"].isin([2019, 2020])]
+        val = df_tune[df_tune["year"] == 2021]
         sub_fit, w_fit = sample_train(fit_part, y, rng)
         models = {}
-        for name, fs in (("lgbm_fwi", FWI_FEATS), ("lgbm_full", feats)):
+        for name, fs in (("lgbm_fwi", FWI_FEATS), ("lgbm_fwi_space", feats_space), ("lgbm_full", feats)):
             params, n_iter = fit_lgbm(sub_fit, w_fit, val, fs, y, name)
             tuned[name] = {**{k: params[k] for k in ("num_leaves", "min_data_in_leaf")}, "iterations": n_iter}
             dtr = lgb.Dataset(sub[fs], sub[y], weight=w)

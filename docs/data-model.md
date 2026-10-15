@@ -127,6 +127,17 @@ Le jour où une couche analytique Python ou Streamlit arrive, le mart devient
 utile et se construit alors comme **sortie parallèle**, sans y basculer Power
 BI. Pas avant.
 
+## Défaut connu de la v1 : fenêtres FIRMS décalées (corrigé le 2026-10-15)
+
+L'API « area » de FIRMS prend dans son chemin la **date de début** de la
+fenêtre et un nombre de jours. `src/ingest/firms.py` passait la date de fin :
+chaque fenêtre était décalée vers l'avant de neuf jours, les premiers jours de
+chaque année n'étaient jamais demandés, et le choix entre archive (SP) et
+temps réel (NRT) se faisait sur les mauvaises dates. `fact_hotspot_countrymonth`
+construite avant cette date porte ce défaut. Correction dans `window_url`,
+verrouillée par un test ; la table doit être reconstruite et la référence de
+parité v1 de cette seule table regelée avec une note dans le manifeste.
+
 ## Chemin des sources
 
 Les partitions ne portent pas de chemin absolu. Le dossier des parquets est un
