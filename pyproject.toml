@@ -26,6 +26,8 @@ dependencies = [
     "dagster-dbt==0.29.26",
     "dbt-core==1.11.16",
     "dbt-duckdb==1.11.0",
+    "mlflow==3.17.1",
+    "statsmodels==0.15.0",
 ]
 
 [dependency-groups]

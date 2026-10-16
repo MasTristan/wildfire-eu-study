@@ -117,3 +117,16 @@ Chaque règle de la colonne de droite est un test dans
 
 `effis_perimeters`, `effis_rda_stats` et `gwis_gfas_emissions` restent des
 appels uniques : leurs sources ne se découpent pas.
+
+## Modèles (`src/models/`, sorties dans `gold/model_out`)
+
+| Module | Question | Ce qu'il produit | Vérifié par |
+|---|---|---|---|
+| `extremes.py` | Q2, queue des tailles de feux | ajustement Pareto généralisé au-dessus d'un seuil par pays, niveaux de retour à 2, 5, 10, 20, 50 ans avec intervalles bootstrap, niveaux empiriques en regard, table de stabilité du seuil, période de retour d'un feu de 10 000 ha | récupération de paramètres connus sur un échantillon synthétique, inversion niveau / période |
+| `attribution.py` | Q3, part de la météo dans la variabilité annuelle | panel pays x année, effets fixes pays, erreurs groupées par pays, composante météo et surface ajustée du climat par pays et année, R² intra-pays, contrôle leave-one-year-out | signal synthétique retrouvé (signe, ordre de grandeur), années à saison incomplète exclues et non imputées |
+| `validation.py` | protocole commun | découpes par année tenue et par blocs spatiaux de 2°, métriques du critère pré-enregistré, fiabilité par décile, bootstrap par blocs sur les différences | partition exacte des lignes, blocs jamais scindés, intervalles qui séparent deux modèles de qualité connue |
+| `tracking.py` | traçabilité | MLflow en SQLite local sans serveur, un identifiant de run sur chaque table publiée, gabarit de carte de modèle | run relu depuis le store |
+
+La version bayésienne de Q3 (PyMC, WSL2) consomme le même panel et doit
+retrouver le signe et l'ordre de grandeur de chaque coefficient. Q1 rejoint
+ce dossier une fois le périmètre fixé par le verdict du spike.
