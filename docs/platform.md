@@ -79,3 +79,41 @@ make dbt-build     # gold/star depuis la silver, avec les tests dbt
 make dagster-dev   # interface Dagster sur localhost:3000
 make check         # ruff, mypy, pytest (dont dbt build sur données synthétiques)
 ```
+
+## Feature store (`gold/features`)
+
+Code dans `src/features/`, assets dans `src/orchestration/assets/features.py`.
+Une année par partition, un Parquet par année (`daily_<année>.parquet`),
+grain maille x jour sur la grille commune (`src/grid.py`, ADR 0003).
+
+| Colonne | Source | Règle de non-fuite |
+|---|---|---|
+| `cell`, `date`, `year`, `doy` | grille, calendrier | |
+| `fwi`, `ffmc`, `dmc`, `dc`, `isi`, `bui`, `dsr` | EWDS cems-fire-historical-v1, jour J | réanalyse du jour, comme l'indice opérationnel |
+| `t2m_c`, `t2m_max`, `rh`, `rh_min`, `wind`, `wind_mean`, `tp_mm`, `vpd_max`, `et0` | Open-Meteo archive, modèle era5, jour J (ADR 0006) | seules les variables servies sont présentes |
+| `tp_7d` | somme de `tp_mm` sur J-7 à J-1 | J exclu, nul sous 3 jours disponibles |
+| `spei3` | EDO SPEI-3 décadaire | dernière décade dont la fin est strictement avant J |
+| `cvh`, `cvl`, `tvh`, `tvl`, `lsm`, `elev_m` | ERA5 champs statiques | statiques |
+| `laga_7`, `laga_30` | départs EFFIS dans la maille sur J-7 à J-1 et J-30 à J-1 | J exclu, historique depuis 2016 |
+| `n_a`, `y_a` | label (a) : départs EFFIS dans la maille le jour J | cible, jamais feature |
+
+Le label (b), premier jour d'un cluster de hotspots VIIRS, est construit par
+`src/features/hotspots.py` (DBSCAN 2 km par jour, chaînage à J-1) et rejoint
+la table dès que les fenêtres FIRMS brutes couvrent l'Europe.
+
+Chaque règle de la colonne de droite est un test dans
+`tests/test_features_daily.py` sur des NetCDF synthétiques.
+
+## Ingestion partition-safe
+
+| Asset | Partition | Reprise |
+|---|---|---|
+| `bronze/cds_fwi_raw` | année | fichier NetCDF par année |
+| `bronze/era5_raw` | décennie | fichier NetCDF par décennie |
+| `bronze/edo_spei_raw` | année | fichier NetCDF par année, années non publiées sautées |
+| `bronze/bdiff_raw` | année | zip par année, `bdiff_incendies` parse et déduplique tous les zips |
+| `bronze/firms_hotspots_raw` | année | fenêtres CSV de 5 jours, `fact_hotspot_countrymonth` agrège toutes les années |
+| `bronze/openmeteo_daily` | lots de mailles | JSON par lot, quota journalier respecté |
+
+`effis_perimeters`, `effis_rda_stats` et `gwis_gfas_emissions` restent des
+appels uniques : leurs sources ne se découpent pas.

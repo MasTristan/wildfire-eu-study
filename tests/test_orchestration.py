@@ -75,3 +75,11 @@ def test_feature_store_assets_are_wired(defs):
     assert node.partitions_def is not None
     assert {AssetKey(["silver", "grid_cells"]), AssetKey(["bronze", "openmeteo_daily"]),
             AssetKey(["silver", "fact_fireevent"])} <= set(node.parent_keys)
+
+
+def test_raw_sources_are_partitioned(defs):
+    graph = defs.get_repository_def().asset_graph
+    for name in ("bdiff_raw", "edo_spei_raw", "cds_fwi_raw", "firms_hotspots_raw"):
+        assert graph.get(AssetKey(["bronze", name])).partitions_def is not None, name
+    assert graph.get(AssetKey(["bronze", "era5_raw"])).partitions_def.get_partition_keys()[0] == "1991-2000"
+    assert AssetKey(["bronze", "bdiff_raw"]) in graph.get(AssetKey(["bronze", "bdiff_incendies"])).parent_keys

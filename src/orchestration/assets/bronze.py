@@ -12,10 +12,12 @@ PLAN.md rewrites them as partition-safe assets; the asset keys stay.
 """
 from datetime import date
 
-from dagster import AssetExecutionContext, MaterializeResult, asset
+from dagster import AssetExecutionContext, MaterializeResult, StaticPartitionsDefinition, asset
 
 from src import config
 from src.orchestration.partitions import yearly
+
+era5_chunks = StaticPartitionsDefinition(["1991-2000", "2001-2010", "2011-2020", "2021-2026"])
 
 GROUP = "bronze"
 PREFIX = "bronze"
@@ -38,12 +40,28 @@ def effis_perimeters() -> MaterializeResult:
     return MaterializeResult(metadata={"features": n})
 
 
-@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, description="BDIFF, French fires at commune grain with causes")
+@asset(
+    key_prefix=PREFIX,
+    group_name=GROUP,
+    kinds={"python"},
+    partitions_def=yearly,
+    description="BDIFF export for one year, raw zip",
+)
+def bdiff_raw(context: AssetExecutionContext) -> MaterializeResult:
+    from src.ingest import bdiff
+
+    path = bdiff.fetch_year(int(context.partition_key))
+    return MaterializeResult(metadata={"path": str(path), "bytes": path.stat().st_size})
+
+
+@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[bdiff_raw],
+       description="BDIFF, French fires at commune grain with causes, parsed from every yearly zip on disk")
 def bdiff_incendies() -> MaterializeResult:
     from src.ingest import bdiff
 
-    out = bdiff.build(config.BASE_YEAR_MIN, date.today().year)
-    return MaterializeResult(metadata={"path": str(out)})
+    rows = bdiff.rows_from_raw()
+    out = bdiff.write_interim(rows)
+    return MaterializeResult(metadata={"path": str(out), "rows": len(rows)})
 
 
 @asset(
@@ -97,17 +115,48 @@ def fwi_countrymonth() -> MaterializeResult:
     return MaterializeResult(metadata={"path": str(out)})
 
 
-@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, description="ERA5 monthly means aggregated to country x month, with precipitation anomaly")
+@asset(
+    key_prefix=PREFIX,
+    group_name=GROUP,
+    kinds={"python"},
+    partitions_def=era5_chunks,
+    description="ERA5 monthly means, one NetCDF per decade (CDS)",
+)
+def era5_raw(context: AssetExecutionContext) -> MaterializeResult:
+    from src.ingest import era5
+
+    start, end = (int(v) for v in context.partition_key.split("-"))
+    path = era5.download_chunk(start, end)
+    return MaterializeResult(metadata={"path": str(path)})
+
+
+@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[era5_raw],
+       description="ERA5 monthly means aggregated to country x month, with precipitation anomaly")
 def era5_countrymonth() -> MaterializeResult:
     from src.ingest import era5
 
-    out = era5.build()
+    out = era5.build(agg_only=True)
     return MaterializeResult(metadata={"path": str(out)})
 
 
-@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, description="EDO SPEI-3 drought index aggregated to country x month")
+@asset(
+    key_prefix=PREFIX,
+    group_name=GROUP,
+    kinds={"python"},
+    partitions_def=yearly,
+    description="EDO SPEI-3 dekadal grid, one NetCDF per year",
+)
+def edo_spei_raw(context: AssetExecutionContext) -> MaterializeResult:
+    from src.ingest import edo_spei
+
+    path = edo_spei.download_year(context.partition_key, edo_spei._remote_names())
+    return MaterializeResult(metadata={"path": str(path) if path else "not published by EDO"})
+
+
+@asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[edo_spei_raw],
+       description="EDO SPEI-3 drought index aggregated to country x month, never imputed")
 def edo_spei3_countrymonth() -> MaterializeResult:
     from src.ingest import edo_spei
 
-    out = edo_spei.build()
+    out = edo_spei.build()  # downloads are cached file by file, so this only aggregates
     return MaterializeResult(metadata={"path": str(out)})
