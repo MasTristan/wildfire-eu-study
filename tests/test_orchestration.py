@@ -67,3 +67,11 @@ def test_yearly_partitions_cover_the_study(defs):
     assert pdef is not None
     keys = pdef.get_partition_keys()
     assert keys[0] == "2006" and "2026" in keys
+
+
+def test_feature_store_assets_are_wired(defs):
+    graph = defs.get_repository_def().asset_graph
+    node = graph.get(AssetKey(["gold", "features_daily"]))
+    assert node.partitions_def is not None
+    assert {AssetKey(["silver", "grid_cells"]), AssetKey(["bronze", "openmeteo_daily"]),
+            AssetKey(["silver", "fact_fireevent"])} <= set(node.parent_keys)
