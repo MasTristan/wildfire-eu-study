@@ -30,7 +30,8 @@ C'est la contrainte de conception, plus que les visuels :
 ## Architecture
 
 Vue détaillée dans [ARCHITECTURE.md](ARCHITECTURE.md). La plateforme v2 en
-construction (lake, Dagster, dbt) est décrite dans [docs/platform.md](docs/platform.md).
+construction (lake, Dagster, dbt) est décrite dans [docs/platform.md](docs/platform.md), et ses décisions
+d'architecture dans [docs/adr/](docs/adr/README.md).
 
 ```
 src/ingest/       une ingestion par source : EFFIS (agrégats et périmètres),
