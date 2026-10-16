@@ -31,4 +31,4 @@ def _make(name: str):
     return _check
 
 
-gold_contract_checks = [_make(name) for name in contracts.GOLD_TABLES]
+gold_contract_checks = [_make(name) for name in contracts.ALL_GOLD_TABLES]

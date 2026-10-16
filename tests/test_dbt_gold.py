@@ -74,7 +74,7 @@ def built_lake(tmp_path_factory, dbt_manifest):
         "WILDFIRE_GOLD_STAR": str(gold),
         "WILDFIRE_DUCKDB": str(lake_dir / "wildfire.duckdb"),
     }
-    res = run_dbt(["build", "--select", "+fact_burntarea_countrymonth +fact_burntarea_countryyear +fact_burntarea_landcover"], env)
+    res = run_dbt(["build", "--select", "+fact_burntarea_countrymonth +fact_burntarea_countryyear +fact_burntarea_landcover +fact_season_countryyear"], env)
     assert res.returncode == 0, res.stdout + res.stderr
     return fact, interim, gold
 
@@ -98,3 +98,29 @@ def test_dbt_rollup_equals_python_rollup(built_lake, name, monkeypatch):
 def test_dbt_rollup_satisfies_contract(built_lake, name):
     _, _, gold = built_lake
     contracts.validate(name, pd.read_parquet(gold / f"{name}.parquet"))
+
+
+def _season_reference(fact: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for (c, src, y), g in fact.groupby(["country_key", "source_key", fact["firedate_key"].dt.year]):
+        d = g.groupby(g["firedate_key"].dt.normalize())["area_ha"].sum().sort_index()
+        cum = d.cumsum()
+        total = d.sum()
+        onset = cum.index[np.argmax(cum.to_numpy() >= 0.05 * total)]
+        end = cum.index[np.argmax(cum.to_numpy() >= 0.95 * total)]
+        rows.append({"country_key": c, "year_key": pd.Timestamp(year=y, month=1, day=1), "source_key": src,
+                     "burnt_area_ha": total, "number_of_fires": len(g), "onset_date": onset, "end_date": end,
+                     "onset_doy": onset.dayofyear, "end_doy": end.dayofyear,
+                     "season_length_days": (end - onset).days + 1, "low_count": len(g) < 10})
+    return pd.DataFrame(rows)
+
+
+def test_dbt_season_equals_pandas_reference(built_lake):
+    fact, _, gold = built_lake
+    expected = _season_reference(fact)
+    got = pd.read_parquet(gold / "fact_season_countryyear.parquet")
+    keys = contracts.V2_GOLD_TABLES["fact_season_countryyear"].keys
+    cols = list(expected.columns)
+    assert_frame_equal(canonical(expected, keys, cols), canonical(got, keys, cols),
+                       check_dtype=False, check_exact=False, rtol=1e-9, atol=1e-6, obj="fact_season_countryyear")
+    contracts.validate("fact_season_countryyear", got)

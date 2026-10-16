@@ -49,3 +49,15 @@ models:
         data_tests: [not_null]
       - name: burnt_area_ha
         data_tests: [not_null, non_negative]
+
+  - name: fact_season_countryyear
+    description: Fire season onset (5 percent of the year's burnt area), end (95 percent) and length, per country, year and source.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [country_key, year_key, source_key]
+    columns:
+      - name: season_length_days
+        data_tests: [not_null, non_negative]
+      - name: onset_doy
+        data_tests: [not_null]
