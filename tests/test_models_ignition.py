@@ -69,7 +69,8 @@ def test_full_protocol_produces_every_table(tmp_path):
     assert len(res["metrics"]) == 10 and res["metrics"]["pr_auc"].notna().all()
     assert set(res["criterion"]) == {"2021", "2022", "all_pass", "thresholds"}
     assert {"brier_rel_improvement", "pr_auc_gain", "pr_auc_rel_gain", "passes"} <= set(res["criterion"]["2021"])
-    assert (res["shap"]["scope"] == "all").sum() == len(ig.full_features(df, "a"))
+    n_feats = len(ig.full_features(df, "a")) + 1  # clim is added by the protocol
+    assert (res["shap"]["scope"] == "all").sum() == n_feats * 2  # two held-out years
     assert len(res["spatial_blocks"]) == 2 and res["spatial_blocks"]["n"].sum() > 0
     assert len(res["predictions"]) == (df["year"].isin([2021, 2022])).sum()
     assert (tmp_path / "criterion_a.json").exists() and (tmp_path / "predictions_a.parquet").exists()
