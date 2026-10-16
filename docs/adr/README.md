@@ -11,4 +11,5 @@ accepté, remplacé par NNNN.
 | [0003](0003-common-grid.md) | Grille commune 0,25°, celle du FWI | proposé |
 | [0004](0004-mlflow-file-dvc.md) | MLflow en store fichier, DVC pour les données, pas de serveur | proposé |
 | [0005](0005-windows-native-wsl-pymc.md) | Pipeline sous Windows natif, WSL2 réservé à PyMC | proposé |
-| [0006](0006-era5-daily-via-open-meteo.md) | ERA5 journalier via l'archive Open-Meteo, pas le CDS | accepté |
+| [0006](0006-era5-daily-via-open-meteo.md) | ERA5 journalier via l'archive Open-Meteo | remplacé par 0007 à l'échelle du maillage |
+| [0007](0007-era5-hourly-cds-monthly.md) | ERA5 journalier réduit localement depuis l'horaire CDS, une requête par mois | accepté |

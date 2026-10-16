@@ -121,3 +121,38 @@ def test_assemble_joins_and_excludes_rain_of_day_j(fwi_file, static_file, edo_fi
     assert one.loc["2022-01-10", "tp_7d"] == 7.0            # days 3..9, never day 10
     assert df.select_dtypes("float64").empty
     assert {"doy", "year", "laga_7", "laga_30", "spei3", "elev_m", "fwi", "dsr"} <= set(df.columns)
+
+
+def test_hourly_to_daily_reduction_and_weather_builder(tmp_path, cells):
+    """Two UTC days of hourly fields: daily max above mean, humidity bounded, the
+    precipitation of day D made of stamps D 01:00 to D+1 00:00."""
+    from src.ingest import era5_daily
+
+    hours = pd.date_range("2022-07-01 00:00", "2022-07-02 23:00", freq="h")
+    shape = (len(hours), len(LATS), len(LONS))
+    t2m = 273.15 + 20 + 8 * np.sin(np.arange(len(hours)) / 24 * 2 * np.pi)[:, None, None] * np.ones(shape)
+    d2m = t2m - 8
+    u10 = 2.0 * np.ones(shape)
+    v10 = np.linspace(0, 6, len(hours))[:, None, None] * np.ones(shape)
+    tp = np.zeros(shape)
+    tp[1:25] = 0.001  # 24 stamps 01:00 .. 00:00 next day = 24 mm on day 1, nothing on day 2
+    ds = xr.Dataset(
+        {"t2m": (("valid_time", "latitude", "longitude"), t2m), "d2m": (("valid_time", "latitude", "longitude"), d2m),
+         "u10": (("valid_time", "latitude", "longitude"), u10), "v10": (("valid_time", "latitude", "longitude"), v10),
+         "tp": (("valid_time", "latitude", "longitude"), tp)},
+        coords={"valid_time": hours, "latitude": LATS, "longitude": LONS},
+    )
+    hourly = tmp_path / "era5h_test_2022_07.nc"
+    ds.to_netcdf(hourly)
+    daily_ds = era5_daily.hourly_to_daily(era5_daily.open_hourly(hourly))
+    assert set(era5_daily.DAILY_VARS) <= set(daily_ds.data_vars)
+    out = tmp_path / "era5_daily_test_2022_07.nc"
+    daily_ds.to_netcdf(out)
+    w = daily.weather_daily([out], cells)
+    assert len(w) == 2 * len(cells)
+    one = w[w["cell"] == cells["cell"].iloc[0]].set_index("date")
+    assert one.loc["2022-07-01", "t2m_max"] > one.loc["2022-07-01", "t2m_c"]
+    assert 0 <= one.loc["2022-07-01", "rh_min"] <= one.loc["2022-07-01", "rh"] <= 100
+    assert one.loc["2022-07-01", "wind"] >= one.loc["2022-07-01", "wind_mean"]
+    assert abs(one.loc["2022-07-01", "tp_mm"] - 24.0) < 1e-3
+    assert abs(one.loc["2022-07-02", "tp_mm"]) < 1e-6

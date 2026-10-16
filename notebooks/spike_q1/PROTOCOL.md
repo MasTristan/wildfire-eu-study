@@ -76,3 +76,14 @@ Reported but not decisive: the same criterion on label (b), block-bootstrap
    t2m, d2m, u10, v10, tp. Any variable the API does not serve is dropped and
    listed in VERDICT.md. The decision criterion, models and validation are
    unchanged.
+
+2. 2026-10-16, ERA5 source again. Open-Meteo's free daily quota was reached
+   after five of 61 batches (about 100 cell-years a day, twelve days for the
+   spike). The daily weather therefore comes from the hourly CDS reanalysis
+   (`reanalysis-era5-single-levels`), one request per month and area,
+   answered in minutes, reduced locally to UTC daily values with the same
+   code as the production ingest (src/ingest/era5_daily.py): daily mean and
+   max temperature, mean and min relative humidity (Magnus-Tetens from the
+   hourly dew point), daily max and mean wind speed, precipitation sum.
+   Vapour pressure deficit and reference evapotranspiration, which only
+   Open-Meteo served, are dropped. Nothing else changes.
