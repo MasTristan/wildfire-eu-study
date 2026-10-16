@@ -93,3 +93,5 @@ def test_model_output_assets_depend_on_the_gold(defs):
         node = graph.get(AssetKey(["gold", name]))
         assert node.group_name == "model_out"
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
+    q1 = graph.get(AssetKey(["gold", "ignition_eval"]))
+    assert AssetKey(["gold", "features_daily"]) in q1.parent_keys
