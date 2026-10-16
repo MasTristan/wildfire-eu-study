@@ -24,8 +24,10 @@ ignition days better than the fire-weather components alone?
 ## Features, all known at day J
 
 FWI, FFMC, DMC, DC, ISI, BUI, DSR (cems-fire-historical-v1, 0.25 degree);
-ERA5 t2m, d2m, derived relative humidity, wind speed, u10, v10, tp, tp summed
-over the 7 previous days; SPEI-3 of the last completed dekad; static ERA5
+ERA5 daily weather (see amendment 1): mean and max temperature, mean and min
+relative humidity, max and mean wind speed, precipitation, max vapour pressure
+deficit, reference evapotranspiration, precipitation summed over the 7
+previous days; SPEI-3 of the last completed dekad; static ERA5
 vegetation cover and type, orography and land fraction (CORINE substitute, see
 VERDICT.md); day of year; ignition count in the cell over the 7 and 30 previous
 days (past only); cell climatology of ignitions per calendar day (+/- 15 days),
@@ -58,3 +60,19 @@ by at least 0.05 (absolute), on 2022 AND on 2023.
 
 Reported but not decisive: the same criterion on label (b), block-bootstrap
 (weekly blocks) intervals for the differences, reliability diagrams, timings.
+
+## Amendments (dated, all before the first training)
+
+1. 2026-10-16, ERA5 source. The CDS daily-statistics dataset needed 240
+   on-demand requests and its queue did not drain; an hourly CDS retrieval
+   tried next (one request per year and area) was abandoned for the same
+   reason. The daily ERA5 weather now
+   comes from the Open-Meteo historical archive with the `era5` model pinned
+   (same reanalysis, same 0.25 degree grid, daily aggregates computed server
+   side in UTC), one request per batch of cell centres. The variable set
+   changes with the source: daily mean and max temperature, mean and min
+   relative humidity, max and mean wind, precipitation, max vapour pressure
+   deficit and reference evapotranspiration replace the hourly-derived
+   t2m, d2m, u10, v10, tp. Any variable the API does not serve is dropped and
+   listed in VERDICT.md. The decision criterion, models and validation are
+   unchanged.

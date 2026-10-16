@@ -31,7 +31,10 @@ SEED = 42
 NEG_RATE = 20  # keep 1 negative in 20, weight 20
 CLIM_WINDOW = 31  # +/- 15 days
 FWI_FEATS = ["fwi", "ffmc", "dmc", "dc", "isi", "bui", "dsr"]
-WEATHER = ["t2m_c", "d2m_c", "rh", "wind", "u10", "v10", "tp_mm", "tp_7d", "spei3"]
+# Daily weather the Open-Meteo archive served (s02): s05 keeps only the columns
+# obtained, so the list is filtered against the table at run time.
+WEATHER_ALL = ["t2m_c", "t2m_max", "rh", "rh_min", "wind", "wind_mean", "tp_mm", "tp_7d", "vpd_max", "et0", "spei3"]
+WEATHER: list[str] = list(WEATHER_ALL)
 STATIC = ["cvh", "cvl", "tvh", "tvl", "lsm", "elev_m"]
 EFFIS_BREAKS = [5.2, 11.2, 21.3, 38.0, 50.0]  # official EFFIS FWI danger classes
 GRID = {"num_leaves": [15, 63], "min_data_in_leaf": [50, 300]}  # same for models 3 and 4
@@ -115,6 +118,10 @@ def run(tag: str) -> None:
     out = common.OUT
     with common.timed(f"load_{tag}"):
         df = pd.read_parquet(common.INTERIM / "daily.parquet")
+    WEATHER[:] = [c for c in WEATHER_ALL if c in df.columns]
+    missing = sorted(set(WEATHER_ALL) - set(WEATHER))
+    if missing:
+        print(f"[{tag}] weather columns not available, excluded from the full model: {missing}")
     with common.timed(f"features_{tag}"):
         # final fit and test: climatology from all three training years
         df = add_climatology(df, y, common.TRAIN_YEARS)

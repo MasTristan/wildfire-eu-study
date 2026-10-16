@@ -11,7 +11,6 @@ the labels. Run after the downloads finish:
 from __future__ import annotations
 
 import sys
-import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -22,94 +21,44 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import common  # noqa: E402
+import mesh  # noqa: E402
+from s02_download_weather import load_weather  # noqa: E402
 
 from src import config  # noqa: E402
-from src.ingest import geo_ref  # noqa: E402
 
 DATES = pd.date_range("2019-01-01", "2023-12-31", freq="D")
 LAG_START = pd.Timestamp("2016-01-01")  # EFFIS history used for the lag counts
 
 
-# --------------------------------------------------------------------- readers
-def open_any(path: Path) -> xr.Dataset:
-    """CDS answers are plain NetCDF or a zip of NetCDF files (named .zip either way)."""
-    if zipfile.is_zipfile(path):
-        out = path.parent / (path.stem + "_unzipped")
-        out.mkdir(exist_ok=True)
-        with zipfile.ZipFile(path) as z:
-            z.extractall(out)
-        parts = [xr.open_dataset(p) for p in sorted(out.glob("*.nc"))]
-        ds = xr.merge(parts, compat="override")
-    else:
-        ds = xr.open_dataset(path)
-    drop = [v for v in ("number", "expver", "surface", "band") if v in ds.variables]
-    ds = ds.drop_vars(drop, errors="ignore")
-    for old in ("valid_time", "time"):
-        if old in ds.dims and old != "time":
-            ds = ds.rename({old: "time"})
-    return ds
-
-
-def _frame(ds: xr.Dataset, variables: list[str]) -> pd.DataFrame:
-    df = ds[variables].to_dataframe().reset_index()
-    df["lon"] = common.snap(df["longitude"])
-    df["lat"] = common.snap(df["latitude"])
-    df["date"] = pd.to_datetime(df["time"]).dt.normalize()
-    return df.drop(columns=["longitude", "latitude", "time"])
-
-
 # ----------------------------------------------------------------------- stages
-def build_fwi() -> pd.DataFrame:
-    parts = []
-    for name in common.AREAS:
-        for year in common.YEARS:
-            ds = open_any(common.RAW / f"fwi_{name}_{year}.zip")
-            df = _frame(ds, list(common.FWI_RENAME)).rename(columns=common.FWI_RENAME)
-            parts.append(df.dropna(subset=["fwi"]))
-    fwi = pd.concat(parts, ignore_index=True)
-    return fwi.drop_duplicates(["lon", "lat", "date"])
+WEATHER_RENAME = {
+    "temperature_2m_mean": "t2m_c",
+    "temperature_2m_max": "t2m_max",
+    "relative_humidity_2m_mean": "rh",
+    "relative_humidity_2m_min": "rh_min",
+    "wind_speed_10m_max": "wind",
+    "wind_speed_10m_mean": "wind_mean",
+    "precipitation_sum": "tp_mm",
+    "vapour_pressure_deficit_max": "vpd_max",
+    "et0_fao_evapotranspiration": "et0",
+}
 
 
-def build_cells(fwi: pd.DataFrame) -> pd.DataFrame:
-    """Mesh: cells with a defined FWI whose centre is inside ES, PT or GR."""
-    uniq = fwi[["lon", "lat"]].drop_duplicates()
-    mask = geo_ref.grid_mask(np.sort(uniq["lon"].unique()), np.sort(uniq["lat"].unique()))
-    mask = mask[mask["country_key"].isin(common.COUNTRIES)]
-    cells = uniq.merge(mask.assign(lon=common.snap(mask["lon"]), lat=common.snap(mask["lat"])), on=["lon", "lat"])
-    cells["cell"] = common.cell_id(cells["lon"], cells["lat"])
-    return cells.drop_duplicates("cell").reset_index(drop=True)
-
-
-def build_era5() -> pd.DataFrame:
-    parts = []
-    for name in common.AREAS:
-        for year in common.YEARS:
-            for month in range(1, 13):
-                mean = open_any(common.RAW / f"era5_mean_{name}_{year}_{month:02d}.nc")
-                tot = open_any(common.RAW / f"era5_sum_{name}_{year}_{month:02d}.nc")
-                ds = xr.merge([mean, tot], compat="override")
-                df = _frame(ds, ["t2m", "d2m", "u10", "v10", "tp"])
-                parts.append(df)
-    e = pd.concat(parts, ignore_index=True).drop_duplicates(["lon", "lat", "date"])
-    t = e["t2m"] - 273.15
-    td = e["d2m"] - 273.15
-
-    def es(x):
-        return 6.1094 * np.exp(17.625 * x / (x + 243.04))
-
-    e["t2m_c"] = t
-    e["d2m_c"] = td
-    e["rh"] = (100 * es(td) / es(t)).clip(0, 100)
-    e["wind"] = np.hypot(e["u10"], e["v10"])
-    e["tp_mm"] = e["tp"] * 1000.0
-    return e[["lon", "lat", "date", "t2m_c", "d2m_c", "rh", "wind", "u10", "v10", "tp_mm"]]
+def build_weather(cells: pd.DataFrame) -> pd.DataFrame:
+    """Daily ERA5 weather per cell from the Open-Meteo batches (s02). Only the
+    variables the API served are present; s06 adapts its feature list."""
+    w = load_weather()
+    w = w.rename(columns={k: v for k, v in WEATHER_RENAME.items() if k in w.columns})
+    w = w[w["cell"].isin(cells["cell"])]
+    keep = ["cell", "date", *[c for c in WEATHER_RENAME.values() if c in w.columns]]
+    return w[keep].drop_duplicates(["cell", "date"])
 
 
 def build_static() -> pd.DataFrame:
     parts = []
     for name in common.AREAS:
-        ds = open_any(common.RAW / f"static_{name}.nc")
-        df = _frame(ds.isel(time=0, drop=True) if "time" in ds.dims else ds, ["cvh", "cvl", "tvh", "tvl", "lsm", "z"])
+        ds = mesh.open_any(common.RAW / f"static_{name}.nc")
+        df = mesh.frame(ds.isel(time=0, drop=True) if "time" in ds.dims else ds, ["cvh", "cvl", "tvh", "tvl", "lsm", "z"])
         parts.append(df.drop(columns=["date"], errors="ignore"))
     s = pd.concat(parts, ignore_index=True).drop_duplicates(["lon", "lat"])
     s["elev_m"] = s["z"] / 9.80665
@@ -218,16 +167,14 @@ def lag_counts(lab: pd.DataFrame, cells: pd.DataFrame, start: pd.Timestamp, tag:
 def main() -> None:
     common.ensure_dirs()
     with common.timed("build_fwi"):
-        fwi = build_fwi()
-        cells = build_cells(fwi)
+        fwi = mesh.build_fwi()
+        cells = mesh.build_cells(fwi)
         fwi["cell"] = common.cell_id(fwi["lon"], fwi["lat"])
         fwi = fwi[fwi["cell"].isin(cells["cell"])].drop(columns=["lon", "lat"])
     print(f"mesh: {len(cells)} cells ({cells['country_key'].value_counts().to_dict()}), fwi rows {len(fwi):,}")
 
-    with common.timed("build_era5"):
-        era = build_era5()
-        era["cell"] = common.cell_id(era["lon"], era["lat"])
-        era = era[era["cell"].isin(cells["cell"])].drop(columns=["lon", "lat"])
+    with common.timed("build_weather"):
+        era = build_weather(cells)
     static = build_static()
     static["cell"] = common.cell_id(static["lon"], static["lat"])
     static = static[static["cell"].isin(cells["cell"])].drop(columns=["lon", "lat"])
@@ -256,9 +203,10 @@ def main() -> None:
         df["year"] = df["date"].dt.year.astype("int16")
         # rolling 7-day rain before J (J excluded), per cell
         df = df.sort_values(["cell", "date"]).reset_index(drop=True)
-        df["tp_7d"] = (
-            df.groupby("cell")["tp_mm"].transform(lambda s: s.rolling(7, min_periods=3).sum().shift(1))
-        )
+        if "tp_mm" in df.columns:
+            df["tp_7d"] = (
+                df.groupby("cell")["tp_mm"].transform(lambda s: s.rolling(7, min_periods=3).sum().shift(1))
+            )
         # the mesh keeps only days where the FWI exists (sea/NaN days drop out)
         df = df[df["fwi"].notna()].reset_index(drop=True)
         f32 = df.select_dtypes("float64").columns
