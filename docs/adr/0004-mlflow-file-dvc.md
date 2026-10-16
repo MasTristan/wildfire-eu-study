@@ -10,8 +10,10 @@ version de données identifiables.
 
 ## Décision
 
-- MLflow en store fichier local (`mlruns/`, gitignoré) : expériences,
-  paramètres, métriques, artefacts. Pas de serveur de tracking.
+- MLflow en store local sans serveur (`mlruns/`, gitignoré) : métadonnées
+  dans un fichier SQLite, artefacts dans un dossier. Le store « fichiers
+  plats » de MLflow est en maintenance depuis la version 3, SQLite est le
+  store local recommandé ; `mlflow ui` le lit directement.
 - Cartes de modèle en Markdown versionnées dans le dépôt, qui citent
   l'identifiant de run.
 - DVC pour versionner gold, feature store et sorties de modèles, avec un

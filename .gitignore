@@ -71,3 +71,6 @@ data/reference/v1/*
 # v2 lake and orchestration state
 data/lake/
 .dagster/
+
+# MLflow file store (ADR 0004)
+mlruns/

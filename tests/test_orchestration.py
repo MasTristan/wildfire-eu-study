@@ -83,3 +83,11 @@ def test_raw_sources_are_partitioned(defs):
         assert graph.get(AssetKey(["bronze", name])).partitions_def is not None, name
     assert graph.get(AssetKey(["bronze", "era5_raw"])).partitions_def.get_partition_keys()[0] == "1991-2000"
     assert AssetKey(["bronze", "bdiff_raw"]) in graph.get(AssetKey(["bronze", "bdiff_incendies"])).parent_keys
+
+
+def test_model_output_assets_depend_on_the_gold(defs):
+    graph = defs.get_repository_def().asset_graph
+    for name in ("tail_risk_country", "attribution_countryyear"):
+        node = graph.get(AssetKey(["gold", name]))
+        assert node.group_name == "model_out"
+        assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
