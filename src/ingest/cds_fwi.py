@@ -102,6 +102,46 @@ def download_year(year: str) -> Path:
     return target
 
 
+# --- v2: the full fire-weather system at the common 0.25 degree grid -----------
+# v1 fetched the FWI alone at 0.5 degree for country-month averages. The feature
+# store (ADR 0003) needs the seven components at the native 0.25 degree grid,
+# so the v2 asset writes a separate yearly file and leaves the v1 files alone.
+FWI_SYSTEM_VARIABLES = [
+    "fire_weather_index", "fine_fuel_moisture_code", "duff_moisture_code", "drought_code",
+    "initial_fire_spread_index", "build_up_index", "fire_daily_severity_rating",
+]
+
+
+def full_year_path(year: str | int) -> Path:
+    return _raw_dir() / f"fwi_full_{year}.zip"
+
+
+def full_year_request(year: str | int, area: list[float] | None = None) -> dict:
+    return {
+        "product_type": "reanalysis",
+        "variable": FWI_SYSTEM_VARIABLES,
+        "dataset_type": "consolidated_dataset",
+        "system_version": "4_1",
+        "year": [str(year)],
+        "month": [f"{m:02d}" for m in range(1, 13)],
+        "day": [f"{d:02d}" for d in range(1, 32)],
+        "area": list(area or _AREA),
+        "grid": "0.25/0.25",
+        "data_format": "netcdf",
+    }
+
+
+def download_year_full(year: str | int, client=None) -> Path:
+    """Seven FWI-system components, 0.25 degree, one year, Europe; resumable.
+    The EWDS answers with a zip of NetCDF files, read by src.features.daily.open_any."""
+    target = full_year_path(year)
+    if target.exists() and target.stat().st_size > 0:
+        return target
+    client = client or config.cds_client("ewds")
+    client.retrieve(config.CDS_FWI_DATASET, full_year_request(year), str(target))
+    return target
+
+
 def download(years: list[str] | None = None) -> list[Path]:
     years = years or _YEARS
     print(f"CDS/EWDS: fire weather index, {years[0]}-{years[-1]}, one request per year.")

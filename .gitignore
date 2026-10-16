@@ -74,3 +74,4 @@ data/lake/
 
 # MLflow file store (ADR 0004)
 mlruns/
+site/

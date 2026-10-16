@@ -74,7 +74,7 @@ def test_feature_store_assets_are_wired(defs):
     node = graph.get(AssetKey(["gold", "features_daily"]))
     assert node.partitions_def is not None
     assert {AssetKey(["silver", "grid_cells"]), AssetKey(["bronze", "era5_daily_raw"]),
-            AssetKey(["silver", "fact_fireevent"])} <= set(node.parent_keys)
+            AssetKey(["bronze", "cds_fwi_full_raw"]), AssetKey(["silver", "fact_fireevent"])} <= set(node.parent_keys)
     monthly = graph.get(AssetKey(["bronze", "era5_daily_raw"])).partitions_def
     assert monthly is not None and monthly.get_partition_keys()[0] == "2016-01"
 

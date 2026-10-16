@@ -50,3 +50,12 @@ def test_firms_window_url_starts_at_the_window_start():
     url = window_url("VIIRS_SNPP_SP", date(2023, 7, 1), 10, map_key="KEY")
     assert url.endswith("/VIIRS_SNPP_SP/-25,34,45,72/10/2023-07-01") or url.endswith("/10/2023-07-01")
     assert "KEY" in url
+
+
+def test_full_fwi_request_covers_the_seven_components_at_quarter_degree():
+    from src.ingest import cds_fwi
+
+    req = cds_fwi.full_year_request(2022)
+    assert len(req["variable"]) == 7 and "drought_code" in req["variable"]
+    assert req["grid"] == "0.25/0.25" and req["year"] == ["2022"] and len(req["month"]) == 12
+    assert cds_fwi.full_year_path(2022).name == "fwi_full_2022.zip"

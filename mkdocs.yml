@@ -1,0 +1,40 @@
+site_name: Wildfire EU Study
+site_description: Feux de végétation en Europe, 2006 à 2026. Plateforme de données, modèles et rapport.
+repo_url: https://github.com/mastristan/wildfire-eu-study
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  language: fr
+  features: [navigation.sections, navigation.top, content.code.copy, toc.integrate]
+  palette:
+    - scheme: default
+      toggle: { icon: material/brightness-7, name: Mode sombre }
+    - scheme: slate
+      toggle: { icon: material/brightness-4, name: Mode clair }
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+nav:
+  - Accueil: index.md
+  - Plateforme: platform.md
+  - Modèle de données: data-model.md
+  - Sources: sources.md
+  - Spécification du rapport: dashboard-spec.md
+  - Décisions d'architecture:
+      - Index: adr/README.md
+      - 0001 Dagster: adr/0001-dagster-orchestration.md
+      - 0002 DuckDB et dbt: adr/0002-duckdb-dbt-gold.md
+      - 0003 Grille commune: adr/0003-common-grid.md
+      - 0004 MLflow et DVC: adr/0004-mlflow-file-dvc.md
+      - 0005 Windows et WSL2: adr/0005-windows-native-wsl-pymc.md
+      - 0006 Open-Meteo: adr/0006-era5-daily-via-open-meteo.md
+      - 0007 ERA5 horaire CDS: adr/0007-era5-hourly-cds-monthly.md
+  - Procédures:
+      - Matérialisation v2: runbooks/materialise-v2.md
+      - Spike Q1: runbooks/spike-q1.md
