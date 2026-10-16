@@ -83,11 +83,9 @@ def fact_fireweather_countrymonth() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     deps=[bronze.firms_hotspots_raw, dim_country],
-    description="fact_hotspot_countrymonth: VIIRS detections counted at country x month (v1 semantics: current year)",
+    description="fact_hotspot_countrymonth: VIIRS detections counted at country x month over every raw window on disk",
 )
 def fact_hotspot_countrymonth() -> MaterializeResult:
     from src.ingest import firms
 
-    path = firms.build()
-    df = pd.read_parquet(path)
-    return _write("fact_hotspot_countrymonth", df)
+    return _write("fact_hotspot_countrymonth", firms.aggregate_raw())

@@ -127,6 +127,45 @@ def assign_country(points: pd.DataFrame) -> pd.DataFrame:
     return joined.drop(columns=["geometry", "index_right"], errors="ignore")
 
 
+DETECTION_KEY = ["latitude", "longitude", "acq_date", "acq_time", "satellite"]
+
+
+def dedupe_detections(points: pd.DataFrame) -> pd.DataFrame:
+    """One row per detection. Raw windows can overlap (a window re-fetched
+    after a quota stop, or NRT and SP covering the same days), and the same
+    detection must never be counted twice."""
+    key = [c for c in DETECTION_KEY if c in points.columns]
+    return points.drop_duplicates(subset=key).reset_index(drop=True)
+
+
+def monthly_from_points(points: pd.DataFrame) -> pd.DataFrame:
+    """country x month x source aggregate from detections that carry country_key."""
+    pts = points.dropna(subset=["country_key"]).copy()
+    if pts.empty:
+        return pd.DataFrame(columns=["country_key", "month_key", "source_key", "hotspot_count", "mean_frp", "max_frp"])
+    pts["month_key"] = pd.to_datetime(pts["acq_date"]).values.astype("datetime64[M]")
+    pts["source_key"] = pts.get("source_key", "FIRMS_VIIRS")
+    pts["source_key"] = pts["source_key"].fillna("FIRMS_VIIRS")
+    return pts.groupby(["country_key", "month_key", "source_key"], as_index=False).agg(
+        hotspot_count=("latitude", "count"),
+        mean_frp=("frp", "mean"),
+        max_frp=("frp", "max"),
+    )
+
+
+def aggregate_raw(raw_dir: Path | None = None) -> pd.DataFrame:
+    """fact_hotspot_countrymonth over EVERY raw window on disk (all years),
+    the v2 semantics; `build(year)` keeps the v1 year-to-date behaviour."""
+    raw_dir = raw_dir or config.DATA_RAW / "firms"
+    files = sorted(raw_dir.glob("viirs_*.csv"))
+    if not files:
+        raise FileNotFoundError(f"no raw FIRMS windows under {raw_dir}")
+    frames = [pd.read_csv(f) for f in files]
+    points = dedupe_detections(pd.concat([f for f in frames if not f.empty], ignore_index=True))
+    points["source_key"] = "FIRMS_VIIRS"
+    return monthly_from_points(assign_country(points))
+
+
 def build(year: int | None = None) -> Path:
     year = year or date.today().year
     print(f"FIRMS: fetching VIIRS_SNPP hotspots for {year} year-to-date...")
