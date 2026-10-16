@@ -73,8 +73,10 @@ def test_feature_store_assets_are_wired(defs):
     graph = defs.get_repository_def().asset_graph
     node = graph.get(AssetKey(["gold", "features_daily"]))
     assert node.partitions_def is not None
-    assert {AssetKey(["silver", "grid_cells"]), AssetKey(["bronze", "openmeteo_daily"]),
+    assert {AssetKey(["silver", "grid_cells"]), AssetKey(["bronze", "era5_daily_raw"]),
             AssetKey(["silver", "fact_fireevent"])} <= set(node.parent_keys)
+    monthly = graph.get(AssetKey(["bronze", "era5_daily_raw"])).partitions_def
+    assert monthly is not None and monthly.get_partition_keys()[0] == "2016-01"
 
 
 def test_raw_sources_are_partitioned(defs):

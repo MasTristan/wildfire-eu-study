@@ -45,10 +45,30 @@ WEATHER_RENAME = {
 
 
 def build_weather(cells: pd.DataFrame) -> pd.DataFrame:
-    """Daily ERA5 weather per cell from the Open-Meteo batches (s02). Only the
-    variables the API served are present; s06 adapts its feature list."""
-    w = load_weather()
-    w = w.rename(columns={k: v for k, v in WEATHER_RENAME.items() if k in w.columns})
+    """Daily weather per cell. Source, by what is on disk: the CDS hourly
+    reduction (s02b, era5_daily_*.nc, complete months only) first, else the
+    Open-Meteo batches (s02). Columns are the same in both cases; only the
+    variables the source provides are present and s06 adapts its list."""
+    import glob
+
+    cds_files = sorted(glob.glob(str(common.RAW / "era5_daily_*.nc")))
+    expected = len(common.AREAS) * len(common.YEARS) * 12
+    if cds_files and len(cds_files) >= expected:
+        parts = []
+        for path in cds_files:
+            ds = mesh.open_any(Path(path))
+            parts.append(mesh.frame(ds, [v for v in WEATHER_RENAME.values() if v in ds.data_vars]))
+            ds.close()
+        w = pd.concat(parts, ignore_index=True)
+        w["cell"] = common.cell_id(w["lon"], w["lat"])
+        w = w.drop(columns=["lon", "lat"])
+        print(f"weather: CDS hourly reduction, {len(cds_files)} monthly files")
+    else:
+        if cds_files:
+            print(f"weather: {len(cds_files)}/{expected} CDS monthly files, incomplete, falling back to Open-Meteo")
+        w = load_weather()
+        w = w.rename(columns={k: v for k, v in WEATHER_RENAME.items() if k in w.columns})
+        print("weather: Open-Meteo batches")
     w = w[w["cell"].isin(cells["cell"])]
     keep = ["cell", "date", *[c for c in WEATHER_RENAME.values() if c in w.columns]]
     return w[keep].drop_duplicates(["cell", "date"])

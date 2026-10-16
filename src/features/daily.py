@@ -69,6 +69,20 @@ def fwi_daily(nc_paths: list[Path], cells: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True).drop_duplicates(["cell", "date"])
 
 
+WEATHER_VARS = ["t2m_c", "t2m_max", "rh", "rh_min", "wind", "wind_mean", "tp_mm"]
+
+
+def weather_daily(nc_paths: list[Path], cells: pd.DataFrame) -> pd.DataFrame:
+    """Daily weather per cell from the monthly files of src/ingest/era5_daily.py."""
+    parts = []
+    for p in nc_paths:
+        ds = open_any(p)
+        df = _frame(ds, WEATHER_VARS)
+        parts.append(df[df["cell"].isin(cells["cell"])])
+        ds.close()
+    return pd.concat(parts, ignore_index=True).drop_duplicates(["cell", "date"])
+
+
 def static_fields(nc_paths: list[Path], cells: pd.DataFrame) -> pd.DataFrame:
     """Static ERA5 surface description per cell: vegetation cover and type, land fraction, elevation."""
     parts = []

@@ -1,6 +1,9 @@
 # 0006. ERA5 journalier via l'archive Open-Meteo, pas le CDS
 
-Statut : accepté le 2026-10-16.
+Statut : accepté le 2026-10-16, remplacé le même jour par 0007 pour tout
+usage à l'échelle du maillage (quota gratuit d'environ cent années-maille
+par jour). Reste valable pour des sondages ponctuels et la prévision sur
+quelques points.
 
 ## Contexte
 
