@@ -29,10 +29,10 @@ monthly = StaticPartitionsDefinition(
 def _fwi_year_path(year: str) -> Path:
     from src.ingest import cds_fwi
 
-    return cds_fwi.year_path(year)
+    return cds_fwi.full_year_path(year)
 
 
-@asset(key_prefix="silver", group_name="silver", kinds={"python"}, deps=[bronze.cds_fwi_raw],
+@asset(key_prefix="silver", group_name="silver", kinds={"python"}, deps=[bronze.cds_fwi_full_raw],
        description="The common 0.25 degree mesh: FWI lattice cells whose centre is in a tracked country (ADR 0003)")
 def grid_cells() -> MaterializeResult:
     from src.features import daily
@@ -89,7 +89,7 @@ def era5_static() -> MaterializeResult:
 
 
 @asset(key_prefix="gold", group_name="gold", kinds={"python"}, partitions_def=yearly,
-       deps=[grid_cells, bronze.cds_fwi_raw, era5_daily_raw, era5_static, bronze.edo_spei3_countrymonth, silver.fact_fireevent],
+       deps=[grid_cells, bronze.cds_fwi_full_raw, era5_daily_raw, era5_static, bronze.edo_spei3_countrymonth, silver.fact_fireevent],
        description="Feature store at cell x day for one year: FWI components, weather, SPEI, static fields, labels and lags")
 def features_daily(context: AssetExecutionContext) -> MaterializeResult:
     from src.features import daily

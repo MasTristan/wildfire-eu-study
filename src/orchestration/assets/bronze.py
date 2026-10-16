@@ -105,6 +105,20 @@ def cds_fwi_raw(context: AssetExecutionContext) -> MaterializeResult:
     key_prefix=PREFIX,
     group_name=GROUP,
     kinds={"python"},
+    partitions_def=yearly,
+    description="The seven FWI-system components at 0.25 degree for one year over Europe (EWDS), the feature store's spine",
+)
+def cds_fwi_full_raw(context: AssetExecutionContext) -> MaterializeResult:
+    from src.ingest import cds_fwi
+
+    path = cds_fwi.download_year_full(context.partition_key)
+    return MaterializeResult(metadata={"path": str(path), "bytes": path.stat().st_size})
+
+
+@asset(
+    key_prefix=PREFIX,
+    group_name=GROUP,
+    kinds={"python"},
     deps=[cds_fwi_raw],
     description="FWI aggregated to country x month from every downloaded year",
 )
