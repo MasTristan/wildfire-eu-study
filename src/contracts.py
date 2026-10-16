@@ -298,13 +298,46 @@ GOLD_TABLES: dict[str, GoldTable] = {
 }
 
 
+# Gold tables that exist only in v2: contract-checked like the others, but
+# outside the v1 parity set and not bound by the v1 TMDL.
+V2_GOLD_TABLES: dict[str, GoldTable] = {
+    t.name: t
+    for t in (
+        GoldTable(
+            "fact_season_countryyear",
+            ("country_key", "year_key", "source_key"),
+            pa.DataFrameSchema(
+                {
+                    "country_key": _string(),
+                    "year_key": Column(_DT, Check(_first_of_year, error="year grain"), coerce=True),
+                    "source_key": _string(checks=Check.isin({"EFFIS_RDA", "BDIFF"})),
+                    "burnt_area_ha": Column(float, Check.ge(0), coerce=True),
+                    "number_of_fires": Column("Int64", Check.ge(1), coerce=True),
+                    "onset_date": Column(_DT, coerce=True),
+                    "end_date": Column(_DT, coerce=True),
+                    "onset_doy": Column("Int64", Check.in_range(1, 366), coerce=True),
+                    "end_doy": Column("Int64", Check.in_range(1, 366), coerce=True),
+                    "season_length_days": Column("Int64", Check.in_range(1, 366), coerce=True),
+                    "low_count": Column(bool, coerce=True),
+                },
+                checks=Check(lambda df: bool((df["end_date"] >= df["onset_date"]).all()), error="end before onset"),
+                unique=["country_key", "year_key", "source_key"],
+                strict=False,
+            ),
+        ),
+    )
+}
+
+ALL_GOLD_TABLES: dict[str, GoldTable] = {**GOLD_TABLES, **V2_GOLD_TABLES}
+
+
 def validate(name: str, df: pd.DataFrame) -> pd.DataFrame:
     """Validate `df` against the contract of gold table `name`, raising on failure.
 
     Returns the (possibly dtype-coerced) frame so callers can write exactly
     what was validated.
     """
-    table = GOLD_TABLES[name]
+    table = ALL_GOLD_TABLES[name]
     return table.schema.validate(df, lazy=True)
 
 
@@ -312,7 +345,7 @@ def validate_processed(folder: Path | None = None) -> dict[str, str]:
     """Validate every gold parquet present in `folder`; return {table: 'ok' | error}."""
     folder = folder or config.DATA_PROCESSED
     results: dict[str, str] = {}
-    for name in GOLD_TABLES:
+    for name in ALL_GOLD_TABLES:
         path = folder / f"{name}.parquet"
         if not path.exists():
             results[name] = "absent"
