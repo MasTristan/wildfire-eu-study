@@ -9,7 +9,7 @@ import pandas as pd
 from dagster import MaterializeResult, asset
 
 from src import lake
-from src.orchestration.assets import gold
+from src.orchestration.assets import features, gold
 
 GROUP = "model_out"
 
@@ -53,3 +53,27 @@ def attribution_countryyear() -> MaterializeResult:
     fitted.to_parquet(out, index=False)
     res.coefficients.assign(run_id=active.info.run_id).to_parquet(lake.GOLD_MODEL_OUT / "attribution_coefficients.parquet", index=False)
     return MaterializeResult(metadata={"rows": int(len(fitted)), "r2_within_weather": res.r2_within_weather, "run_id": active.info.run_id})
+
+
+@asset(key_prefix="gold", group_name=GROUP, kinds={"python"}, deps=[features.features_daily, features.grid_cells],
+       description="Q1: ignition occurrence, leave-one-year-out over the feature store with the pre-registered protocol")
+def ignition_eval() -> MaterializeResult:
+    from src.models import ignition, tracking
+
+    files = sorted(lake.GOLD_FEATURES.glob("daily_*.parquet"))
+    df = pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+    cells = pd.read_parquet(features.CELLS_PATH)
+    df = df.merge(cells[["cell", "country_key"]], on="cell", how="left")
+    years = sorted(int(y) for y in df["year"].unique())
+    test_years = years[2:]  # every year with at least two earlier years to train on
+    p = ignition.Protocol()
+    with tracking.run("q1_ignition", f"loyo_{date.today():%Y%m%d}", {"test_years": test_years, "neg_rate": p.neg_rate, "block_deg": p.block_deg}) as active:
+        res = ignition.run_protocol(df, test_years, p, out_dir=lake.GOLD_MODEL_OUT / "ignition")
+        for name, g in res["metrics"].groupby("model"):
+            tracking.log_metrics({f"{name}_pr_auc_mean": g["pr_auc"].mean(), f"{name}_brier_mean": g["brier"].mean()})
+        tracking.log_metrics({"all_pass": float(res["criterion"]["all_pass"])})
+        tracking.log_table(res["metrics"], "metrics")
+        summary = ignition.monthly_country_summary(res["predictions"], cells).assign(run_id=active.info.run_id)
+    summary.to_parquet(lake.GOLD_MODEL_OUT / "ignition_monthly_country.parquet", index=False)
+    res["metrics"].assign(run_id=active.info.run_id).to_parquet(lake.GOLD_MODEL_OUT / "ignition_metrics.parquet", index=False)
+    return MaterializeResult(metadata={"test_years": str(test_years), "all_pass": res["criterion"]["all_pass"], "run_id": active.info.run_id})

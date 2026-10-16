@@ -191,6 +191,31 @@ Ouvrir `http://localhost:5000` : deux expériences `q2_tail_risk` et
 `q3_attribution`, un run chacune avec paramètres et métriques. Capture
 d'écran `docs/img/mlflow-runs.png`. Ctrl+C.
 
+## 7b. Q1 sur le feature store (après le verdict du spike)
+
+```powershell
+uv run dagster asset materialize -m src.orchestration.definitions --select "gold/ignition_eval"
+```
+
+Durée : plusieurs heures (une année tenue à la fois, cinq modèles, blocs
+spatiaux). Attendu : `data/lake/gold/model_out/ignition/` avec
+`metrics_a.csv`, `reliability_a.csv`, `bootstrap_a.csv`, `shap_a.csv`,
+`tuned_a.csv`, `spatial_blocks_a.csv`, `predictions_a.parquet`,
+`criterion_a.json`, plus `ignition_monthly_country.parquet` et
+`ignition_metrics.parquet` dans `model_out/`.
+
+Vérification :
+
+```powershell
+uv run python -c "import pandas as pd; m=pd.read_csv('data/lake/gold/model_out/ignition/metrics_a.csv'); print(m.pivot(index='model', columns='held_year', values='pr_auc').round(4)); b=pd.read_csv('data/lake/gold/model_out/ignition/spatial_blocks_a.csv'); print(b)"
+type data\lake\gold\model_out\ignition\criterion_a.json
+```
+
+Attendu : cinq modèles par année tenue, aucune métrique `nan`, et pour
+chaque année `pr_auc_blocked` du même ordre que la PR-AUC du modèle complet
+(un écart supérieur à 30 % relatif signale une autocorrélation spatiale
+exploitée : le rapporter, c'est un résultat, pas une erreur).
+
 ## 8. Bascule Power BI
 
 Dans `powerbi/WildfireEU.SemanticModel/definition/expressions.tmdl`, faire
