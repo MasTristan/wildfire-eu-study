@@ -230,13 +230,14 @@ Attendu : la commande de gel recopie les 12 tables et réécrit
 `data/reference/v1/manifest.json` ; le test de parité passe intégralement.
 Puis éditer `data/reference/v1/manifest.json` : ajouter sous
 `tables.fact_hotspot_countrymonth` la clé
-`"note": "rebuilt 2026-10 with the FIRMS window fix (src/ingest/firms.py window_url), differs from the v1.0 release asset"`.
+`"note": "rebuilt 2026-11 with the FIRMS window fix (src/ingest/firms.py window_url); the original v1.0 asset gold-v1.zip is left untouched, this reference is gold-v1-ref-2026-11.zip on the same release"`.
 
 ```powershell
 git add data/reference/v1/manifest.json
 git commit -m "chore(parity): re-freeze fact_hotspot_countrymonth after the FIRMS window fix"
 git push origin ccr-9f718573-2htm0s
-gh release upload v1.0 dist/gold-v1.zip --clobber
+Copy-Item dist/gold-v1.zip dist/gold-v1-ref-2026-11.zip
+gh release upload v1.0 dist/gold-v1-ref-2026-11.zip
 ```
 
 ## 8. Vérification GWIS
@@ -297,3 +298,58 @@ git push origin ccr-9f718573-2htm0s
 
 Aucune ligne d'attribution dans le message de commit. Rapporter les trois
 tableaux et l'empreinte du commit.
+
+Note sur la release : l'asset d'origine `gold-v1.zip` de la release `v1.0`
+n'est jamais écrasé, car c'est une référence publiée. La référence regelée
+est ajoutée à côté sous un autre nom. Si `gh release upload` répond que
+l'asset existe déjà, ne pas ajouter `--clobber` : arrêter et rapporter.
+
+## 10. Seconde exécution de s08 et analyse E4 (addendum d'EXPLORATORY.md)
+
+Préalable : l'addendum d'`EXPLORATORY.md` est sur la branche, il est donc
+pré-déclaré.
+
+```powershell
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+uv run python notebooks/spike_q1/s08_exploratory.py
+```
+
+Durée : environ deux fois celle de la première exécution, à cause des dix
+graines de E4.
+
+Vérification de reproduction, bloquante :
+
+```powershell
+uv run python -c "import pandas as pd; v=pd.read_csv('notebooks/spike_q1/out/metrics_a.csv').set_index(['year','model'])['pr_auc']; e=pd.read_csv('notebooks/spike_q1/out/exploratory_new_ignitions.csv'); e=e[e.subset=='all'].set_index(['year','model'])['pr_auc']; d=(v-e).abs().dropna(); print(d); print('MAX', d.max())"
+```
+
+Attendu : `MAX` inférieur à 1e-9 pour les quatre modèles et les deux
+années. Le refit reproduit alors la section 3 du VERDICT. Sinon : arrêt et
+rapport du tableau.
+
+Attendu ensuite : cinq fichiers `out/exploratory_*.csv`. Les fichiers
+`exploratory_ablation.csv` et `exploratory_new_ignitions.csv` changent pour
+les modèles 3b et 4, et `exploratory_new_ignitions.csv` gagne les colonnes
+`base_rate` et `lift`. `exploratory_seeds.csv` et
+`exploratory_seeds_summary.csv` sont nouveaux. `exploratory_spatial_blocks.csv`
+est inchangé. Aucun autre fichier de `out/` n'est modifié.
+
+Dans `VERDICT.md`, section 11 :
+
+1. Remplacer la phrase « The cause was not investigated » par la cause
+   écrite dans l'addendum d'`EXPLORATORY.md`, en une phrase.
+2. Remplacer les tableaux E2 et E3 par ceux de la nouvelle exécution, avec
+   les colonnes `base_rate` et `lift` ajoutées au tableau E3.
+3. Ajouter un tableau E4 : le contenu d'`exploratory_seeds_summary.csv`.
+4. Lire chaque tableau par la règle d'`EXPLORATORY.md` et de son addendum,
+   en une phrase chacun, sans autre interprétation.
+
+```powershell
+git add notebooks/spike_q1/out/exploratory_*.csv notebooks/spike_q1/VERDICT.md
+git commit -m "docs(spike): exploratory analyses rerun with the shared training sample, E4 seed sensitivity"
+git push origin ccr-9f718573-2htm0s
+```
+
+Aucune ligne d'attribution. Rapporter la sortie de la vérification de
+reproduction, le tableau E4 et l'empreinte du commit.

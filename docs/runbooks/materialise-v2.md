@@ -222,6 +222,8 @@ exploitée : le rapporter, c'est un résultat, pas une erreur).
 
 ## 8. Bascule Power BI
 
+> **Action du propriétaire.** Cette étape demande Power BI Desktop, une application graphique qu'une session Claude Code ne pilote pas. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
+
 Dans `powerbi/WildfireEU.SemanticModel/definition/expressions.tmdl`, faire
 pointer `DataFolder` sur le chemin absolu de `data/lake/gold/star`. Ouvrir
 `powerbi/WildfireEU.pbip` dans Power BI Desktop, Accueil > Actualiser.
@@ -236,6 +238,8 @@ Commiter `expressions.tmdl` uniquement si le chemin ne contient pas de
 nom d'utilisateur ; sinon rapporter et ne pas commiter.
 
 ## 9. DVC, remote gratuit
+
+> **Action du propriétaire.** Cette étape demande la création d'un compte de stockage et la saisie de ses clés, que seul le propriétaire peut faire. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
 
 1. Créer un bucket sur Cloudflare R2 ou Backblaze B2 (compte gratuit,
    quota vérifié le jour même sur la page de tarification, à noter dans le
