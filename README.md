@@ -10,6 +10,12 @@ faits (un grain chacune), 6 dimensions conformes, une table de mesures dédiée,
 un groupe de calcul temporel, drill-through, segments synchronisés, paramètre
 de champ.
 
+![Page « Scale » : 11,3 millions d'hectares brûlés depuis 2016](docs/img/report-scale.png)
+
+| Où l'Europe brûle | La France, à la commune et à la cause |
+|---|---|
+| ![Page « Where »](docs/img/report-where.png) | ![Page « France »](docs/img/report-france.png) |
+
 ## Ce que le projet refuse de faire
 
 C'est la contrainte de conception, plus que les visuels :
