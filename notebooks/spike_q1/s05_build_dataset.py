@@ -95,7 +95,9 @@ def build_spei(cells: pd.DataFrame) -> pd.DataFrame:
     pieces = []
     for path in sorted((config.DATA_RAW / "edo").glob("sem03_m_edo_*.nc")):
         ds = xr.open_dataset(path)
-        da = ds["sem03"].isel(band=0, drop=True)
+        # load the (small) grid in memory first: pointwise selection on the lazy
+        # NetCDF array reads element by element and takes tens of minutes
+        da = ds["sem03"].isel(band=0, drop=True).load()
         da = da.rename({"lon": "x", "lat": "y"})
         pts = da.sel(
             x=xr.DataArray(x, dims="cell"), y=xr.DataArray(y, dims="cell"), method="nearest"
