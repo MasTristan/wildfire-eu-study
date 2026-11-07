@@ -5,7 +5,8 @@
 Reuses the verdict pipeline: s06 functions, hyper-parameters from
 out/criterion_a.json, training 2019-2021, testing 2022 and 2023. Writes
 out/exploratory_spatial_blocks.csv, out/exploratory_ablation.csv,
-out/exploratory_new_ignitions.csv.
+out/exploratory_new_ignitions.csv, out/exploratory_seeds.csv and
+out/exploratory_seeds_summary.csv.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ from src.models import validation  # noqa: E402
 
 Y = "y_a"
 TAG = "a"
+N_SEEDS = 10
 
 
 def params_for(tuned: dict) -> dict:
@@ -42,14 +44,23 @@ def params_for(tuned: dict) -> dict:
 
 def fit(train: pd.DataFrame, feats: list[str], tuned: dict, rng: np.random.Generator) -> lgb.Booster:
     sub, w = s06.sample_train(train, Y, rng)
-    return lgb.train(params_for(tuned), lgb.Dataset(sub[feats], sub[Y], weight=w), num_boost_round=tuned["iterations"])
+    return fit_on(sub, w, feats, tuned)
+
+
+def fit_on(sub: pd.DataFrame, w: np.ndarray, feats: list[str], tuned: dict, seed: int = s06.SEED) -> lgb.Booster:
+    params = {**params_for(tuned), "seed": seed}
+    return lgb.train(params, lgb.Dataset(sub[feats], sub[Y], weight=w), num_boost_round=tuned["iterations"])
 
 
 def score(y: np.ndarray, p: np.ndarray) -> dict:
+    """PR-AUC depends on the base rate, so it is reported with its lift
+    (PR-AUC / base rate), the only form comparable across subsets."""
     if y.sum() == 0:
-        return {"n": int(len(y)), "positives": 0, "pr_auc": float("nan"), "brier": float("nan")}
-    return {"n": int(len(y)), "positives": int(y.sum()), "pr_auc": float(average_precision_score(y, p)),
-            "brier": float(brier_score_loss(y, p))}
+        return {"n": int(len(y)), "positives": 0, "base_rate": 0.0, "pr_auc": float("nan"),
+                "lift": float("nan"), "brier": float("nan")}
+    ap, base = float(average_precision_score(y, p)), float(y.mean())
+    return {"n": int(len(y)), "positives": int(y.sum()), "base_rate": base, "pr_auc": ap,
+            "lift": ap / base, "brier": float(brier_score_loss(y, p))}
 
 
 def main() -> None:
@@ -71,8 +82,13 @@ def main() -> None:
     train = df[df["year"].isin(common.TRAIN_YEARS)]
 
     # ---- E2 and E3: one fit per model on all training years ----------------
+    # One negative sample drawn exactly as s06 draws it (first draw of
+    # default_rng(SEED) on the training rows), shared by every model, so the
+    # refits reproduce section 3 of VERDICT.md. The first version drew a new
+    # sample per model, which is why its place-and-time PR-AUCs differed.
     rng = np.random.default_rng(s06.SEED)
-    boosters = {m: fit(train, fs, tuned_of[m], rng) for m, fs in feats.items()}
+    shared_sub, shared_w = s06.sample_train(train, Y, rng)
+    boosters = {m: fit_on(shared_sub, shared_w, fs, tuned_of[m]) for m, fs in feats.items()}
     rates = pd.Series(train[Y].to_numpy()).groupby(s06.danger_class(train["fwi"])).mean()
     abl_rows, new_rows = [], []
     lon, lat = grid.cell_centre(df["cell"].to_numpy())
@@ -128,11 +144,40 @@ def main() -> None:
                          "relative_drop": (u - s["pr_auc"]) / u if u else float("nan"),
                          "transfers": bool((u - s["pr_auc"]) / u <= 0.30) if u else False})
 
+    # ---- E4: sensitivity to the training sample (EXPLORATORY.md, addendum) ---
+    seed_rows = []
+    for seed in range(N_SEEDS):
+        rng = np.random.default_rng(seed)
+        sub, w = s06.sample_train(train, Y, rng)
+        models = {m: fit_on(sub, w, feats[m], tuned_of[m], seed=seed) for m in ("lgbm_fwi", "lgbm_fwi_space", "lgbm_full")}
+        for yr in common.TEST_YEARS:
+            te = df[df["year"] == yr]
+            yt = te[Y].to_numpy()
+            sc = {m: score(yt, b.predict(te[feats[m]])) for m, b in models.items()}
+            m3, m4 = sc["lgbm_fwi"], sc["lgbm_full"]
+            rel = (m3["brier"] - m4["brier"]) / m3["brier"]
+            gain = m4["pr_auc"] - m3["pr_auc"]
+            seed_rows.append({"seed": seed, "year": yr, "pr_auc_m3": m3["pr_auc"], "pr_auc_m3b": sc["lgbm_fwi_space"]["pr_auc"],
+                              "pr_auc_m4": m4["pr_auc"], "brier_rel_improvement": rel, "pr_auc_gain": gain,
+                              "passes": bool(rel >= 0.10 and gain >= 0.05)})
+        print(f"seed {seed + 1}/{N_SEEDS} done", flush=True)
+    seeds = pd.DataFrame(seed_rows)
+    per_seed = seeds.groupby("seed")["passes"].all()
+    summary = seeds.groupby("year").agg(
+        brier_rel_min=("brier_rel_improvement", "min"), brier_rel_median=("brier_rel_improvement", "median"),
+        brier_rel_max=("brier_rel_improvement", "max"), pr_auc_m4_min=("pr_auc_m4", "min"),
+        pr_auc_m4_median=("pr_auc_m4", "median"), pr_auc_m4_max=("pr_auc_m4", "max"),
+        share_passing_year=("passes", "mean"),
+    ).reset_index()
+    summary["share_seeds_passing_both_years"] = float(per_seed.mean())
+
     out = common.OUT
+    seeds.to_csv(out / "exploratory_seeds.csv", index=False)
+    summary.to_csv(out / "exploratory_seeds_summary.csv", index=False)
     pd.DataFrame(blk_rows).to_csv(out / "exploratory_spatial_blocks.csv", index=False)
     pd.DataFrame(abl_rows).to_csv(out / "exploratory_ablation.csv", index=False)
     pd.DataFrame(new_rows).to_csv(out / "exploratory_new_ignitions.csv", index=False)
-    for name in ("spatial_blocks", "ablation", "new_ignitions"):
+    for name in ("spatial_blocks", "ablation", "new_ignitions", "seeds_summary"):
         print(f"\n== {name} ==")
         print(pd.read_csv(out / f"exploratory_{name}.csv").round(4).to_string(index=False))
 
