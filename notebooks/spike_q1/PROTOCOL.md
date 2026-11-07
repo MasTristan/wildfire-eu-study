@@ -87,3 +87,16 @@ Reported but not decisive: the same criterion on label (b), block-bootstrap
    hourly dew point), daily max and mean wind speed, precipitation sum.
    Vapour pressure deficit and reference evapotranspiration, which only
    Open-Meteo served, are dropped. Nothing else changes.
+
+3. 2026-11-07, ERA5 source for the missing months. The CDS queue stopped
+   delivering at 67/120 monthly files ("Data Stores Service protection
+   measures"). The 53 missing months come from the ARCO-ERA5 public
+   store (gs://gcp-public-data-arco-era5, full_37-1h-0p25deg-chunk-1.zarr-v3),
+   the same ERA5 hourly reanalysis on the same 0.25 degree grid, reduced to
+   daily values by the same function (src/ingest/era5_daily.hourly_to_daily).
+   Identity was checked before any training on 2019-07 in both areas against
+   the CDS files: maximum absolute differences iberia [0.000551, 0.001160,
+   0.003044, 0.010323, 0.000532, 0.000186, 0.004195] and greece [0.000559,
+   0.001160, 0.003220, 0.009300, 0.000540, 0.000185, 0.002805] for [t2m_c,
+   t2m_max, rh, rh_min, wind, wind_mean, tp_mm], all within tolerance.
+   Variables, periods, models and decision criterion are unchanged.
