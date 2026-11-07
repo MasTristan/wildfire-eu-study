@@ -1,5 +1,5 @@
 {
-  "frozen_at": "2026-10-15T09:41:24+00:00",
+  "frozen_at": "2026-11-07T23:24:49+00:00",
   "tag": "v1.0",
   "tables": {
     "dim_date": {
@@ -141,7 +141,8 @@
         "mean_frp",
         "max_frp"
       ],
-      "sha256": "517149b733b888721b693be9a86fde9a01268afc575e11b0d2b5cc769f0119fb"
+      "sha256": "24d43204b30e344428480c1c835aa062dd86882152ca7c8b03fb4d6a9b1f1e58",
+      "note": "rebuilt 2026-11 with the FIRMS window fix (src/ingest/firms.py window_url); the original v1.0 asset gold-v1.zip is left untouched, this reference is gold-v1-ref-2026-11.zip on the same release"
     },
     "fact_fireweather_countrymonth": {
       "rows": 6076,
