@@ -30,5 +30,5 @@ jobs:
 
       - name: requirements.txt mirrors uv.lock
         run: |
-          uv export --no-hashes --no-dev --format requirements-txt -o /tmp/req.txt
-          diff -u requirements.txt /tmp/req.txt
+          uv export --no-hashes --no-dev --format requirements-txt -o requirements.txt
+          git diff --exit-code requirements.txt
