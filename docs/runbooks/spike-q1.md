@@ -1,6 +1,6 @@
 # Procédure : terminer le spike Q1
 
-Exécution : poste local Windows natif, sur la branche `v2-platform`. Chaque étape donne la commande, le
+Exécution : poste local Windows natif, sur la branche `ccr-9f718573-2htm0s` (recréée depuis `main` le 2026-11-07). Chaque étape donne la commande, le
 résultat attendu, la vérification et la conduite à tenir en cas d'écart.
 Règle générale : une étape dont la vérification échoue se relance une fois
 à l'identique ; si elle échoue encore, on s'arrête et on rapporte le message
@@ -10,15 +10,18 @@ de modélisation.
 ## 0. État de départ
 
 ```powershell
-git pull --ff-only
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
 git log --oneline -1
 uv sync
 uv run pytest -q
 ```
 
-Attendu : la branche est au moins à `9169409`, `uv sync` ne signale aucune
-erreur, pytest affiche `N passed, M skipped` sans `failed`. Si un test échoue,
-rapporter sa sortie complète et s'arrêter.
+Attendu : `src/ingest/era5_arco.py` et `notebooks/spike_q1/s02c_download_era5_arco.py`
+existent, `uv sync` ne signale aucune erreur, pytest affiche
+`N passed, M skipped` sans `failed`. Si un test échoue, rapporter sa
+sortie complète et s'arrêter. Les fichiers sous `data/` ne sont pas
+touchés par le changement de branche : ils sont hors git.
 
 ## 1. Météo journalière (CDS horaire, amendement 2)
 
@@ -57,7 +60,8 @@ moins de 74 fichiers. Sinon, laisser l'étape 1 finir et passer à l'étape 2.
 2. Vérifier le store :
 
 ```powershell
-git pull --ff-only
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
 uv sync
 uv run python notebooks/spike_q1/s02c_download_era5_arco.py --check
 ```
@@ -197,7 +201,7 @@ modification des seuils.
 git add notebooks/spike_q1/out notebooks/spike_q1/VERDICT.md
 git status --short
 git commit -m "spike(q1): verdict, metrics, reliability, concordance and timings"
-git push origin v2-platform
+git push origin ccr-9f718573-2htm0s
 git log --oneline -1
 ```
 
@@ -231,7 +235,7 @@ Puis éditer `data/reference/v1/manifest.json` : ajouter sous
 ```powershell
 git add data/reference/v1/manifest.json
 git commit -m "chore(parity): re-freeze fact_hotspot_countrymonth after the FIRMS window fix"
-git push origin v2-platform
+git push origin ccr-9f718573-2htm0s
 gh release upload v1.0 dist/gold-v1.zip --clobber
 ```
 
