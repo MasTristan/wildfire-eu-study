@@ -249,3 +249,51 @@ Attendu : `Wrote data/interim/gwis_gfas_emissions.csv (... rows, 2003-01 to 20xx
 Si HTTP 404 : ouvrir `https://gwis.jrc.ec.europa.eu/apps/country.profile/` dans
 un navigateur, relever le nom exact du fichier d'émissions GFAS proposé au
 téléchargement, et le rapporter sans modifier le code.
+
+## 9. Analyses exploratoires après le verdict (ADR 0009)
+
+Préalable : `notebooks/spike_q1/EXPLORATORY.md` est commité, et les sorties
+du verdict sont dans `out/`. Aucun fichier existant de `out/` n'est
+modifié par cette étape.
+
+```powershell
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+uv run python notebooks/spike_q1/s08_exploratory.py
+```
+
+Durée : dix à trente minutes, avec cinq plis spatiaux, trois modèles et
+deux années. Le script reconstruit en mémoire les modèles du verdict avec
+les hyperparamètres de `out/criterion_a.json`, sans nouveau réglage.
+
+Attendu : trois nouveaux fichiers, et rien d'autre de modifié dans `out/`.
+
+- `out/exploratory_spatial_blocks.csv` : 6 lignes, trois modèles et deux
+  années, avec `pr_auc`, `pr_auc_unblocked`, `relative_drop` et `transfers`.
+- `out/exploratory_ablation.csv` : 12 lignes, six modèles et deux années,
+  avec `share_of_3b_pr_auc`.
+- `out/exploratory_new_ignitions.csv` : 24 lignes, trois sous-ensembles,
+  quatre modèles et deux années, avec `share_of_positives`.
+
+Vérification :
+
+```powershell
+git status --short notebooks/spike_q1/out
+```
+
+Attendu : seuls les trois fichiers `exploratory_*.csv` apparaissent, en
+nouveaux. Un fichier du verdict modifié : arrêt et rapport.
+
+Ajouter à la fin de `VERDICT.md` une section `## 11. Exploratory analyses
+(post-verdict, not decisive)` qui recopie les trois tableaux en Markdown. Y
+ajouter une phrase par analyse, appliquant la règle de lecture écrite dans
+`EXPLORATORY.md`, sans autre interprétation. Puis :
+
+```powershell
+git add notebooks/spike_q1/out/exploratory_*.csv notebooks/spike_q1/VERDICT.md
+git commit -m "docs(spike): exploratory analyses E1 to E3 after the verdict"
+git push origin ccr-9f718573-2htm0s
+```
+
+Aucune ligne d'attribution dans le message de commit. Rapporter les trois
+tableaux et l'empreinte du commit.

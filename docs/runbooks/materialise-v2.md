@@ -110,6 +110,8 @@ l'année et continuer.
 
 ## 6. Feature store
 
+> **Non exécutée en GO réduit (ADR 0009).** Le feature store Europe n'est plus matérialisé : il ne servait que Q1 Europe et la prévision opérationnelle, toutes deux abandonnées. Passer directement à l'étape suivante.
+
 ### 6a. Composantes FWI complètes, 0,25°, Europe
 
 ```powershell
@@ -193,6 +195,8 @@ d'écran `docs/img/mlflow-runs.png`. Ctrl+C.
 
 ## 7b. Q1 sur le feature store (après le verdict du spike)
 
+> **Non exécutée en GO réduit (ADR 0009).** Le feature store Europe n'est plus matérialisé : il ne servait que Q1 Europe et la prévision opérationnelle, toutes deux abandonnées. Passer directement à l'étape suivante.
+
 ```powershell
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/ignition_eval"
 ```
@@ -266,7 +270,7 @@ Cocher chaque ligne dans le rapport final :
 - [ ] `make dbt-build` : 13 modèles, tous les tests `PASS`.
 - [ ] `tests/test_gold_parity.py` vert sur `data/lake/gold/star`.
 - [ ] Graphe Dagster complet capturé, checks gold verts.
-- [ ] `features/daily_2016.parquet` à `daily_2025.parquet` présents.
+- [ ] Spike Q1 : `out/exploratory_*.csv` présents et section 11 de `VERDICT.md` écrite (procédure du spike, étape 9).
 - [ ] `tail_risk_country.parquet` et `attribution_countryyear.parquet` présents avec `run_id`.
 - [ ] MLflow : deux expériences, captures.
 - [ ] Power BI actualisé sur `gold/star`, chiffres inchangés.

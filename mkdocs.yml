@@ -36,6 +36,7 @@ nav:
       - 0006 Open-Meteo: adr/0006-era5-daily-via-open-meteo.md
       - 0007 ERA5 horaire CDS: adr/0007-era5-hourly-cds-monthly.md
       - 0008 Repli ARCO-ERA5: adr/0008-arco-era5-fallback.md
+      - 0009 Périmètre après le spike: adr/0009-q1-scope-after-reduced-go.md
   - Procédures:
       - Matérialisation v2: runbooks/materialise-v2.md
       - Spike Q1: runbooks/spike-q1.md
