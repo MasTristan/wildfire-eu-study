@@ -278,7 +278,7 @@ Reading: variants keep 72 % and 76 % of 3b without lags (3c), 91 % and 93 % with
 | 2023 | neighbourhood_new_30d | lgbm_fwi_space | 358540 | 252 | 0.0007 | 0.0137 | 19.5 | 0.0007 | 0.181 |
 | 2023 | neighbourhood_new_30d | lgbm_full | 358540 | 252 | 0.0007 | 0.0188 | 26.7 | 0.0007 | 0.181 |
 
-Reading: on cells with no ignition in the previous 30 days (38 % to 39 % of test positives) model 4 keeps +0.014 (2022) and +0.021 (2023) of PR-AUC over model 3, against +0.136 and +0.182 on all days, and on the stricter neighbourhood subset (16 % to 18 % of positives) +0.003 and +0.016, so it does not keep most of its absolute advantage; in lift, model 4 stays 2.3 to 7.4 times above model 3 on the new-ignition subsets (all days: 10.5 and 5.3 times).
+Reading: on cells with no ignition in the previous 30 days (38 % to 39 % of test positives) model 4 keeps +0.014 (2022) and +0.021 (2023) of PR-AUC over model 3, against +0.136 and +0.182 on all days, and on the stricter neighbourhood subset (16 % to 18 % of positives) +0.003 and +0.016, so it does not keep most of its absolute advantage; in lift, model 4 stays 2.6 to 7.4 times above model 3 on the new-ignition subsets (all days: 10.5 and 5.3 times).
 
 ### E4. Sensitivity to the training sample (10 seeds)
 
