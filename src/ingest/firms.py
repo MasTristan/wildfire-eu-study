@@ -3,7 +3,7 @@
 Scope decision (documented, not silently assumed): hotspots are ingested for
 the CURRENT CALENDAR YEAR only (year-to-date), matching the "saison en cours
 / live" page this fact serves (docs/dashboard-spec.md P1). Full multi-year
-hotspot history is explicitly phase 2 in CLAUDE.md's own roadmap and would
+hotspot history is explicitly phase 2 in the project roadmap and would
 multiply the request count for a facet nobody views historically (hotspots
 are never compared to burnt-area hectares anyway, see data model guardrail).
 Sensor scope: VIIRS_SNPP only (both its NRT and SP/science-quality feeds,
@@ -60,16 +60,26 @@ def _data_availability(source: str) -> tuple[date, date]:
     return date.fromisoformat(min_d), date.fromisoformat(max_d)
 
 
-def _fetch_window(source: str, end_date: date, day_range: int) -> pd.DataFrame:
+def window_url(source: str, start_date: date, day_range: int, map_key: str | None = None) -> str:
+    """Area CSV URL for `day_range` days STARTING at `start_date`.
+
+    The FIRMS area API path is .../{SOURCE}/{bbox}/{DAY_RANGE}/{DATE} where
+    DATE is the first day of the window, not the last. Until 2026-10-15 the
+    caller passed the window end, which shifted every window forward by
+    day_range - 1 days: the first days of each year were never fetched and the
+    source choice (SP vs NRT) was made on the wrong dates. fact_hotspot_countrymonth
+    built before that date carries the defect; see docs/data-model.md.
+    """
     w, s, e, n = _BBOX
-    url = (
-        f"{config.FIRMS_AREA_CSV_URL}/{config.FIRMS_MAP_KEY}/{source}/"
-        f"{w},{s},{e},{n}/{day_range}/{end_date.isoformat()}"
-    )
-    resp = requests.get(url, timeout=_TIMEOUT)
+    key = config.FIRMS_MAP_KEY if map_key is None else map_key
+    return f"{config.FIRMS_AREA_CSV_URL}/{key}/{source}/{w},{s},{e},{n}/{day_range}/{start_date.isoformat()}"
+
+
+def _fetch_window(source: str, start_date: date, day_range: int) -> pd.DataFrame:
+    resp = requests.get(window_url(source, start_date, day_range), timeout=_TIMEOUT)
     resp.raise_for_status()
     if resp.text.startswith("Invalid") or resp.text.startswith("Error"):
-        raise RuntimeError(f"FIRMS API error for {source} {end_date}: {resp.text[:200]}")
+        raise RuntimeError(f"FIRMS API error for {source} {start_date}: {resp.text[:200]}")
     return pd.read_csv(io.StringIO(resp.text))
 
 
@@ -90,7 +100,7 @@ def fetch_year_to_date(year: int) -> pd.DataFrame:
         source = "VIIRS_SNPP_SP" if window_end <= sp_max else "VIIRS_SNPP_NRT"
         day_range = (window_end - cursor).days + 1
         try:
-            df = _fetch_window(source, window_end, day_range)
+            df = _fetch_window(source, cursor, day_range)
         except RuntimeError as exc:
             print(f"    {cursor}..{window_end} ({source}): SKIPPED ({exc})")
             cursor = window_end + timedelta(days=1)
@@ -109,12 +119,51 @@ def fetch_year_to_date(year: int) -> pd.DataFrame:
 
 def assign_country(points: pd.DataFrame) -> pd.DataFrame:
     countries = geo_ref.load_country_polygons()
-    geom = [Point(xy) for xy in zip(points["longitude"], points["latitude"])]
+    geom = [Point(xy) for xy in zip(points["longitude"], points["latitude"], strict=False)]
     gpts = gpd.GeoDataFrame(points, geometry=geom, crs="EPSG:4326")
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
         joined = gpd.sjoin(gpts, countries, how="left", predicate="within")
     return joined.drop(columns=["geometry", "index_right"], errors="ignore")
+
+
+DETECTION_KEY = ["latitude", "longitude", "acq_date", "acq_time", "satellite"]
+
+
+def dedupe_detections(points: pd.DataFrame) -> pd.DataFrame:
+    """One row per detection. Raw windows can overlap (a window re-fetched
+    after a quota stop, or NRT and SP covering the same days), and the same
+    detection must never be counted twice."""
+    key = [c for c in DETECTION_KEY if c in points.columns]
+    return points.drop_duplicates(subset=key).reset_index(drop=True)
+
+
+def monthly_from_points(points: pd.DataFrame) -> pd.DataFrame:
+    """country x month x source aggregate from detections that carry country_key."""
+    pts = points.dropna(subset=["country_key"]).copy()
+    if pts.empty:
+        return pd.DataFrame(columns=["country_key", "month_key", "source_key", "hotspot_count", "mean_frp", "max_frp"])
+    pts["month_key"] = pd.to_datetime(pts["acq_date"]).values.astype("datetime64[M]")
+    pts["source_key"] = pts.get("source_key", "FIRMS_VIIRS")
+    pts["source_key"] = pts["source_key"].fillna("FIRMS_VIIRS")
+    return pts.groupby(["country_key", "month_key", "source_key"], as_index=False).agg(
+        hotspot_count=("latitude", "count"),
+        mean_frp=("frp", "mean"),
+        max_frp=("frp", "max"),
+    )
+
+
+def aggregate_raw(raw_dir: Path | None = None) -> pd.DataFrame:
+    """fact_hotspot_countrymonth over EVERY raw window on disk (all years),
+    the v2 semantics; `build(year)` keeps the v1 year-to-date behaviour."""
+    raw_dir = raw_dir or config.DATA_RAW / "firms"
+    files = sorted(raw_dir.glob("viirs_*.csv"))
+    if not files:
+        raise FileNotFoundError(f"no raw FIRMS windows under {raw_dir}")
+    frames = [pd.read_csv(f) for f in files]
+    points = dedupe_detections(pd.concat([f for f in frames if not f.empty], ignore_index=True))
+    points["source_key"] = "FIRMS_VIIRS"
+    return monthly_from_points(assign_country(points))
 
 
 def build(year: int | None = None) -> Path:

@@ -34,19 +34,11 @@ powerbi/.render/
 # builds them is not shared or documented publicly.
 powerbi/scripts/
 powerbi/specs/
-powerbi/.claude/
 docs/powerbi-spec.md
 docs/specs/
 
-# AI instruction files: never commit if the repo becomes public.
-CLAUDE.md
-CLAUDE.local.md
+# Private working notes
 docs/internal/
-PLAN.md
-IMPROVEMENTS.md
-.claude/rules/
-**/.claude/skills/**/SKILL.md
-**/.claude/settings.local.json
 
 # Personal publishing tooling: not part of the ETL pipeline or the Power BI
 # project, stays local.
@@ -58,3 +50,20 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# v2: parity reference (downloaded from the v1.0 release asset) and uv venv
+data/reference/*
+!data/reference/.gitkeep
+.venv/
+.mypy_cache/
+!data/reference/v1/
+data/reference/v1/*
+!data/reference/v1/manifest.json
+
+# v2 lake and orchestration state
+data/lake/
+.dagster/
+
+# MLflow file store (ADR 0004)
+mlruns/
+site/

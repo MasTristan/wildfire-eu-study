@@ -56,16 +56,13 @@ def _session_search(annee_deb: int, annee_fin: int) -> tuple[requests.Session, i
     whether the range needs splitting before hitting /zip (30k row cap)."""
     sess = requests.Session()
     sess.get(f"{config.BDIFF_HOST}/incendies", timeout=_TIMEOUT)
-    resp = sess.get(
-        f"{config.BDIFF_HOST}/incendies",
-        params={
-            "if[periodeAnnees][anneeDeb]": annee_deb,
-            "if[periodeAnnees][anneeFin]": annee_fin,
-            "if[fr]": 1,
-            "if[submit]": "",
-        },
-        timeout=_TIMEOUT,
-    )
+    params: dict[str, str | int] = {
+        "if[periodeAnnees][anneeDeb]": annee_deb,
+        "if[periodeAnnees][anneeFin]": annee_fin,
+        "if[fr]": 1,
+        "if[submit]": "",
+    }
+    resp = sess.get(f"{config.BDIFF_HOST}/incendies", params=params, timeout=_TIMEOUT)
     resp.raise_for_status()
     m = re.search(r"(\d[\d\s]*) incendies", resp.text)
     count = int(m.group(1).replace(" ", "")) if m else -1
@@ -122,7 +119,7 @@ def parse_incendies_csv(raw_bytes: bytes) -> list[dict]:
             continue
         if len(row) != len(_COLUMNS):
             continue  # malformed/trailing line, skip rather than guess
-        rows.append(dict(zip(_COLUMNS, row)))
+        rows.append(dict(zip(_COLUMNS, row, strict=False)))
     return rows
 
 
@@ -159,6 +156,43 @@ def build(annee_deb: int, annee_fin: int) -> Path:
         writer.writerows(all_rows)
     print(f"Wrote {out} ({len(all_rows)} total records)")
     return out
+
+
+def rows_from_raw(raw_dir: Path | None = None) -> list[dict]:
+    """Parse every incendies_*.zip on disk and deduplicate on (year, fire_number):
+    the partition-safe path, one zip per year downloaded by fetch_zip(y, y)."""
+    raw_dir = raw_dir or config.DATA_RAW / "bdiff"
+    seen: set[tuple[str, str]] = set()
+    rows: list[dict] = []
+    for path in sorted(raw_dir.glob("incendies_*.zip")):
+        with zipfile.ZipFile(path) as zf:
+            parsed = parse_incendies_csv(zf.read("Incendies.csv"))
+        for r in parsed:
+            key = (r["year"], r["fire_number"])
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append(r)
+    return rows
+
+
+def write_interim(rows: list[dict]) -> Path:
+    out = config.DATA_INTERIM / "bdiff_incendies.csv"
+    with out.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=_COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return out
+
+
+def fetch_year(year: int) -> Path:
+    """Download one year's zip to data/raw/bdiff if absent (resumable partition)."""
+    raw_dir = config.DATA_RAW / "bdiff"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    target = raw_dir / f"incendies_{year}_{year}.zip"
+    if not (target.exists() and target.stat().st_size > 0):
+        target.write_bytes(fetch_zip(year, year))
+    return target
 
 
 if __name__ == "__main__":

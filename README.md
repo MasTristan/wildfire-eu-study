@@ -10,6 +10,12 @@ faits (un grain chacune), 6 dimensions conformes, une table de mesures dédiée,
 un groupe de calcul temporel, drill-through, segments synchronisés, paramètre
 de champ.
 
+![Page « Scale » : 11,3 millions d'hectares brûlés depuis 2016](docs/img/report-scale.png)
+
+| Où l'Europe brûle | La France, à la commune et à la cause |
+|---|---|
+| ![Page « Where »](docs/img/report-where.png) | ![Page « France »](docs/img/report-france.png) |
+
 ## Ce que le projet refuse de faire
 
 C'est la contrainte de conception, plus que les visuels :
@@ -29,7 +35,9 @@ C'est la contrainte de conception, plus que les visuels :
 
 ## Architecture
 
-Vue détaillée dans [ARCHITECTURE.md](ARCHITECTURE.md).
+Vue détaillée dans [ARCHITECTURE.md](ARCHITECTURE.md). La plateforme v2 en
+construction (lake, Dagster, dbt) est décrite dans [docs/platform.md](docs/platform.md), et ses décisions
+d'architecture dans [docs/adr/](docs/adr/README.md).
 
 ```
 src/ingest/       une ingestion par source : EFFIS (agrégats et périmètres),
@@ -44,16 +52,17 @@ docs/             modèle de données, catalogue de sources
 
 ## Démarrage
 
-```bash
-pip install -r requirements.txt
-```
+Les versions sont verrouillées dans `uv.lock` ; `requirements.txt` en est un
+export pour qui préfère pip.
 
 ```bash
-pytest -q
+uv sync          # ou : pip install -r requirements.txt
+make check       # ruff, mypy, pytest
 ```
 
 Les tests passent sans réseau et sans données : ceux qui ont besoin des parquets
-se sautent proprement.
+se sautent proprement. `make validate` applique les contrats pandera de
+`src/contracts.py` aux parquets produits.
 
 Pour reconstruire la couche données de bout en bout, dans cet ordre :
 
