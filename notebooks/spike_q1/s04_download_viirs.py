@@ -1,7 +1,7 @@
 """Step 1d: VIIRS S-NPP hotspots 2019-2023 (science quality, SP) for the three countries.
 
 Raw material for the label variant (b). FIRMS area API, max day_range = 5 for this
-key (see CLAUDE.md pitfalls); availability is read from /api/data_availability.
+key (an account limit, not a documented API cap); availability is read from /api/data_availability.
 Resumable per (area, 5-day window).
 
     uv run python notebooks/spike_q1/s04_download_viirs.py

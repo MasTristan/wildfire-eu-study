@@ -3,7 +3,7 @@
 Scope decision (documented, not silently assumed): hotspots are ingested for
 the CURRENT CALENDAR YEAR only (year-to-date), matching the "saison en cours
 / live" page this fact serves (docs/dashboard-spec.md P1). Full multi-year
-hotspot history is explicitly phase 2 in CLAUDE.md's own roadmap and would
+hotspot history is explicitly phase 2 in the project roadmap and would
 multiply the request count for a facet nobody views historically (hotspots
 are never compared to burnt-area hectares anyway, see data model guardrail).
 Sensor scope: VIIRS_SNPP only (both its NRT and SP/science-quality feeds,

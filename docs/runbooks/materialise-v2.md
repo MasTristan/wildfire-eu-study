@@ -1,7 +1,6 @@
 # Procédure : matérialiser la v2 de bout en bout
 
-Exécutant : une session Claude Code locale, Windows natif, worktree de la
-branche `ccr-9f718573-2htm0s`, après la procédure du spike Q1. Même règle :
+Exécution : poste local Windows natif, sur la branche `v2-platform`, après la procédure du spike Q1. Même règle :
 commande, attendu, vérification, conduite en cas d'écart ; une relance à
 l'identique, puis arrêt et rapport avec l'erreur exacte. Les chemins de
 données sont ceux de `src/lake.py` : silver = `data/processed`, gold =
@@ -251,7 +250,7 @@ uv run dvc add data/lake/gold/star data/lake/gold/model_out data/lake/gold/featu
 uv run dvc push
 git add data/lake/gold/*.dvc .dvc/config
 git commit -m "data: track gold star, features and model outputs with DVC"
-git push origin ccr-9f718573-2htm0s
+git push origin v2-platform
 ```
 
 Attendu : `dvc push` termine sans erreur et `dvc status -c` répond

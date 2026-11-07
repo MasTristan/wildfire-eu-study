@@ -1,7 +1,6 @@
 # Procédure : terminer le spike Q1
 
-Exécutant : une session Claude Code locale, Windows natif, dans le worktree
-de la branche `ccr-9f718573-2htm0s`. Chaque étape donne la commande, le
+Exécution : poste local Windows natif, sur la branche `v2-platform`. Chaque étape donne la commande, le
 résultat attendu, la vérification et la conduite à tenir en cas d'écart.
 Règle générale : une étape dont la vérification échoue se relance une fois
 à l'identique ; si elle échoue encore, on s'arrête et on rapporte le message
@@ -127,7 +126,7 @@ modification des seuils.
 git add notebooks/spike_q1/out notebooks/spike_q1/VERDICT.md
 git status --short
 git commit -m "spike(q1): verdict, metrics, reliability, concordance and timings"
-git push origin ccr-9f718573-2htm0s
+git push origin v2-platform
 git log --oneline -1
 ```
 
@@ -161,7 +160,7 @@ Puis éditer `data/reference/v1/manifest.json` : ajouter sous
 ```powershell
 git add data/reference/v1/manifest.json
 git commit -m "chore(parity): re-freeze fact_hotspot_countrymonth after the FIRMS window fix"
-git push origin ccr-9f718573-2htm0s
+git push origin v2-platform
 gh release upload v1.0 dist/gold-v1.zip --clobber
 ```
 
