@@ -206,3 +206,75 @@ check before trusting model 3b.
 Reproduction: `notebooks/spike_q1/s05_build_dataset.py`, then
 `s06_train_evaluate.py a b`, then `s07_concordance.py`. Outputs in
 `notebooks/spike_q1/out/`.
+
+## 11. Exploratory analyses (post-verdict, not decisive)
+
+Pre-declared in `EXPLORATORY.md` (2026-11-08), run by `s08_exploratory.py` on
+label (a) with the hyper-parameters of `out/criterion_a.json`. None of them
+changes the verdict of section 1. The "unblocked" and "all" PR-AUC values below
+come from a refit inside `s08_exploratory.py` and differ from section 3 for the
+models that use place and time (2022, model 4: 0.169 here against 0.150; model
+3b: 0.141 against 0.135; model 3 is identical). The cause was not investigated.
+
+### E1. Spatial block control (2 degree blocks, 5 folds, pooled)
+
+| Year | Model | PR-AUC blocked | PR-AUC unblocked | Relative drop | Transfers |
+|---|---|---|---|---|---|
+| 2022 | lgbm_full | 0.1568 | 0.1691 | 7.3 % | True |
+| 2022 | lgbm_fwi | 0.0097 | 0.0143 | 32.4 % | False |
+| 2022 | lgbm_fwi_space | 0.1456 | 0.1407 | -3.5 % | True |
+| 2023 | lgbm_full | 0.2176 | 0.2452 | 11.3 % | True |
+| 2023 | lgbm_fwi | 0.0263 | 0.0419 | 37.3 % | False |
+| 2023 | lgbm_fwi_space | 0.2233 | 0.2112 | -5.7 % | True |
+
+Rule: within 30 percent of the unblocked PR-AUC means the skill transfers to unseen cells. Models 3b and 4 transfer (drops of 7.3 % and 11.3 % for model 4, none for 3b); model 3 does not (drops of 32.4 % and 37.3 %), and its blocked PR-AUC is 0.010 and 0.026.
+
+### E2. Ablation of the place-and-time block
+
+| Year | Model | PR-AUC | Brier | Share of 3b PR-AUC |
+|---|---|---|---|---|
+| 2022 | lgbm_fwi | 0.0143 | 0.00383 | 0.102 |
+| 2022 | lgbm_fwi_space | 0.1407 | 0.00361 | 1.0 |
+| 2022 | 3c_no_lags | 0.0997 | 0.00366 | 0.708 |
+| 2022 | 3d_fwi_lags | 0.1459 | 0.00351 | 1.037 |
+| 2022 | 3e_no_fwi | 0.1129 | 0.0036 | 0.802 |
+| 2022 | lgbm_full | 0.1691 | 0.0035 | 1.201 |
+| 2023 | lgbm_fwi | 0.0419 | 0.00309 | 0.199 |
+| 2023 | lgbm_fwi_space | 0.2112 | 0.00278 | 1.0 |
+| 2023 | 3c_no_lags | 0.1562 | 0.00285 | 0.74 |
+| 2023 | 3d_fwi_lags | 0.2187 | 0.0027 | 1.036 |
+| 2023 | 3e_no_fwi | 0.165 | 0.00281 | 0.781 |
+| 2023 | lgbm_full | 0.2452 | 0.00265 | 1.161 |
+
+Without lags the model keeps 71 % and 74 % of 3b (3c), with FWI and lags only it keeps 104 % (3d), and without FWI it keeps 80 % and 78 % (3e): the gain is carried mainly by what burnt recently, with a smaller part from where, and largely does not depend on fire weather.
+
+### E3. New ignitions only
+
+| Year | Subset | Model | Rows | Positives | PR-AUC | Brier | Share of positives |
+|---|---|---|---|---|---|---|---|
+| 2022 | all | danger_class | 443475 | 1709 | 0.0047 | 0.00384 | 1.0 |
+| 2022 | all | lgbm_fwi | 443475 | 1709 | 0.0143 | 0.00383 | 1.0 |
+| 2022 | all | lgbm_fwi_space | 443475 | 1709 | 0.1407 | 0.00361 | 1.0 |
+| 2022 | all | lgbm_full | 443475 | 1709 | 0.1691 | 0.0035 | 1.0 |
+| 2022 | cell_new_30d | danger_class | 415036 | 675 | 0.003 | 0.00162 | 0.395 |
+| 2022 | cell_new_30d | lgbm_fwi | 415036 | 675 | 0.0041 | 0.00163 | 0.395 |
+| 2022 | cell_new_30d | lgbm_fwi_space | 415036 | 675 | 0.0158 | 0.00161 | 0.395 |
+| 2022 | cell_new_30d | lgbm_full | 415036 | 675 | 0.0176 | 0.00161 | 0.395 |
+| 2022 | neighbourhood_new_30d | danger_class | 329676 | 272 | 0.002 | 0.00083 | 0.159 |
+| 2022 | neighbourhood_new_30d | lgbm_fwi | 329676 | 272 | 0.0019 | 0.00083 | 0.159 |
+| 2022 | neighbourhood_new_30d | lgbm_fwi_space | 329676 | 272 | 0.0041 | 0.00082 | 0.159 |
+| 2022 | neighbourhood_new_30d | lgbm_full | 329676 | 272 | 0.005 | 0.00082 | 0.159 |
+| 2023 | all | danger_class | 443475 | 1393 | 0.0031 | 0.00313 | 1.0 |
+| 2023 | all | lgbm_fwi | 443475 | 1393 | 0.0419 | 0.00309 | 1.0 |
+| 2023 | all | lgbm_fwi_space | 443475 | 1393 | 0.2112 | 0.00278 | 1.0 |
+| 2023 | all | lgbm_full | 443475 | 1393 | 0.2452 | 0.00265 | 1.0 |
+| 2023 | cell_new_30d | danger_class | 423092 | 532 | 0.0015 | 0.00126 | 0.382 |
+| 2023 | cell_new_30d | lgbm_fwi | 423092 | 532 | 0.0076 | 0.00125 | 0.382 |
+| 2023 | cell_new_30d | lgbm_fwi_space | 423092 | 532 | 0.0282 | 0.00124 | 0.382 |
+| 2023 | cell_new_30d | lgbm_full | 423092 | 532 | 0.0272 | 0.00124 | 0.382 |
+| 2023 | neighbourhood_new_30d | danger_class | 358540 | 252 | 0.001 | 0.0007 | 0.181 |
+| 2023 | neighbourhood_new_30d | lgbm_fwi | 358540 | 252 | 0.0026 | 0.00071 | 0.181 |
+| 2023 | neighbourhood_new_30d | lgbm_fwi_space | 358540 | 252 | 0.0165 | 0.0007 | 0.181 |
+| 2023 | neighbourhood_new_30d | lgbm_full | 358540 | 252 | 0.0124 | 0.0007 | 0.181 |
+
+On cells with no ignition in the previous 30 days (38 % to 39 % of test positives) model 4 keeps +0.014 (2022) and +0.020 (2023) of PR-AUC over model 3, against +0.155 and +0.203 on all days, and on the stricter neighbourhood subset (16 % to 18 % of positives) +0.003 and +0.010: it does not keep most of its advantage, so most of the skill measured in section 3 is persistence of the same fire activity.
