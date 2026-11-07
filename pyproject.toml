@@ -30,6 +30,7 @@ dependencies = [
     "statsmodels==0.15.0",
     "dvc==3.67.1",
     "dvc-s3==3.3.0",
+    "numcodecs==0.15.1",
 ]
 
 [dependency-groups]

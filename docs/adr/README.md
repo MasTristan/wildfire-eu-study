@@ -13,3 +13,4 @@ accepté, remplacé par NNNN.
 | [0005](0005-windows-native-wsl-pymc.md) | Pipeline sous Windows natif, WSL2 réservé à PyMC | proposé |
 | [0006](0006-era5-daily-via-open-meteo.md) | ERA5 journalier via l'archive Open-Meteo | remplacé par 0007 à l'échelle du maillage |
 | [0007](0007-era5-hourly-cds-monthly.md) | ERA5 journalier réduit localement depuis l'horaire CDS, une requête par mois | accepté |
+| [0008](0008-arco-era5-fallback.md) | ARCO-ERA5 en repli du CDS pour l'horaire ERA5, sous vérification d'identité | accepté |

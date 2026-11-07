@@ -46,6 +46,77 @@ les 120 secondes par le script lui-même. Un fichier horaire corrompu (erreur
 NetCDF à l'ouverture) : supprimer `data/raw/spike_q1/era5h_<zone>_<année>_<mois>.nc`
 et relancer la commande.
 
+## 1b. Repli ARCO-ERA5 (seulement si l'étape 1 a livré moins de 74 fichiers à l'échéance)
+
+Condition d'entrée : à l'échéance fixée, le comptage de l'étape 1 donne
+moins de 74 fichiers. Sinon, laisser l'étape 1 finir et passer à l'étape 2.
+
+1. Arrêter le processus s02b en cours. Ne pas supprimer les fichiers
+   `era5_daily_*.nc` déjà obtenus : ce sont les références de vérification.
+
+2. Vérifier le store :
+
+```powershell
+git pull --ff-only
+uv sync
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --check
+```
+
+Attendu : `ARCO store layout ok, final data to 2026-06-30`. Toute autre
+sortie : arrêt et rapport.
+
+3. Vérification bloquante sur un mois déjà obtenu par le CDS, en Ibérie
+   puis en Grèce (choisir un mois d'été présent sur disque, par exemple 2019-07) :
+
+```powershell
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --verify 2019 07 iberia
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --verify 2019 07 greece
+```
+
+Attendu : un tableau de sept lignes (`t2m_c, t2m_max, rh, rh_min, wind, wind_mean, tp_mm`),
+`passes` vrai partout, et la dernière ligne `VERIFY PASS`, pour les deux
+zones. Tolérances : 0,01 °C, 0,1 point d'humidité, 0,01 m/s, 0,01 mm.
+
+Si `VERIFY FAIL` : recopier le tableau dans le rapport, s'arrêter, ne pas
+écrire d'amendement. Si seul `tp_mm` échoue avec un écart d'environ un
+jour de décalage (valeurs du jour suivant), le rapporter tel quel : c'est
+une différence de convention d'horodatage à trancher côté cloud.
+
+4. Écrire l'amendement 3 à la fin de `notebooks/spike_q1/PROTOCOL.md`,
+   **texte exact**, en remplaçant les crochets :
+
+```
+3. [AAAA-MM-JJ], ERA5 source for the missing months. The CDS queue stopped
+   delivering at [N]/120 monthly files ("Data Stores Service protection
+   measures"). The [120 - N] missing months come from the ARCO-ERA5 public
+   store (gs://gcp-public-data-arco-era5, full_37-1h-0p25deg-chunk-1.zarr-v3),
+   the same ERA5 hourly reanalysis on the same 0.25 degree grid, reduced to
+   daily values by the same function (src/ingest/era5_daily.hourly_to_daily).
+   Identity was checked before any training on [mois] in both areas against
+   the CDS files: maximum absolute differences [t2m_c, t2m_max, rh, rh_min,
+   wind, wind_mean, tp_mm], all within tolerance. Variables, periods,
+   models and decision criterion are unchanged.
+```
+
+5. Commiter l'amendement seul, avant tout entraînement :
+
+```powershell
+git add notebooks/spike_q1/PROTOCOL.md
+git commit -m "docs(spike): amendment 3, ARCO-ERA5 for the months the CDS did not deliver"
+git push origin ccr-9f718573-2htm0s
+```
+
+6. Remplir les mois manquants :
+
+```powershell
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --workers 8
+```
+
+Environ 9,8 Go lus par mois manquant, rien de brut conservé. Reprenable à
+l'identique. Attendu à la fin : 120 fichiers (même vérification qu'à
+l'étape 1). Si le débit est faible, `--workers 16` ; au-delà de 16, pas de
+gain attendu.
+
 ## 2. Jeu de données
 
 ```powershell

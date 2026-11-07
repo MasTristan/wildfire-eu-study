@@ -41,6 +41,7 @@ FIRMS : clé gratuite sur firms.modaps.eosdis.nasa.gov/api/map_key, limite
 | ERA5 monthly means (`reanalysis-era5-single-levels-monthly-means`) | Température 2 m, précipitations totales, point de rosée 2 m | 1940+, ingéré 1991-2026 | `cdsapi`, store **CDS**, grille 0.5° | **live** |
 | European Drought Observatory, SPEI-3 (`sem03`) | Indice sécheresse standardisé 3 mois, grille 10 km EPSG:3035, pas décadaire | 1991-2026 | `GET drought.emergency.copernicus.eu/data/Drought_Observatories_datasets/EDO_MARSMet_Standardized_Precipitation_Evapotranspiration_Index_SPEI3/ver1-1-0/`, netCDF annuels, **sans clé** | **live** |
 | CORINE Land Cover | Type de végétation (attribution surface brûlée) | 1990-2018 | Copernicus Land | fichier |
+| ARCO-ERA5 (Google Cloud, données publiques) | ERA5 horaire 0,25°, store Zarr `full_37-1h-0p25deg-chunk-1.zarr-v3`, un bloc par heure sur le globe | 1940 à 2026-06 définitif | HTTPS anonyme `storage.googleapis.com/gcp-public-data-arco-era5/...`, sans clé, licence Copernicus | **live** (repli, ADR 0008) |
 | Open-Meteo, archive historique, modèle `era5` | ERA5 journalier par point (température, humidité, vent, précipitations, VPD, ET0), agrégé côté serveur en UTC, 0,25° | 1940+ | `GET archive-api.open-meteo.com/v1/archive?models=era5&daily=...`, sans clé, CC BY 4.0, usage non commercial | **live** (spike Q1) |
 
 Bornes d'ingestion mesurées le 2026-07-31 : FWI 2016-01 à 2026-04 (la
