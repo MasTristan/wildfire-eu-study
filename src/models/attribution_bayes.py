@@ -1,7 +1,9 @@
 """Q3, Bayesian hierarchical version of the weather attribution (PyMC).
 
-Same panel as the frequentist fit (`attribution.build_panel`), same
-standardisation of the metrics, same outcome (log burnt area, country x year).
+Same panel as the frequentist fit (`attribution.prepare_panel`, the single
+exclusion rule), same standardisation of the metrics (centred on each country's
+mean, divided by the within-country standard deviation), same outcome (log
+burnt area, country x year).
 What changes is the structure on the country effects and on the slopes:
 
     log_area[c,t] = alpha[c] + sum_k beta[c,k] * z[c,t,k] + eps,   eps ~ N(0, sigma)
@@ -15,7 +17,8 @@ frequentist model estimates with a single pooled coefficient, so the two are
 compared metric by metric.
 
 Priors, all weakly informative and on the log scale (the metrics are
-standardised, so one unit is one standard deviation of the metric):
+standardised, so one unit is one within-country standard deviation of the
+metric; the `prior_n02` robustness variant widens `mu_beta` to N(0, 2)):
 
 * mu_alpha ~ N(8, 3): median country-year around 3 000 ha, 95 % of the prior
   mass between roughly 8 ha and 1.2 million ha, which covers every observed
@@ -38,6 +41,10 @@ only weakly identified against the mean of the country offsets (R-hat 1.02 to
 1.03 at 1000 draws on the real panel, against under 1.01 centred). The model is fitted on countries with at least
 `min_years` observations; the others carry no within-country information.
 
+The robustness variants add year effects (`gamma`, centred across years, scale
+`sigma_year ~ HalfNormal(1)`) or a common linear trend (`delta ~ N(0, 1)` on
+the standardised year).
+
 Attribution is statistical, not causal. The Bayesian R2 follows Gelman et
 al. (2019): per posterior draw and per country, the variance of the weather
 component over the years divided by that variance plus the residual variance.
@@ -59,16 +66,19 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.models.attribution import METRIC_NAMES, METRICS
+from src.models import attribution as at
+from src.models.attribution import METRIC_NAMES, Z_95, PreparedPanel
 from src.models.attribution import fit_attribution as fit_attribution_freq
 
-HDI_PROB = 0.94
+HDI_PROB = 0.95
 PRIORS = {
     "mu_alpha": (8.0, 3.0),
     "mu_beta": (0.0, 1.0),
     "tau": 0.5,
     "sigma_alpha": 2.0,
     "sigma": 1.5,
+    "sigma_year": 1.0,
+    "delta": 1.0,
 }
 
 
@@ -101,41 +111,43 @@ class BayesResult:
     diagnostics: dict[str, float] = field(default_factory=dict)
     idata: Any = None
     dropped_countries: list[str] = field(default_factory=list)
+    prepared: PreparedPanel | None = None
+    freq: Any = None                # the OLS fit on exactly the same prepared panel
 
 
-def prepare(panel: pd.DataFrame, metrics: list[str] | None = None, min_years: int = 4) -> tuple[pd.DataFrame, list[str], list[str]]:
-    """Complete rows only, countries with at least `min_years` rows, metrics standardised
-    on the whole panel as the frequentist fit does. Returns (frame, metrics, dropped countries)."""
-    metrics = [m for m in (metrics or METRICS) if m in panel.columns and panel[m].notna().any()]
-    df = panel.dropna(subset=[*metrics, "log_area"]).copy()
-    counts = df.groupby("country_key")["year"].transform("size")
-    dropped = sorted(df.loc[counts < min_years, "country_key"].unique())
-    df = df[counts >= min_years].reset_index(drop=True)
-    for m in metrics:
-        df[f"z_{m}"] = (df[m] - df[m].mean()) / (df[m].std(ddof=0) or 1.0)
-    return df, metrics, dropped
-
-
-def build_model(df: pd.DataFrame, metrics: list[str]):
-    """The PyMC model on a prepared frame (see `prepare`)."""
+def build_model(df: pd.DataFrame, metrics: list[str], priors: dict[str, Any] | None = None,
+                year_effects: bool = False, trend: bool = False):
+    """The PyMC model on a prepared frame (`attribution.prepare_panel(...).frame`)."""
     import pymc as pm
 
     countries = pd.Index(sorted(df["country_key"].unique()), name="country")
     cidx = countries.get_indexer(df["country_key"])
     x = df[[f"z_{m}" for m in metrics]].to_numpy()
-    coords = {"country": countries.to_list(), "feature": metrics, "obs": np.arange(len(df))}
+    pr = {**PRIORS, **(priors or {})}
+    years = pd.Index(sorted(df["year"].unique()), name="year")
+    yidx = years.get_indexer(df["year"])
+    coords = {"country": countries.to_list(), "feature": metrics, "obs": np.arange(len(df)), "year": years.to_list()}
     with pm.Model(coords=coords) as model:
-        mu_alpha = pm.Normal("mu_alpha", *PRIORS["mu_alpha"])
-        sigma_alpha = pm.HalfNormal("sigma_alpha", PRIORS["sigma_alpha"])
+        mu_alpha = pm.Normal("mu_alpha", *pr["mu_alpha"])
+        sigma_alpha = pm.HalfNormal("sigma_alpha", pr["sigma_alpha"])
         alpha = pm.Normal("alpha", mu_alpha, sigma_alpha, dims="country")
 
-        mu_beta = pm.Normal("mu_beta", *PRIORS["mu_beta"], dims="feature")
-        tau = pm.HalfNormal("tau", PRIORS["tau"], dims="feature")
+        mu_beta = pm.Normal("mu_beta", *pr["mu_beta"], dims="feature")
+        tau = pm.HalfNormal("tau", pr["tau"], dims="feature")
         b_raw = pm.Normal("b_raw", 0.0, 1.0, dims=("country", "feature"))
         beta = pm.Deterministic("beta", mu_beta + tau * b_raw, dims=("country", "feature"))
 
-        sigma = pm.HalfNormal("sigma", PRIORS["sigma"])
+        sigma = pm.HalfNormal("sigma", pr["sigma"])
         mean = alpha[cidx] + (beta[cidx] * x).sum(axis=-1)
+        if year_effects:
+            sigma_year = pm.HalfNormal("sigma_year", pr["sigma_year"])
+            gamma = pm.Normal("gamma", 0.0, sigma_year, dims="year")
+            gamma_c = pm.Deterministic("gamma_c", gamma - gamma.mean(), dims="year")  # centred: the level lives in alpha
+            mean = mean + gamma_c[yidx]
+        if trend:
+            t = ((df["year"] - df["year"].mean()) / (df["year"].std(ddof=0) or 1.0)).to_numpy()
+            delta = pm.Normal("delta", 0.0, pr["delta"])
+            mean = mean + delta * t
         pm.Normal("log_area", mean, sigma, observed=df["log_area"].to_numpy(), dims="obs")
     return model
 
@@ -186,7 +198,8 @@ def _hdi(samples: np.ndarray, prob: float = HDI_PROB) -> tuple[np.ndarray, np.nd
     return s[i, cols].reshape(samples.shape[1:]), s[i + k - 1, cols].reshape(samples.shape[1:])
 
 
-def summarise(idata, df: pd.DataFrame, metrics: list[str], freq) -> tuple[pd.DataFrame, pd.DataFrame, float]:
+def summarise(idata, df: pd.DataFrame, metrics: list[str], freq,
+              scales: pd.DataFrame | None = None) -> tuple[pd.DataFrame, pd.DataFrame, float]:
     """Posterior tables: coefficients (population, country-level, heterogeneity) and country x year."""
     import arviz as az
 
@@ -212,13 +225,21 @@ def summarise(idata, df: pd.DataFrame, metrics: list[str], freq) -> tuple[pd.Dat
     for k, m in enumerate(metrics):
         r = block("population", None, k, mu_beta[:, k], rhat["mu_beta"].sel(feature=m).item(), ess["mu_beta"].sel(feature=m).item())
         r.update(freq_coef=float(fc.loc[m, "coef"]), freq_se=float(fc.loc[m, "se"]),
-                 freq_ci_low=float(fc.loc[m, "coef"] - 1.96 * fc.loc[m, "se"]), freq_ci_high=float(fc.loc[m, "coef"] + 1.96 * fc.loc[m, "se"]))
+                 freq_ci_low=float(fc.loc[m, "coef"] - Z_95 * fc.loc[m, "se"]), freq_ci_high=float(fc.loc[m, "coef"] + Z_95 * fc.loc[m, "se"]))
         rows.append(r)
         rows.append(block("between_country_sd", None, k, tau[:, k], rhat["tau"].sel(feature=m).item(), ess["tau"].sel(feature=m).item()))
         for c, country in enumerate(countries):
             rows.append(block("country", country, k, beta[:, c, k],
                               rhat["beta"].sel(country=country, feature=m).item(), ess["beta"].sel(country=country, feature=m).item()))
     coefficients = pd.DataFrame(rows)
+    coefficients["hdi_prob"] = HDI_PROB
+    if scales is not None:
+        coefficients = coefficients.merge(scales[["metric", "sd_within", "sd_pooled", "unit_size", "unit_label"]], on="metric", how="left")
+        k = coefficients["unit_size"] / coefficients["sd_within"]
+        for col in ("mean", "hdi_low", "hdi_high", "sd"):
+            coefficients[f"{col}_per_unit"] = coefficients[col] * k
+        coefficients["multiplier_per_unit"] = np.exp(coefficients["mean_per_unit"])
+        coefficients["freq_coef_per_unit"] = coefficients["freq_coef"] * k
 
     # weather component per draw: slope x deviation of the metric from the country's own mean
     zcols = [f"z_{m}" for m in metrics]
@@ -226,6 +247,12 @@ def summarise(idata, df: pd.DataFrame, metrics: list[str], freq) -> tuple[pd.Dat
     cidx = pd.Index(countries).get_indexer(df["country_key"])
     comp = np.einsum("sik,ik->si", beta[:, cidx, :], dev.to_numpy())    # (S, N)
     fitted = alpha[:, cidx] + np.einsum("sik,ik->si", beta[:, cidx, :], df[zcols].to_numpy())
+    if "gamma_c" in post:
+        yidx = pd.Index(post["year"].values).get_indexer(df["year"])
+        fitted = fitted + post["gamma_c"].transpose("sample", "year").values[:, yidx]
+    if "delta" in post:
+        t = ((df["year"] - df["year"].mean()) / (df["year"].std(ddof=0) or 1.0)).to_numpy()
+        fitted = fitted + post["delta"].values[:, None] * t[None, :]
     comp_mean = comp.mean(axis=0)
     lo, hi = _hdi(comp)
 
@@ -251,22 +278,43 @@ def summarise(idata, df: pd.DataFrame, metrics: list[str], freq) -> tuple[pd.Dat
     return coefficients, out, float(r2_overall_draws.mean())
 
 
-def fit_attribution_bayes(panel: pd.DataFrame, metrics: list[str] | None = None, min_years: int = 4, draws: int = 1000,
+def fit_attribution_bayes(panel: pd.DataFrame, metrics: list[str] | None = None, min_years: int = at.MIN_YEARS, draws: int = 1000,
                           tune: int = 1000, chains: int = 4, cores: int | None = None, target_accept: float = 0.99,
-                          seed: int = 20260101) -> BayesResult:
-    """Fit the hierarchical model and summarise it against the frequentist fit on the same rows."""
+                          seed: int = 20260101, priors: dict[str, Any] | None = None, year_effects: bool = False,
+                          trend: bool = False, **prepare_kwargs) -> BayesResult:
+    """Fit the hierarchical model and summarise it against the OLS fit on exactly the same prepared panel."""
     configure_backend()
-    df, mets, dropped = prepare(panel, metrics, min_years)
-    freq = fit_attribution_freq(df, mets)
-    model = build_model(df, mets)
+    prep = at.prepare_panel(panel, metrics, min_years=min_years, **prepare_kwargs)
+    df, mets = prep.frame, prep.metrics
+    freq = fit_attribution_freq(df, mets, min_years=min_years)
+    model = build_model(df, mets, priors, year_effects, trend)
     t0 = time.perf_counter()
     idata = sample(model, draws, tune, chains, cores, target_accept, seed)
     duration = time.perf_counter() - t0
-    diag = diagnostics(idata, ["mu_alpha", "sigma_alpha", "mu_beta", "tau", "sigma", "beta", "alpha"])
+    names = ["mu_alpha", "sigma_alpha", "mu_beta", "tau", "sigma", "beta", "alpha"]
+    names += [v for v in ("sigma_year", "gamma", "delta") if v in idata.posterior]
+    diag = diagnostics(idata, names)
     diag["duration_s"] = duration
-    coefficients, countryyear, r2_overall = summarise(idata, df, mets, freq)
+    coefficients, countryyear, r2_overall = summarise(idata, df, mets, freq, prep.scales)
     diag["r2_weather_overall"] = r2_overall
     diag["r2_weather_freq"] = freq.r2_within_weather
     diag["n_obs"] = float(len(df))
     diag["n_countries"] = float(df["country_key"].nunique())
-    return BayesResult(coefficients, countryyear, r2_overall, diag, idata, dropped)
+    dropped = prep.exclusions.loc[~prep.exclusions["kept"], "country_key"].tolist()
+    return BayesResult(coefficients, countryyear, r2_overall, diag, idata, dropped, prep, freq)
+
+
+def robustness_bayes(panel: pd.DataFrame, eu_countries: list[str], variants: list[str] | None = None,
+                     metrics: list[str] | None = None, **fit_kwargs) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Posterior population slopes under each variant (`VARIANTS` plus the N(0, 2) prior), long format
+    without the `robust` flags, and the sampler diagnostics of every variant."""
+    rows, diags = [], []
+    for name in variants or [*at.VARIANTS, *at.BAYES_EXTRA_VARIANTS]:
+        prep_kw, flags = at.variant_spec(name, eu_countries)
+        priors = {"mu_beta": (0.0, 2.0)} if name == "prior_n02" else None
+        res = fit_attribution_bayes(panel, metrics, priors=priors, **flags, **prep_kw, **fit_kwargs)
+        pop = res.coefficients[res.coefficients["level"] == "population"].rename(columns={"mean": "coef"})
+        rows.append(at.variant_rows("bayesian", name, pop, "hdi_low", "hdi_high", int(res.diagnostics["n_obs"]),
+                                    int(res.diagnostics["n_countries"])))
+        diags.append({"variant": name, **{k: float(v) for k, v in res.diagnostics.items()}})
+    return pd.concat(rows, ignore_index=True), pd.DataFrame(diags)
