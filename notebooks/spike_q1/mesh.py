@@ -45,6 +45,8 @@ def frame(ds: xr.Dataset, variables: list[str]) -> pd.DataFrame:
     df = ds[variables].to_dataframe().reset_index()
     df["lon"] = common.snap(df["longitude"])
     df["lat"] = common.snap(df["latitude"])
+    if "time" not in df.columns:  # static fields carry no time axis
+        return df.drop(columns=["longitude", "latitude"])
     df["date"] = pd.to_datetime(df["time"]).dt.normalize()
     return df.drop(columns=["longitude", "latitude", "time"])
 

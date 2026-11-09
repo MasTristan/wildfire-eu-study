@@ -11,9 +11,20 @@ Conventions:
 - threshold u: a quantile of the sizes above the detection floor, chosen
   per group; the stability table over a grid of candidate thresholds is
   returned for the report rather than hidden;
-- rate: exceedances per year over the observed span;
+- rate: exceedances per year over the observed span, counted in calendar
+  years: from the group's first record of any size to the last complete year
+  of the source, inclusive, so a year without a large fire still counts as
+  observed. Only complete
+  years enter: the data end is the latest record of the whole input, and a
+  final year that ends before December is dropped (the 2026 extraction stops
+  at the end of July, before most of the southern season), since counting it
+  as a full year would bias the rate down;
 - return level x_T: the size exceeded on average once every T years,
-  x_T = u + sigma / xi * ((T * rate)^xi - 1), the Gumbel limit when xi ~ 0.
+  x_T = u + sigma / xi * ((T * rate)^xi - 1), the Gumbel limit when xi ~ 0;
+- reliable horizon: a return level (or return period) is published only up
+  to MAX_EXTRAPOLATION times the observed span. With about ten years of
+  records and a shape near 1, a 50-year level is an extrapolation the data
+  cannot check, so it is reported as null by design, not estimated.
 """
 from __future__ import annotations
 
@@ -24,6 +35,7 @@ import pandas as pd
 from scipy import stats
 
 RETURN_PERIODS = (2, 5, 10, 20, 50)
+MAX_EXTRAPOLATION = 2.0  # published return periods stay within this multiple of the observed span
 
 
 @dataclass(frozen=True)
@@ -121,21 +133,39 @@ def empirical_return_levels(sizes: np.ndarray, years: float, periods=RETURN_PERI
     return out
 
 
+def last_complete_year_of(data_end: pd.Timestamp) -> int:
+    """Latest calendar year fully covered by data ending at data_end."""
+    return int(data_end.year) if data_end.month == 12 else int(data_end.year) - 1
+
+
 def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: float = 30.0,
                     threshold_quantile: float = 0.90, min_exceedances: int = 30, n_boot: int = 500,
-                    periods=RETURN_PERIODS) -> pd.DataFrame:
+                    periods=RETURN_PERIODS, max_extrapolation: float = MAX_EXTRAPOLATION,
+                    data_end: pd.Timestamp | None = None) -> pd.DataFrame:
     """One row per group: threshold, exceedances, rate, GPD parameters with
     intervals, fitted and empirical return levels. Groups with too few
     exceedances are listed with null estimates rather than dropped, so the
-    report shows where the tail cannot be estimated."""
+    report shows where the tail cannot be estimated. Return levels and the
+    10 000 ha return period beyond max_extrapolation times the observed span
+    are null; the horizon is given in max_return_period_years."""
     ev = events.dropna(subset=["area_ha", "firedate_key"])
+    end = pd.Timestamp(data_end) if data_end is not None else pd.to_datetime(ev["firedate_key"]).max()
+    last_complete_year = last_complete_year_of(end)
+    ev = ev[pd.to_datetime(ev["firedate_key"]).dt.year <= last_complete_year]
+    # the period runs from the group's first record of any size (its coverage start)
+    # to the source's last complete year, not to the group's last large fire:
+    # years without a large fire are observed years, and dropping them would inflate the rate
+    first_year = pd.to_datetime(ev["firedate_key"]).dt.year.groupby(ev[group]).min()
     ev = ev[ev["area_ha"] >= floor_ha]
     rows = []
     for key, g in ev.groupby(group):
-        dates = pd.to_datetime(g["firedate_key"])
-        years = max((dates.max() - dates.min()).days / 365.25, 1.0)
+        start = int(first_year[key])
+        years = float(last_complete_year - start + 1)
         sizes = g["area_ha"].to_numpy(dtype="float64")
-        row: dict = {group: key, "n_fires": int(len(sizes)), "years": round(years, 2), "largest_ha": float(sizes.max())}
+        horizon = max_extrapolation * years
+        row: dict = {group: key, "n_fires": int(len(sizes)), "first_year": start,
+                     "last_year": last_complete_year, "years": round(years, 2), "largest_ha": float(sizes.max()),
+                     "max_return_period_years": round(horizon, 2)}
         emp = empirical_return_levels(sizes, years, periods)
         for T in periods:
             row[f"empirical_rl_{T}y"] = emp[T]
@@ -149,10 +179,13 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: 
         boot = bootstrap_fit(sizes, u, years, n_boot=n_boot, periods=periods).set_index("quantity")
         row.update({"rate_per_year": fit.rate_per_year, "shape": fit.shape, "scale": fit.scale,
                     "shape_p2.5": boot.loc["shape", "p2.5"], "shape_p97.5": boot.loc["shape", "p97.5"]})
+        nan = float("nan")
         for T in periods:
-            row[f"rl_{T}y"] = fit.return_level(T)
-            row[f"rl_{T}y_p2.5"] = boot.loc[f"rl_{T}y", "p2.5"]
-            row[f"rl_{T}y_p97.5"] = boot.loc[f"rl_{T}y", "p97.5"]
-        row["return_period_10k_ha_years"] = fit.return_period(10_000.0)
+            within = T <= horizon
+            row[f"rl_{T}y"] = fit.return_level(T) if within else nan
+            row[f"rl_{T}y_p2.5"] = boot.loc[f"rl_{T}y", "p2.5"] if within else nan
+            row[f"rl_{T}y_p97.5"] = boot.loc[f"rl_{T}y", "p97.5"] if within else nan
+        rp = fit.return_period(10_000.0)
+        row["return_period_10k_ha_years"] = rp if rp <= horizon else nan
         rows.append(row)
     return pd.DataFrame(rows)

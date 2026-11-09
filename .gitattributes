@@ -10,3 +10,4 @@
 *.pbix binary
 *.nc binary
 *.zip binary
+*.gz binary

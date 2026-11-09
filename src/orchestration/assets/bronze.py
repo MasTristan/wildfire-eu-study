@@ -12,12 +12,24 @@ PLAN.md rewrites them as partition-safe assets; the asset keys stay.
 """
 from datetime import date
 
-from dagster import AssetExecutionContext, MaterializeResult, StaticPartitionsDefinition, asset
+from dagster import (
+    AssetExecutionContext,
+    BackfillPolicy,
+    MaterializeResult,
+    StaticPartitionsDefinition,
+    asset,
+)
 
 from src import config
 from src.orchestration.partitions import yearly
 
 era5_chunks = StaticPartitionsDefinition(["1991-2000", "2001-2010", "2011-2020", "2021-2026"])
+
+# Every partitioned asset runs a partition range as ONE run (no daemon needed:
+# `dagster asset materialize --partition-range` refuses multi-run backfills
+# without one) and loops over context.partition_keys. The functions it calls
+# skip files already on disk, so a range rerun downloads only what is missing.
+SINGLE_RUN = BackfillPolicy.single_run()
 
 GROUP = "bronze"
 PREFIX = "bronze"
@@ -45,13 +57,15 @@ def effis_perimeters() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=yearly,
-    description="BDIFF export for one year, raw zip",
+    backfill_policy=SINGLE_RUN,
+    description="BDIFF export, one raw zip per year",
 )
 def bdiff_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import bdiff
 
-    path = bdiff.fetch_year(int(context.partition_key))
-    return MaterializeResult(metadata={"path": str(path), "bytes": path.stat().st_size})
+    paths = [bdiff.fetch_year(int(k)) for k in context.partition_keys]
+    return MaterializeResult(metadata={"years": ",".join(context.partition_keys),
+                                       "bytes": sum(p.stat().st_size for p in paths)})
 
 
 @asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[bdiff_raw],
@@ -69,14 +83,14 @@ def bdiff_incendies() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=yearly,
-    description="NASA FIRMS VIIRS S-NPP hotspots, raw CSV windows for one year",
+    backfill_policy=SINGLE_RUN,
+    description="NASA FIRMS VIIRS S-NPP hotspots, raw CSV windows per year (refetched on every run)",
 )
 def firms_hotspots_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import firms
 
-    year = int(context.partition_key)
-    points = firms.fetch_year_to_date(year)
-    return MaterializeResult(metadata={"year": year, "detections": int(len(points))})
+    detections = sum(int(len(firms.fetch_year_to_date(int(k)))) for k in context.partition_keys)
+    return MaterializeResult(metadata={"years": ",".join(context.partition_keys), "detections": detections})
 
 
 @asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, description="GWIS/GFAS wildfire emissions, country x month")
@@ -92,13 +106,16 @@ def gwis_gfas_emissions() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=yearly,
+    backfill_policy=SINGLE_RUN,
     description="CEMS EWDS fire weather indices (ERA5-based), one NetCDF per year",
 )
 def cds_fwi_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import cds_fwi
 
-    cds_fwi.build(download_only=True, years=[context.partition_key])
-    return MaterializeResult(metadata={"year": context.partition_key})
+    # download() skips years already on disk and reports, without raising, a
+    # year the EWDS has not consolidated yet
+    cds_fwi.build(download_only=True, years=list(context.partition_keys))
+    return MaterializeResult(metadata={"years": ",".join(context.partition_keys)})
 
 
 @asset(
@@ -106,13 +123,15 @@ def cds_fwi_raw(context: AssetExecutionContext) -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=yearly,
-    description="The seven FWI-system components at 0.25 degree for one year over Europe (EWDS), the feature store's spine",
+    backfill_policy=SINGLE_RUN,
+    description="The seven FWI-system components at 0.25 degree, one file per year over Europe (EWDS), the feature store's spine",
 )
 def cds_fwi_full_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import cds_fwi
 
-    path = cds_fwi.download_year_full(context.partition_key)
-    return MaterializeResult(metadata={"path": str(path), "bytes": path.stat().st_size})
+    paths = [cds_fwi.download_year_full(k) for k in context.partition_keys]
+    return MaterializeResult(metadata={"years": ",".join(context.partition_keys),
+                                       "bytes": sum(p.stat().st_size for p in paths)})
 
 
 @asset(
@@ -134,14 +153,18 @@ def fwi_countrymonth() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=era5_chunks,
+    backfill_policy=SINGLE_RUN,
     description="ERA5 monthly means, one NetCDF per decade (CDS)",
 )
 def era5_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import era5
 
-    start, end = (int(v) for v in context.partition_key.split("-"))
-    path = era5.download_chunk(start, end)
-    return MaterializeResult(metadata={"path": str(path)})
+    paths = []
+    for key in context.partition_keys:
+        start, end = (int(v) for v in key.split("-"))
+        paths.append(era5.download_chunk(start, end))
+    return MaterializeResult(metadata={"decades": ",".join(context.partition_keys),
+                                       "paths": ", ".join(p.name for p in paths)})
 
 
 @asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[era5_raw],
@@ -158,13 +181,16 @@ def era5_countrymonth() -> MaterializeResult:
     group_name=GROUP,
     kinds={"python"},
     partitions_def=yearly,
+    backfill_policy=SINGLE_RUN,
     description="EDO SPEI-3 dekadal grid, one NetCDF per year",
 )
 def edo_spei_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import edo_spei
 
-    path = edo_spei.download_year(context.partition_key, edo_spei._remote_names())
-    return MaterializeResult(metadata={"path": str(path) if path else "not published by EDO"})
+    remote = edo_spei._RemoteIndex()  # read only if a year is missing from disk
+    found = [k for k in context.partition_keys if edo_spei.download_year(k, remote) is not None]
+    missing = sorted(set(context.partition_keys) - set(found))
+    return MaterializeResult(metadata={"years": ",".join(found), "not_published": ",".join(missing) or "none"})
 
 
 @asset(key_prefix=PREFIX, group_name=GROUP, kinds={"python"}, deps=[edo_spei_raw],

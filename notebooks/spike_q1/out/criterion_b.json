@@ -1,0 +1,30 @@
+{
+  "2022": {
+    "brier_rel_improvement": 0.056486468803540885,
+    "pr_auc_gain": 0.10573182105522783,
+    "passes": false
+  },
+  "2023": {
+    "brier_rel_improvement": 0.03582274169828048,
+    "pr_auc_gain": 0.07444026869780285,
+    "passes": false
+  },
+  "all_pass": false,
+  "tuned": {
+    "lgbm_fwi": {
+      "num_leaves": 15,
+      "min_data_in_leaf": 300,
+      "iterations": 87
+    },
+    "lgbm_fwi_space": {
+      "num_leaves": 15,
+      "min_data_in_leaf": 300,
+      "iterations": 160
+    },
+    "lgbm_full": {
+      "num_leaves": 15,
+      "min_data_in_leaf": 300,
+      "iterations": 140
+    }
+  }
+}

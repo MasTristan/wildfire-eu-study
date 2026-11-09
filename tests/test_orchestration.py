@@ -95,3 +95,46 @@ def test_model_output_assets_depend_on_the_gold(defs):
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
     q1 = graph.get(AssetKey(["gold", "ignition_eval"]))
     assert AssetKey(["gold", "features_daily"]) in q1.parent_keys
+
+
+def test_asset_selection_strings_parse_and_resolve(defs):
+    """Regression guard: `dagster asset materialize --select` parses its
+    argument with an ANTLR grammar. An antlr4 runtime older than the one the
+    grammar was generated with (4.9.3 came in through DVC's hydra-core) made
+    every --select crash with "ord() expected string of length 1"."""
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    keys = AssetSelection.from_string('key:"silver/dim_date"').resolve(graph)
+    assert keys == {AssetKey(["silver", "dim_date"])}
+    gold = AssetSelection.from_string('group:"gold"').resolve(graph)
+    assert AssetKey(["gold", "fact_burntarea_countryyear"]) in gold
+
+
+def test_every_runbook_selection_resolves_as_the_cli_parses_it(defs):
+    """Each `--select` written in the runbooks is resolved exactly as the
+    Dagster CLI does (comma split, then AssetSelection.from_coercible) and
+    must name existing assets: an executor runs them verbatim."""
+    import re
+    from pathlib import Path
+
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    selections = []
+    for path in sorted(Path("docs/runbooks").glob("*.md")):
+        selections += re.findall(r'--select\s+("[^"]+"|\S+)', path.read_text(encoding="utf-8"))
+    assert selections, "no --select found in the runbooks"
+    for raw in selections:
+        sel = raw.strip('"')
+        keys = AssetSelection.from_coercible(sel.split(",")).resolve(graph)
+        assert keys, f"selection {sel!r} resolves to no asset"
+
+
+def test_group_gold_is_exactly_the_star_schema(defs):
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    keys = AssetSelection.from_coercible(["group:gold"]).resolve(graph)
+    assert keys == {AssetKey(["gold", n]) for n in contracts.ALL_GOLD_TABLES}
+    assert AssetKey(["gold", "features_daily"]) not in keys

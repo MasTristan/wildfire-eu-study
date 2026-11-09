@@ -1,6 +1,6 @@
 # Procédure : matérialiser la v2 de bout en bout
 
-Exécution : poste local Windows natif, sur la branche `v2-platform`, après la procédure du spike Q1. Même règle :
+Exécution : poste local Windows natif, sur la branche `ccr-9f718573-2htm0s` (recréée depuis `main` le 2026-11-07), après la procédure du spike Q1. Même règle :
 commande, attendu, vérification, conduite en cas d'écart ; une relance à
 l'identique, puis arrêt et rapport avec l'erreur exacte. Les chemins de
 données sont ceux de `src/lake.py` : silver = `data/processed`, gold =
@@ -9,7 +9,8 @@ données sont ceux de `src/lake.py` : silver = `data/processed`, gold =
 ## 1. Environnement
 
 ```powershell
-git pull --ff-only
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
 uv sync
 uv run pytest -q
 make dbt-parse
@@ -24,6 +25,14 @@ mlflow, statsmodels, dvc), rapporter le message complet.
 ```powershell
 make dbt-build
 ```
+
+Sans `make` sous Windows, la commande équivalente, lancée depuis la racine du dépôt :
+
+```powershell
+cd dbt; uv run --project .. dbt build --project-dir . --profiles-dir .; cd ..
+```
+
+dbt doit être lancé depuis `dbt/` : les chemins relatifs de son profil et de ses sources partent du dossier courant.
 
 Attendu : `Completed successfully`, avec 13 modèles `OK created external` et
 tous les tests `PASS`. Dossier `data/lake/gold/star/` contenant 13 Parquet :
@@ -65,8 +74,21 @@ uv run dagster asset materialize -m src.orchestration.definitions --select "silv
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_fireevent"
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_fireweather_countrymonth"
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_hotspot_countrymonth"
-uv run dagster asset materialize -m src.orchestration.definitions --select "gold/*"
+uv run dagster asset list -m src.orchestration.definitions --select group:gold
+uv run dagster asset materialize -m src.orchestration.definitions --select group:gold
 ```
+
+Depuis le 2026-11-09, `silver/dim_country` et `silver/dim_commune` lisent
+des instantanés versionnés, sans réseau. Leur matérialisation ne doit
+afficher aucun appel à `api.worldbank.org` ni à `geo.api.gouv.fr`. Elle
+imprime une ligne « from snapshot … (retrieved 2026-10-15) ».
+
+`--select` lit une liste de clés exactes séparées par des virgules, ou une
+expression de sélection comme `group:gold`, écrite sans guillemets pour que
+PowerShell la transmette intacte. La commande `asset list` qui précède la
+dernière matérialisation doit lister exactement les 13 tables gold du schéma
+en étoile (les 12 de la v1 et `fact_season_countryyear`), et aucun asset du
+feature store. Une autre liste : arrêt et rapport.
 
 Les assets silver appellent les fonctions v1 sur les sources déjà sur disque
 (`data/raw`, `data/interim`) : aucun téléchargement nouveau, sauf
@@ -108,6 +130,8 @@ année FWI absente (consolidation EWDS en retard) échoue proprement : noter
 l'année et continuer.
 
 ## 6. Feature store
+
+> **Non exécutée en GO réduit (ADR 0009).** Le feature store Europe n'est plus matérialisé : il ne servait que Q1 Europe et la prévision opérationnelle, toutes deux abandonnées. Passer directement à l'étape suivante.
 
 ### 6a. Composantes FWI complètes, 0,25°, Europe
 
@@ -173,14 +197,27 @@ nuls supérieur à 10 % sur une colonne : rapporter la colonne et s'arrêter.
 
 ```powershell
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country,gold/attribution_countryyear"
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','n_exceedances','shape','rl_10y','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
+uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','first_year','last_year','years','n_exceedances','shape','rl_2y','rl_10y','rl_50y','max_return_period_years','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
 uv run python -c "import pandas as pd; c=pd.read_parquet('data/lake/gold/model_out/attribution_coefficients.parquet'); print(c.round(4).to_string()); a=pd.read_parquet('data/lake/gold/model_out/attribution_countryyear.parquet'); print(a.groupby('year')[['burnt_area_ha','adjusted_area_ha']].sum().round(0))"
 ```
 
-Attendu : pour Q2, `shape` entre 0 et 1 pour `PT`, `ES`, `GR`, `IT`, avec
-`rl_10y` supérieur à `rl_2y` ; pour Q3, `days_high_season` à coefficient
+Attendu pour Q2, sur les pays ajustés (au moins 30 dépassements du seuil,
+`min_exceedances`) : `shape` positif, typiquement entre 0,5 et 1,2 ; une
+valeur supérieure ou égale à 1 signale une queue à moyenne infinie, attendue
+pour les pays méditerranéens et à rapporter telle quelle, sans s'arrêter ;
+`rl_10y` supérieur à `rl_2y`. Les pays sous 30 dépassements ont `shape` et
+`rl_*` nuls par construction. Les niveaux au-delà de
+`max_return_period_years` (deux fois la durée observée, environ 20 ans) sont
+nuls par conception : `rl_50y` est vide partout tant que l'historique fait
+une dizaine d'années, de même que `return_period_10k_ha_years` quand il
+dépasse cet horizon. Seules les années complètes entrent : l'extraction
+s'arrêtant fin juillet 2026, `last_year` vaut 2025 pour tous les pays, et
+`years` vaut 10 pour les pays couverts depuis 2016 : la période court du
+premier enregistrement du pays, toutes tailles confondues, à la dernière
+année complète de la source, même sans grand feu les dernières années. Attendu pour Q3 : `days_high_season` à coefficient
 positif, un `run_id` non vide dans les deux tables. Tout `shape` négatif
-sous -0,5 ou coefficient `days_high_season` négatif : rapporter.
+sous -0,5, un `rl_50y` non nul ou un coefficient `days_high_season` négatif :
+rapporter.
 
 ```powershell
 uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
@@ -191,6 +228,8 @@ Ouvrir `http://localhost:5000` : deux expériences `q2_tail_risk` et
 d'écran `docs/img/mlflow-runs.png`. Ctrl+C.
 
 ## 7b. Q1 sur le feature store (après le verdict du spike)
+
+> **Non exécutée en GO réduit (ADR 0009).** Le feature store Europe n'est plus matérialisé : il ne servait que Q1 Europe et la prévision opérationnelle, toutes deux abandonnées. Passer directement à l'étape suivante.
 
 ```powershell
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/ignition_eval"
@@ -217,6 +256,8 @@ exploitée : le rapporter, c'est un résultat, pas une erreur).
 
 ## 8. Bascule Power BI
 
+> **Action du propriétaire.** Cette étape demande Power BI Desktop, une application graphique qu'une session Claude Code ne pilote pas. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
+
 Dans `powerbi/WildfireEU.SemanticModel/definition/expressions.tmdl`, faire
 pointer `DataFolder` sur le chemin absolu de `data/lake/gold/star`. Ouvrir
 `powerbi/WildfireEU.pbip` dans Power BI Desktop, Accueil > Actualiser.
@@ -232,25 +273,27 @@ nom d'utilisateur ; sinon rapporter et ne pas commiter.
 
 ## 9. DVC, remote gratuit
 
+> **Action du propriétaire.** Cette étape demande la création d'un compte de stockage et la saisie de ses clés, que seul le propriétaire peut faire. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
+
 1. Créer un bucket sur Cloudflare R2 ou Backblaze B2 (compte gratuit,
    quota vérifié le jour même sur la page de tarification, à noter dans le
    rapport). Nom du bucket : `wildfire-eu-study-lake`.
 2. Renseigner l'accès localement, jamais dans le dépôt :
 
 ```powershell
-uv run dvc remote modify --local storage endpointurl https://<endpoint-du-fournisseur>
-uv run dvc remote modify --local storage access_key_id <clé>
-uv run dvc remote modify --local storage secret_access_key <secret>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage endpointurl https://<endpoint-du-fournisseur>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage access_key_id <clé>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage secret_access_key <secret>
 ```
 
 3. Suivre et pousser la gold et les sorties de modèles :
 
 ```powershell
-uv run dvc add data/lake/gold/star data/lake/gold/model_out data/lake/gold/features
-uv run dvc push
+uvx --from "dvc[s3]==3.67.1" dvc add data/lake/gold/star data/lake/gold/model_out
+uvx --from "dvc[s3]==3.67.1" dvc push
 git add data/lake/gold/*.dvc .dvc/config
 git commit -m "data: track gold star, features and model outputs with DVC"
-git push origin v2-platform
+git push origin ccr-9f718573-2htm0s
 ```
 
 Attendu : `dvc push` termine sans erreur et `dvc status -c` répond
@@ -265,7 +308,7 @@ Cocher chaque ligne dans le rapport final :
 - [ ] `make dbt-build` : 13 modèles, tous les tests `PASS`.
 - [ ] `tests/test_gold_parity.py` vert sur `data/lake/gold/star`.
 - [ ] Graphe Dagster complet capturé, checks gold verts.
-- [ ] `features/daily_2016.parquet` à `daily_2025.parquet` présents.
+- [ ] Spike Q1 : `out/exploratory_*.csv` présents et section 11 de `VERDICT.md` écrite (procédure du spike, étape 9).
 - [ ] `tail_risk_country.parquet` et `attribution_countryyear.parquet` présents avec `run_id`.
 - [ ] MLflow : deux expériences, captures.
 - [ ] Power BI actualisé sur `gold/star`, chiffres inchangés.

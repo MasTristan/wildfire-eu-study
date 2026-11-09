@@ -5,7 +5,18 @@ reference nomenclature (ISO/EU membership, French administrative geography,
 EFFIS land-cover schema, source documentation) or derived directly from
 already-ingested source data (BDIFF cause labels). No business figures are
 invented: land/forest area come from the World Bank API, commune geography
-from the French government's geo.api.gouv.fr, at run time.
+from the French government's geo.api.gouv.fr.
+
+Both are read from versioned snapshots in reference/ (worldbank_areas.csv,
+geo_communes.csv.gz), never from the live APIs during a build. The World
+Bank revises its figures (16 percent of the land areas changed between
+2026-10-15 and 2026-11-09) and French communes merge every 1 January; a
+dimension that moved with its source would make the v1 -> v2 parity test
+unreproducible. Refreshing a snapshot is an explicit, dated step, committed
+like any other data change and followed by a parity re-freeze:
+
+    python src/transform/dimensions.py --refresh-worldbank
+    python src/transform/dimensions.py --refresh-communes
 
 Run:
     python src/transform/dimensions.py
@@ -14,6 +25,7 @@ from __future__ import annotations
 
 import csv
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pandas as pd
@@ -84,17 +96,37 @@ def _worldbank_indicator(iso3_codes: list[str], indicator: str) -> dict[str, flo
     return out
 
 
-def build_dim_country() -> pd.DataFrame:
+WORLDBANK_SNAPSHOT = REFERENCE_DIR / "worldbank_areas.csv"
+
+
+def refresh_worldbank_snapshot(path: Path = WORLDBANK_SNAPSHOT) -> Path:
+    """Fetch land and forest area from the live API and rewrite the snapshot,
+    stamped with today's date. Only countries the API answers for are written."""
+    from datetime import date
+
     ref = pd.read_csv(REFERENCE_DIR / "country_reference.csv")
     iso3_list = ref["iso3"].tolist()
-
     print("  World Bank: fetching land area (AG.LND.TOTL.K2)...")
     land = _worldbank_indicator(iso3_list, "AG.LND.TOTL.K2")
     print("  World Bank: fetching forest area (AG.LND.FRST.K2)...")
     forest = _worldbank_indicator(iso3_list, "AG.LND.FRST.K2")
+    snap = pd.DataFrame({"iso3": sorted(set(land) | set(forest))})
+    snap["land_area_km2"] = snap["iso3"].map(land)
+    snap["forest_area_km2"] = snap["iso3"].map(forest)
+    snap["retrieved_on"] = date.today().isoformat()
+    snap.to_csv(path, index=False)
+    print(f"  wrote {path} ({len(snap)} countries)")
+    return path
 
-    ref["land_area_km2"] = ref["iso3"].map(land)
-    ref["forest_area_ha"] = ref["iso3"].map(forest).mul(100)  # km2 -> ha
+
+def build_dim_country(snapshot: Path = WORLDBANK_SNAPSHOT) -> pd.DataFrame:
+    ref = pd.read_csv(REFERENCE_DIR / "country_reference.csv")
+    snap = pd.read_csv(snapshot).set_index("iso3")
+    print(f"  World Bank areas from snapshot {snapshot.name} "
+          f"(retrieved {', '.join(sorted(snap['retrieved_on'].astype(str).unique()))})")
+
+    ref["land_area_km2"] = ref["iso3"].map(snap["land_area_km2"])
+    ref["forest_area_ha"] = ref["iso3"].map(snap["forest_area_km2"]).mul(100)  # km2 -> ha
 
     missing = ref[ref["land_area_km2"].isna() | ref["forest_area_ha"].isna()]
     if not missing.empty:
@@ -110,7 +142,12 @@ def build_dim_country() -> pd.DataFrame:
 
 # --- Dim_Commune (France) --------------------------------------------------------
 
-def build_dim_commune() -> pd.DataFrame:
+COMMUNES_SNAPSHOT = REFERENCE_DIR / "geo_communes.csv.gz"
+_COMMUNE_TEXT = {"commune_key": str, "name": str, "department_code": str, "department_name": str,
+                 "region_code": str, "region_name": str, "country_key": str}
+
+
+def _fetch_communes() -> pd.DataFrame:
     print("  geo.api.gouv.fr: fetching regions/departements/communes...")
     regions = {r["code"]: r["nom"] for r in requests.get(
         "https://geo.api.gouv.fr/regions", params={"fields": "code,nom"}, timeout=_TIMEOUT
@@ -143,9 +180,26 @@ def build_dim_commune() -> pd.DataFrame:
             "centroid_lon": lon,
             "centroid_lat": lat,
         })
-    df = pd.DataFrame(rows)
-    print(f"  {len(df)} communes")
-    return df
+    return pd.DataFrame(rows)
+
+
+def refresh_communes_snapshot(path: Path = COMMUNES_SNAPSHOT) -> Path:
+    """Fetch the French commune geography from the live API and rewrite the
+    snapshot, stamped with today's date. Communes merge every 1 January, so a
+    refresh is a dated data change, committed and re-frozen for parity."""
+    from datetime import date
+
+    df = _fetch_communes().assign(retrieved_on=date.today().isoformat())
+    df.to_csv(path, index=False, compression="gzip")
+    print(f"  wrote {path} ({len(df)} communes)")
+    return path
+
+
+def build_dim_commune(snapshot: Path = COMMUNES_SNAPSHOT) -> pd.DataFrame:
+    df = pd.read_csv(snapshot, dtype=_COMMUNE_TEXT)
+    print(f"  French communes from snapshot {snapshot.name} "
+          f"(retrieved {', '.join(sorted(df['retrieved_on'].astype(str).unique()))}): {len(df)} communes")
+    return df.drop(columns=["retrieved_on"])
 
 
 # --- Dim_LandCover ----------------------------------------------------------------
@@ -248,7 +302,7 @@ def build_dim_source() -> pd.DataFrame:
 
 
 def build_all() -> None:
-    builders = {
+    builders: dict[str, Callable[[], pd.DataFrame]] = {
         "dim_date": build_dim_date,
         "dim_country": build_dim_country,
         "dim_commune": build_dim_commune,
@@ -265,4 +319,10 @@ def build_all() -> None:
 
 
 if __name__ == "__main__":
-    build_all()
+    if "--refresh-worldbank" in sys.argv or "--refresh-communes" in sys.argv:
+        if "--refresh-worldbank" in sys.argv:
+            refresh_worldbank_snapshot()
+        if "--refresh-communes" in sys.argv:
+            refresh_communes_snapshot()
+    else:
+        build_all()

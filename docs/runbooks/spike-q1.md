@@ -1,6 +1,6 @@
 # Procédure : terminer le spike Q1
 
-Exécution : poste local Windows natif, sur la branche `v2-platform`. Chaque étape donne la commande, le
+Exécution : poste local Windows natif, sur la branche `ccr-9f718573-2htm0s` (recréée depuis `main` le 2026-11-07). Chaque étape donne la commande, le
 résultat attendu, la vérification et la conduite à tenir en cas d'écart.
 Règle générale : une étape dont la vérification échoue se relance une fois
 à l'identique ; si elle échoue encore, on s'arrête et on rapporte le message
@@ -10,15 +10,18 @@ de modélisation.
 ## 0. État de départ
 
 ```powershell
-git pull --ff-only
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
 git log --oneline -1
 uv sync
 uv run pytest -q
 ```
 
-Attendu : la branche est au moins à `9169409`, `uv sync` ne signale aucune
-erreur, pytest affiche `N passed, M skipped` sans `failed`. Si un test échoue,
-rapporter sa sortie complète et s'arrêter.
+Attendu : `src/ingest/era5_arco.py` et `notebooks/spike_q1/s02c_download_era5_arco.py`
+existent, `uv sync` ne signale aucune erreur, pytest affiche
+`N passed, M skipped` sans `failed`. Si un test échoue, rapporter sa
+sortie complète et s'arrêter. Les fichiers sous `data/` ne sont pas
+touchés par le changement de branche : ils sont hors git.
 
 ## 1. Météo journalière (CDS horaire, amendement 2)
 
@@ -45,6 +48,78 @@ tp_mm somme positive. Une valeur hors de ces bornes : rapporter, ne pas corriger
 les 120 secondes par le script lui-même. Un fichier horaire corrompu (erreur
 NetCDF à l'ouverture) : supprimer `data/raw/spike_q1/era5h_<zone>_<année>_<mois>.nc`
 et relancer la commande.
+
+## 1b. Repli ARCO-ERA5 (seulement si l'étape 1 a livré moins de 74 fichiers à l'échéance)
+
+Condition d'entrée : à l'échéance fixée, le comptage de l'étape 1 donne
+moins de 74 fichiers. Sinon, laisser l'étape 1 finir et passer à l'étape 2.
+
+1. Arrêter le processus s02b en cours. Ne pas supprimer les fichiers
+   `era5_daily_*.nc` déjà obtenus : ce sont les références de vérification.
+
+2. Vérifier le store :
+
+```powershell
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+uv sync
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --check
+```
+
+Attendu : `ARCO store layout ok, final data to 2026-06-30`. Toute autre
+sortie : arrêt et rapport.
+
+3. Vérification bloquante sur un mois déjà obtenu par le CDS, en Ibérie
+   puis en Grèce (choisir un mois d'été présent sur disque, par exemple 2019-07) :
+
+```powershell
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --verify 2019 07 iberia
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --verify 2019 07 greece
+```
+
+Attendu : un tableau de sept lignes (`t2m_c, t2m_max, rh, rh_min, wind, wind_mean, tp_mm`),
+`passes` vrai partout, et la dernière ligne `VERIFY PASS`, pour les deux
+zones. Tolérances : 0,01 °C, 0,1 point d'humidité, 0,01 m/s, 0,01 mm.
+
+Si `VERIFY FAIL` : recopier le tableau dans le rapport, s'arrêter, ne pas
+écrire d'amendement. Si seul `tp_mm` échoue avec un écart d'environ un
+jour de décalage (valeurs du jour suivant), le rapporter tel quel : c'est
+une différence de convention d'horodatage à trancher côté cloud.
+
+4. Écrire l'amendement 3 à la fin de `notebooks/spike_q1/PROTOCOL.md`,
+   **texte exact**, en remplaçant les crochets :
+
+```
+3. [AAAA-MM-JJ], ERA5 source for the missing months. The CDS queue stopped
+   delivering at [N]/120 monthly files ("Data Stores Service protection
+   measures"). The [120 - N] missing months come from the ARCO-ERA5 public
+   store (gs://gcp-public-data-arco-era5, full_37-1h-0p25deg-chunk-1.zarr-v3),
+   the same ERA5 hourly reanalysis on the same 0.25 degree grid, reduced to
+   daily values by the same function (src/ingest/era5_daily.hourly_to_daily).
+   Identity was checked before any training on [mois] in both areas against
+   the CDS files: maximum absolute differences [t2m_c, t2m_max, rh, rh_min,
+   wind, wind_mean, tp_mm], all within tolerance. Variables, periods,
+   models and decision criterion are unchanged.
+```
+
+5. Commiter l'amendement seul, avant tout entraînement :
+
+```powershell
+git add notebooks/spike_q1/PROTOCOL.md
+git commit -m "docs(spike): amendment 3, ARCO-ERA5 for the months the CDS did not deliver"
+git push origin ccr-9f718573-2htm0s
+```
+
+6. Remplir les mois manquants :
+
+```powershell
+uv run python notebooks/spike_q1/s02c_download_era5_arco.py --workers 8
+```
+
+Environ 9,8 Go lus par mois manquant, rien de brut conservé. Reprenable à
+l'identique. Attendu à la fin : 120 fichiers (même vérification qu'à
+l'étape 1). Si le débit est faible, `--workers 16` ; au-delà de 16, pas de
+gain attendu.
 
 ## 2. Jeu de données
 
@@ -126,7 +201,7 @@ modification des seuils.
 git add notebooks/spike_q1/out notebooks/spike_q1/VERDICT.md
 git status --short
 git commit -m "spike(q1): verdict, metrics, reliability, concordance and timings"
-git push origin v2-platform
+git push origin ccr-9f718573-2htm0s
 git log --oneline -1
 ```
 
@@ -155,13 +230,14 @@ Attendu : la commande de gel recopie les 12 tables et réécrit
 `data/reference/v1/manifest.json` ; le test de parité passe intégralement.
 Puis éditer `data/reference/v1/manifest.json` : ajouter sous
 `tables.fact_hotspot_countrymonth` la clé
-`"note": "rebuilt 2026-10 with the FIRMS window fix (src/ingest/firms.py window_url), differs from the v1.0 release asset"`.
+`"note": "rebuilt 2026-11 with the FIRMS window fix (src/ingest/firms.py window_url); the original v1.0 asset gold-v1.zip is left untouched, this reference is gold-v1-ref-2026-11.zip on the same release"`.
 
 ```powershell
 git add data/reference/v1/manifest.json
 git commit -m "chore(parity): re-freeze fact_hotspot_countrymonth after the FIRMS window fix"
-git push origin v2-platform
-gh release upload v1.0 dist/gold-v1.zip --clobber
+git push origin ccr-9f718573-2htm0s
+Copy-Item dist/gold-v1.zip dist/gold-v1-ref-2026-11.zip
+gh release upload v1.0 dist/gold-v1-ref-2026-11.zip
 ```
 
 ## 8. Vérification GWIS
@@ -174,3 +250,106 @@ Attendu : `Wrote data/interim/gwis_gfas_emissions.csv (... rows, 2003-01 to 20xx
 Si HTTP 404 : ouvrir `https://gwis.jrc.ec.europa.eu/apps/country.profile/` dans
 un navigateur, relever le nom exact du fichier d'émissions GFAS proposé au
 téléchargement, et le rapporter sans modifier le code.
+
+## 9. Analyses exploratoires après le verdict (ADR 0009)
+
+Préalable : `notebooks/spike_q1/EXPLORATORY.md` est commité, et les sorties
+du verdict sont dans `out/`. Aucun fichier existant de `out/` n'est
+modifié par cette étape.
+
+```powershell
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+uv run python notebooks/spike_q1/s08_exploratory.py
+```
+
+Durée : dix à trente minutes, avec cinq plis spatiaux, trois modèles et
+deux années. Le script reconstruit en mémoire les modèles du verdict avec
+les hyperparamètres de `out/criterion_a.json`, sans nouveau réglage.
+
+Attendu : trois nouveaux fichiers, et rien d'autre de modifié dans `out/`.
+
+- `out/exploratory_spatial_blocks.csv` : 6 lignes, trois modèles et deux
+  années, avec `pr_auc`, `pr_auc_unblocked`, `relative_drop` et `transfers`.
+- `out/exploratory_ablation.csv` : 12 lignes, six modèles et deux années,
+  avec `share_of_3b_pr_auc`.
+- `out/exploratory_new_ignitions.csv` : 24 lignes, trois sous-ensembles,
+  quatre modèles et deux années, avec `share_of_positives`.
+
+Vérification :
+
+```powershell
+git status --short notebooks/spike_q1/out
+```
+
+Attendu : seuls les trois fichiers `exploratory_*.csv` apparaissent, en
+nouveaux. Un fichier du verdict modifié : arrêt et rapport.
+
+Ajouter à la fin de `VERDICT.md` une section `## 11. Exploratory analyses
+(post-verdict, not decisive)` qui recopie les trois tableaux en Markdown. Y
+ajouter une phrase par analyse, appliquant la règle de lecture écrite dans
+`EXPLORATORY.md`, sans autre interprétation. Puis :
+
+```powershell
+git add notebooks/spike_q1/out/exploratory_*.csv notebooks/spike_q1/VERDICT.md
+git commit -m "docs(spike): exploratory analyses E1 to E3 after the verdict"
+git push origin ccr-9f718573-2htm0s
+```
+
+Aucune ligne d'attribution dans le message de commit. Rapporter les trois
+tableaux et l'empreinte du commit.
+
+Note sur la release : l'asset d'origine `gold-v1.zip` de la release `v1.0`
+n'est jamais écrasé, car c'est une référence publiée. La référence regelée
+est ajoutée à côté sous un autre nom. Si `gh release upload` répond que
+l'asset existe déjà, ne pas ajouter `--clobber` : arrêter et rapporter.
+
+## 10. Seconde exécution de s08 et analyse E4 (addendum d'EXPLORATORY.md)
+
+Préalable : l'addendum d'`EXPLORATORY.md` est sur la branche, il est donc
+pré-déclaré.
+
+```powershell
+git fetch origin
+git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+uv run python notebooks/spike_q1/s08_exploratory.py
+```
+
+Durée : environ deux fois celle de la première exécution, à cause des dix
+graines de E4.
+
+Vérification de reproduction, bloquante :
+
+```powershell
+uv run python -c "import pandas as pd; v=pd.read_csv('notebooks/spike_q1/out/metrics_a.csv').set_index(['year','model'])['pr_auc']; e=pd.read_csv('notebooks/spike_q1/out/exploratory_new_ignitions.csv'); e=e[e.subset=='all'].set_index(['year','model'])['pr_auc']; d=(v-e).abs().dropna(); print(d); print('MAX', d.max())"
+```
+
+Attendu : `MAX` inférieur à 1e-9 pour les quatre modèles et les deux
+années. Le refit reproduit alors la section 3 du VERDICT. Sinon : arrêt et
+rapport du tableau.
+
+Attendu ensuite : cinq fichiers `out/exploratory_*.csv`. Les fichiers
+`exploratory_ablation.csv` et `exploratory_new_ignitions.csv` changent pour
+les modèles 3b et 4, et `exploratory_new_ignitions.csv` gagne les colonnes
+`base_rate` et `lift`. `exploratory_seeds.csv` et
+`exploratory_seeds_summary.csv` sont nouveaux. `exploratory_spatial_blocks.csv`
+est inchangé. Aucun autre fichier de `out/` n'est modifié.
+
+Dans `VERDICT.md`, section 11 :
+
+1. Remplacer la phrase « The cause was not investigated » par la cause
+   écrite dans l'addendum d'`EXPLORATORY.md`, en une phrase.
+2. Remplacer les tableaux E2 et E3 par ceux de la nouvelle exécution, avec
+   les colonnes `base_rate` et `lift` ajoutées au tableau E3.
+3. Ajouter un tableau E4 : le contenu d'`exploratory_seeds_summary.csv`.
+4. Lire chaque tableau par la règle d'`EXPLORATORY.md` et de son addendum,
+   en une phrase chacun, sans autre interprétation.
+
+```powershell
+git add notebooks/spike_q1/out/exploratory_*.csv notebooks/spike_q1/VERDICT.md
+git commit -m "docs(spike): exploratory analyses rerun with the shared training sample, E4 seed sensitivity"
+git push origin ccr-9f718573-2htm0s
+```
+
+Aucune ligne d'attribution. Rapporter la sortie de la vérification de
+reproduction, le tableau E4 et l'empreinte du commit.
