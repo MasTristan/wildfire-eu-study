@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "A country by year panel, 2016 to 2025, with country fixed effects, so each country is compared with itself. Seasonal fire weather (high-danger days, rainfall, temperature) and spring drought explain part of the swings in burnt area. The weather-adjusted area is what each year would have burnt under that country's average weather: the gap between the two lines is the weather's doing.",
+                    "value": "A country by year panel, 2016 to 2025, with country fixed effects, so each country is compared with itself, and each metric is measured in within-country standard deviations: a country's own year-to-year spread. Of four weather metrics, only high-danger days and spring drought (SPEI) are robust: their 95 % interval excludes zero and the sign holds in every variant tested. Temperature and rainfall cannot be told apart from zero (grey bars below, robust ones in orange). The weather-adjusted area is what each year would have burnt under that country's average weather, all four terms included.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

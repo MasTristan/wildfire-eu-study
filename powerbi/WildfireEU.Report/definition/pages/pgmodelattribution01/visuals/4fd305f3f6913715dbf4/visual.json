@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "4fd305f3f6913715dbf4",
   "position": {
-    "x": 740.59,
+    "x": 660.08,
     "y": 16,
     "z": 21,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tail risk'"
+                  "Value": "'Live'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgmodeltailrisk00001'"
+                  "Value": "'pglivecurrentseason1'"
                 }
               }
             }

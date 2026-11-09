@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "62bf2b55c669fdaab674",
   "position": {
-    "x": 418.55,
+    "x": 257.53,
     "y": 16,
     "z": 15,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Why'"
+                  "Value": "'When'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgwhyclimatefwi00001'"
+                  "Value": "'pgwhenseasonality001'"
                 }
               }
             }

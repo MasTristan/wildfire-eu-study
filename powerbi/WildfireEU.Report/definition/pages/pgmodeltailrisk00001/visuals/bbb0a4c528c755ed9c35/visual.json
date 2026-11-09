@@ -1,10 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "da5f9be67a38970fb575",
+  "name": "bbb0a4c528c755ed9c35",
   "position": {
-    "x": 96.51,
+    "x": 982.12,
     "y": 16,
-    "z": 11,
+    "z": 24,
     "width": 72.51,
     "height": 44
   },
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Scale'"
+                  "Value": "'Method'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgeuropeoverview0001'"
+                  "Value": "'pgaboutsourcesnote01'"
                 }
               }
             }

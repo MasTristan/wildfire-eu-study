@@ -1,15 +1,15 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "0cadb09a5f3eb3b4c175",
+  "name": "2f4964fd70820f66131a",
   "position": {
-    "x": 16.0,
-    "y": 588,
-    "z": 10,
-    "width": 1248.0,
-    "height": 148
+    "x": 434.67,
+    "y": 536,
+    "z": 9,
+    "width": 410.67,
+    "height": 200
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
         "Category": {
@@ -19,14 +19,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_date"
+                      "Entity": "tail_risk_threshold_stability"
                     }
                   },
-                  "Property": "year"
+                  "Property": "threshold_ha"
                 }
               },
-              "queryRef": "dim_date.year",
-              "nativeQueryRef": "year",
+              "queryRef": "tail_risk_threshold_stability.threshold_ha",
+              "nativeQueryRef": "threshold_ha",
               "active": true
             }
           ]
@@ -41,30 +41,45 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Weather effect"
+                  "Property": "Shape by threshold"
                 }
               },
-              "queryRef": "_Measures.Weather effect",
-              "nativeQueryRef": "Weather effect"
+              "queryRef": "_Measures.Shape by threshold",
+              "nativeQueryRef": "Shape by threshold"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Shape by threshold, 95% low"
+                }
+              },
+              "queryRef": "_Measures.Shape by threshold, 95% low",
+              "nativeQueryRef": "Shape by threshold, 95% low"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Shape by threshold, 95% high"
+                }
+              },
+              "queryRef": "_Measures.Shape by threshold, 95% high",
+              "nativeQueryRef": "Shape by threshold, 95% high"
             }
           ]
         }
       }
     },
     "objects": {
-      "zoom": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          }
-        }
-      ],
       "valueAxis": [
         {
           "properties": {
@@ -78,10 +93,10 @@
           }
         }
       ],
-      "labels": [
+      "lineStyles": [
         {
           "properties": {
-            "show": {
+            "showMarker": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -95,6 +110,26 @@
         {
           "properties": {
             "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bottom'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
                   "Value": "false"
@@ -119,7 +154,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Weather effect by year: how far the season's weather pushed burnt area above or below normal'"
+                  "Value": "'Tail shape by threshold (ha)'"
                 }
               }
             }

@@ -1,10 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "bfe4f45e5a73214e9e53",
+  "name": "75f444d00c960aba4794",
   "position": {
-    "x": 16.0,
+    "x": 901.61,
     "y": 16,
-    "z": 12,
+    "z": 23,
     "width": 72.51,
     "height": 44
   },
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cover'"
+                  "Value": "'Validation'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgcoverintro00000001'"
+                  "Value": "'pgmodelvalidation001'"
                 }
               }
             }

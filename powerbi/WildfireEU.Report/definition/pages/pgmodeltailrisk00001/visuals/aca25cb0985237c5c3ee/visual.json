@@ -1,10 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "e9d6d6129d2d675675da",
+  "name": "aca25cb0985237c5c3ee",
   "position": {
     "x": 16.0,
     "y": 744,
-    "z": 9,
+    "z": 11,
     "width": 1248.0,
     "height": 44
   },
@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Peaks over threshold: threshold at the 90th percentile of each country's fire sizes, at least 30 exceedances required to fit (20 of 50 countries qualify), maximum likelihood, 500 bootstrap resamples for the 95 % intervals. Observed level: the size exceeded about once every N years in the record. Reliable horizon: twice the observed period. A description of the 2016-2025 record, not a forecast. Every table carries the MLflow run that produced it.",
+                    "value": "Peaks over threshold: fixed 500 ha threshold, fires within 3 days merged into one episode, maximum likelihood, bootstrap by year blocks for the 95 % intervals. Return levels are in episodes: the size exceeded about once every N years. Observed level: the same, read straight from the 2016-2025 record. Reliable horizon: twice the observed period. A description of that record, not a forecast. Every table carries the MLflow run that produced it.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",

@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "ea047718373c2b34c569",
   "position": {
-    "x": 821.1,
+    "x": 740.59,
     "y": 16,
     "z": 22,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Attribution'"
+                  "Value": "'Tail risk'"
                 }
               }
             },
@@ -65,7 +65,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#FF7A45'"
+                      "Value": "'#8892A0'"
                     }
                   }
                 }
@@ -96,7 +96,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#3A1E12'"
+                      "Value": "'#131820'"
                     }
                   }
                 }
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgmodelattribution01'"
+                  "Value": "'pgmodeltailrisk00001'"
                 }
               }
             }

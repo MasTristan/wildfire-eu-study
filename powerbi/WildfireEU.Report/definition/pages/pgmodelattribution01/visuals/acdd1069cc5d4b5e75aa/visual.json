@@ -1,15 +1,15 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "0cb19dfa7415a0f0000f",
+  "name": "acdd1069cc5d4b5e75aa",
   "position": {
-    "x": 644.0,
+    "x": 16.0,
     "y": 380,
     "z": 9,
-    "width": 620.0,
+    "width": 515.33,
     "height": 200
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
         "Category": {
@@ -19,14 +19,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "attribution_coefficients"
+                      "Entity": "dim_date"
                     }
                   },
-                  "Property": "metric_name"
+                  "Property": "year"
                 }
               },
-              "queryRef": "attribution_coefficients.metric_name",
-              "nativeQueryRef": "metric_name",
+              "queryRef": "dim_date.year",
+              "nativeQueryRef": "year",
               "active": true
             }
           ]
@@ -41,48 +41,31 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Coefficient"
+                  "Property": "Burnt area, panel (ha)"
                 }
               },
-              "queryRef": "_Measures.Coefficient",
-              "nativeQueryRef": "Coefficient"
+              "queryRef": "_Measures.Burnt area, panel (ha)",
+              "nativeQueryRef": "Burnt area, panel (ha)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Weather-adjusted area (ha)"
+                }
+              },
+              "queryRef": "_Measures.Weather-adjusted area (ha)",
+              "nativeQueryRef": "Weather-adjusted area (ha)"
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "_Measures"
-                  }
-                },
-                "Property": "Coefficient"
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
     },
     "objects": {
-      "zoom": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          }
-        }
-      ],
       "valueAxis": [
         {
           "properties": {
@@ -96,10 +79,10 @@
           }
         }
       ],
-      "labels": [
+      "lineStyles": [
         {
           "properties": {
-            "show": {
+            "showMarker": {
               "expr": {
                 "Literal": {
                   "Value": "true"
@@ -115,7 +98,14 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Top'"
                 }
               }
             }
@@ -137,7 +127,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Effect of one standard deviation of each metric on log burnt area'"
+                  "Value": "'Burnt area against the weather-adjusted area (ha)'"
                 }
               }
             }

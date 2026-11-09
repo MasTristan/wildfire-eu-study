@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Predicting where fires start: a real gain, a criterion missed by one number",
+                    "value": "Predicting ignitions: a real gain, but the pre-registered criterion is not met",
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
                       "fontSize": "23pt",

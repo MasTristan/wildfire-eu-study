@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "4221728f6215448cf7d3",
   "position": {
-    "x": 853.33,
+    "x": 644.0,
     "y": 276,
     "z": 7,
-    "width": 410.67,
+    "width": 306.0,
     "height": 96
   },
   "visual": {
@@ -22,11 +22,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Weather effect, 2022"
+                  "Property": "Burnt area multiplier, high-danger days"
                 }
               },
-              "queryRef": "_Measures.Weather effect, 2022",
-              "nativeQueryRef": "Weather effect, 2022"
+              "queryRef": "_Measures.Burnt area multiplier, high-danger days",
+              "nativeQueryRef": "Burnt area multiplier, high-danger days"
             }
           ]
         }

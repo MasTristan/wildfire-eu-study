@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "f0b8b5535401fd96bdd8",
   "position": {
-    "x": 434.67,
+    "x": 330.0,
     "y": 276,
     "z": 6,
-    "width": 410.67,
+    "width": 306.0,
     "height": 96
   },
   "visual": {
@@ -22,11 +22,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Burnt area multiplier, high-danger days"
+                  "Property": "Weather share, out of sample"
                 }
               },
-              "queryRef": "_Measures.Burnt area multiplier, high-danger days",
-              "nativeQueryRef": "Burnt area multiplier, high-danger days"
+              "queryRef": "_Measures.Weather share, out of sample",
+              "nativeQueryRef": "Weather share, out of sample"
             }
           ]
         }

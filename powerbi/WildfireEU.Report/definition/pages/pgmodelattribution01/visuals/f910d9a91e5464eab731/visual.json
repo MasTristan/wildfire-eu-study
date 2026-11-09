@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "b2bea537cd03c486b63c",
+  "name": "f910d9a91e5464eab731",
   "position": {
-    "x": 434.67,
+    "x": 539.33,
     "y": 380,
-    "z": 7,
-    "width": 410.67,
-    "height": 356
+    "z": 10,
+    "width": 724.67,
+    "height": 200
   },
   "visual": {
     "visualType": "barChart",
@@ -19,14 +19,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_country"
+                      "Entity": "attribution_coefficients"
                     }
                   },
-                  "Property": "name_en"
+                  "Property": "metric_name"
                 }
               },
-              "queryRef": "dim_country.name_en",
-              "nativeQueryRef": "name_en",
+              "queryRef": "attribution_coefficients.metric_name",
+              "nativeQueryRef": "metric_name",
               "active": true
             }
           ]
@@ -41,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "10-year fire (ha)"
+                  "Property": "Coefficient"
                 }
               },
-              "queryRef": "_Measures.10-year fire (ha)",
-              "nativeQueryRef": "10-year fire (ha)"
+              "queryRef": "_Measures.Coefficient",
+              "nativeQueryRef": "Coefficient"
             }
           ]
         }
@@ -60,7 +60,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "10-year fire (ha)"
+                "Property": "Coefficient"
               }
             },
             "direction": "Descending"
@@ -121,6 +121,65 @@
             }
           }
         }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Conditional": {
+                      "Cases": [
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 1,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "_Measures"
+                                    }
+                                  },
+                                  "Property": "Coefficient is robust"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#FF7A45'"
+                            }
+                          }
+                        }
+                      ],
+                      "DefaultValue": {
+                        "Literal": {
+                          "Value": "'#5A6472'"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ]
+          }
+        }
       ]
     },
     "visualContainerObjects": {
@@ -137,7 +196,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Fire size reached once every 10 years (ha)'"
+                  "Value": "'Effect of one within-country standard deviation on log burnt area'"
                 }
               }
             }

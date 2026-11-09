@@ -6,7 +6,7 @@
     "y": 68,
     "z": 1,
     "width": 1248.0,
-    "height": 96
+    "height": 44
   },
   "visual": {
     "visualType": "textbox",
@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Portugal's largest fires follow a tail with no finite mean",
+                    "value": "Heavy-tailed fire sizes: no return level where the fitted shape reaches 1",
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
                       "fontSize": "23pt",

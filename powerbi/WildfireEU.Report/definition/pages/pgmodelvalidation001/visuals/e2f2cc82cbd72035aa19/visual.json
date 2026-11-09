@@ -131,7 +131,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Pre-registered criterion, full model against the fire-weather-only model (95 % block-bootstrap interval)'"
+                  "Value": "'Criterion: full model against fire-weather-only (95 % interval)'"
                 }
               }
             }
