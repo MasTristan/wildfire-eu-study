@@ -64,10 +64,10 @@ def log_table(df, name: str) -> None:
     mlflow.log_table(df, artifact_file=f"{name}.json")
 
 
-def log_artifact(path: Path) -> None:
+def log_artifact(path: Path, artifact_path: str | None = None) -> None:
     import mlflow
 
-    mlflow.log_artifact(str(path))
+    mlflow.log_artifact(str(path), artifact_path=artifact_path)
 
 
 MODEL_CARD_TEMPLATE = """# Model card: {name}

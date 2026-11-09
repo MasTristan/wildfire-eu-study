@@ -100,6 +100,7 @@ def test_model_output_assets_depend_on_the_gold(defs):
 
 def test_q1_spike_results_materialises_without_data(tmp_path, monkeypatch):
     """The validation page's tables come from committed spike outputs only."""
+    import pandas as pd
     from dagster import materialize
 
     from src import lake
@@ -108,9 +109,13 @@ def test_q1_spike_results_materialises_without_data(tmp_path, monkeypatch):
     monkeypatch.setattr(lake, "GOLD_MODEL_OUT", tmp_path / "model_out")
     for attr in ("SILVER", "GOLD_STAR", "GOLD_FEATURES"):
         monkeypatch.setattr(lake, attr, tmp_path / attr.lower())
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{tmp_path.resolve() / 'mlflow.db'}")
+    monkeypatch.setenv("MLFLOW_ARTIFACT_ROOT", str(tmp_path / "artifacts"))
     assert materialize([models.q1_spike_results]).success
     names = sorted(p.stem for p in (tmp_path / "model_out").glob("*.parquet"))
     assert names == ["q1_criterion", "q1_importance", "q1_metrics", "q1_reliability"]
+    run_ids = {pd.read_parquet(tmp_path / "model_out" / f"{n}.parquet")["run_id"].iloc[0] for n in names}
+    assert len(run_ids) == 1 and next(iter(run_ids))
 
 
 def test_asset_selection_strings_parse_and_resolve(defs):

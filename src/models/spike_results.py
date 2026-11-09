@@ -13,6 +13,9 @@ Tables (label (a) EFFIS, the primary label of the protocol):
   gain, its block-bootstrap interval, the threshold and the outcome;
 - q1_reliability: calibration bins per test year and model;
 - q1_importance: LightGBM gain of the full model's features, as a share.
+
+Every table carries a `run_id`: the MLflow run `q1_spike` that logs the spike's
+output files, the criterion file and the criterion metrics (`log_spike_run`).
 """
 from __future__ import annotations
 
@@ -65,6 +68,8 @@ FEATURES = {
     "elev_m": ("Elevation", "Land"),
 }
 QUANTITY_NAMES = {"brier_rel_improvement": "Brier score, relative gain", "pr_auc_gain": "PR-AUC, absolute gain"}
+EXPERIMENT = "q1_spike"
+LOGGED_SUFFIXES = {".csv", ".json", ".png"}
 
 
 def _with_model_names(df: pd.DataFrame) -> pd.DataFrame:
@@ -115,6 +120,37 @@ def importance(out: Path = SPIKE_OUT) -> pd.DataFrame:
     return df.sort_values("rank").reset_index(drop=True)
 
 
-def all_tables(out: Path = SPIKE_OUT) -> dict[str, pd.DataFrame]:
-    return {"q1_metrics": metrics(out), "q1_criterion": criterion(out),
-            "q1_reliability": reliability(out), "q1_importance": importance(out)}
+def all_tables(out: Path = SPIKE_OUT, run_id: str | None = None) -> dict[str, pd.DataFrame]:
+    tables = {"q1_metrics": metrics(out), "q1_criterion": criterion(out),
+              "q1_reliability": reliability(out), "q1_importance": importance(out)}
+    return {name: df.assign(run_id=run_id) for name, df in tables.items()}
+
+
+def log_spike_run(out: Path = SPIKE_OUT) -> str:
+    """Log the frozen spike outputs as one MLflow run and return its id.
+
+    Logged: every CSV, JSON and PNG of `out` (artefact folder `out/`), the
+    pre-registered criterion quantities per test year, the PR-AUC of every
+    model and the selected hyper-parameters. Nothing is recomputed.
+    """
+    from src.models import tracking
+
+    crit = json.loads((out / f"criterion_{LABEL}.json").read_text())
+    params: dict[str, object] = {"label": LABEL, "train_years": "2019-2021", "test_years": "2022,2023", "seed": 42,
+                                 **{f"threshold_{k}": v for k, v in THRESHOLDS.items()}}
+    for model, hp in crit["tuned"].items():
+        params.update({f"{model}_{k}": v for k, v in hp.items()})
+    with tracking.run(EXPERIMENT, "spike_q1", params, tags={"scope": "ES PT GR 2019-2023"}) as active:
+        values: dict[str, float] = {"all_pass": float(crit["all_pass"])}
+        for year in sorted(k for k in crit if k.isdigit()):
+            for quantity in THRESHOLDS:
+                values[f"{quantity}_{year}"] = float(crit[year][quantity])
+            values[f"passes_{year}"] = float(crit[year]["passes"])
+        for row in metrics(out).itertuples():
+            values[f"pr_auc_{row.model}_{row.year}"] = float(row.pr_auc)
+            values[f"brier_{row.model}_{row.year}"] = float(row.brier)
+        tracking.log_metrics(values)
+        for path in sorted(out.iterdir()):
+            if path.suffix in LOGGED_SUFFIXES:
+                tracking.log_artifact(path, artifact_path="out")
+        return str(active.info.run_id)

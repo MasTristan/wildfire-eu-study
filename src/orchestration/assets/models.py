@@ -126,9 +126,10 @@ def q1_spike_results() -> MaterializeResult:
     from src.models import spike_results
 
     lake.ensure_dirs()
-    tables = spike_results.all_tables()
+    run_id = spike_results.log_spike_run()
+    tables = spike_results.all_tables(run_id=run_id)
     for name, df in tables.items():
         df.to_parquet(lake.GOLD_MODEL_OUT / f"{name}.parquet", index=False)
     crit = tables["q1_criterion"]
     return MaterializeResult(metadata={**{name: int(len(df)) for name, df in tables.items()},
-                                       "all_pass": bool(crit["all_pass"].iloc[0])})
+                                       "all_pass": bool(crit["all_pass"].iloc[0]), "run_id": run_id})
