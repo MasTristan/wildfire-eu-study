@@ -37,6 +37,7 @@ nav:
       - 0007 ERA5 horaire CDS: adr/0007-era5-hourly-cds-monthly.md
       - 0008 Repli ARCO-ERA5: adr/0008-arco-era5-fallback.md
       - 0009 Périmètre après le spike: adr/0009-q1-scope-after-reduced-go.md
+      - 0010 PyMC en Windows natif: adr/0010-pymc-windows-native.md
   - Procédures:
       - Matérialisation v2: runbooks/materialise-v2.md
       - Spike Q1: runbooks/spike-q1.md

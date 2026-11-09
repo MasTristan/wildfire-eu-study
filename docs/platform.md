@@ -125,6 +125,7 @@ appels uniques : leurs sources ne se découpent pas.
 |---|---|---|---|
 | `extremes.py` | Q2, queue des tailles de feux | ajustement Pareto généralisé au-dessus d'un seuil par pays, niveaux de retour à 2, 5, 10, 20, 50 ans avec intervalles bootstrap, publiés seulement jusqu'à deux fois la durée observée (`max_return_period_years`), au moins 30 dépassements requis, années complètes seulement (une dernière année partielle est exclue), niveaux empiriques en regard, table de stabilité du seuil, période de retour d'un feu de 10 000 ha | récupération de paramètres connus sur un échantillon synthétique, inversion niveau / période |
 | `attribution.py` | Q3, part de la météo dans la variabilité annuelle | panel pays x année, effets fixes pays, erreurs groupées par pays, composante météo et surface ajustée du climat par pays et année, R² intra-pays, contrôle leave-one-year-out | signal synthétique retrouvé (signe, ordre de grandeur), années à saison incomplète exclues et non imputées |
+| `attribution_bayes.py` | Q3, version bayésienne hiérarchique (PyMC) | même panel, intercepts et pentes partiellement mis en commun entre pays (pentes non centrées), a priori faiblement informatifs, coefficients a posteriori (moyenne, intervalle crédible à 94 %) en regard des coefficients fréquentistes, R² bayésien de la météo par pays, diagnostics (R-hat, ESS, divergences) | pente connue retrouvée sur un jeu simulé, schéma des tables, règle d'acceptation du sampler |
 | `validation.py` | protocole commun | découpes par année tenue et par blocs spatiaux de 2°, métriques du critère pré-enregistré, fiabilité par décile, bootstrap par blocs sur les différences | partition exacte des lignes, blocs jamais scindés, intervalles qui séparent deux modèles de qualité connue |
 | `tracking.py` | traçabilité | MLflow en SQLite local sans serveur, un identifiant de run sur chaque table publiée, gabarit de carte de modèle | run relu depuis le store |
 
@@ -138,6 +139,7 @@ un seul paramètre à régler).
 |---|---|---|
 | 10 Tail risk | `tail_risk_country`, `tail_risk_levels` (niveaux de retour en format long, une ligne par pays et période) | `gold/tail_risk_country` |
 | 11 Attribution | `attribution_countryyear`, `attribution_coefficients` (nom lisible, intervalle à 95 %, multiplicateur de surface), `attribution_summary` (R² intra-pays) | `gold/attribution_countryyear` |
+| (pas de page) | `attribution_bayes_coefficients` (niveaux population, écart-type entre pays et pays : moyenne, écart-type, intervalle à 94 %, coefficient fréquentiste en regard, R-hat, ESS), `attribution_bayes_countryyear` (composante météo avec intervalle, surface ajustée, R² bayésien par pays) ; `run_id` sur chaque ligne | `gold/attribution_bayes` |
 | 12 Validation | `q1_metrics`, `q1_criterion`, `q1_importance` ; `q1_reliability` est écrite pour le site | `gold/q1_spike_results` |
 
 `gold/q1_spike_results` ne recalcule rien : il remet en forme les sorties
@@ -145,6 +147,11 @@ gelées et commitées du spike (`notebooks/spike_q1/out`), si bien que la page e
 `VERDICT.md` ne peuvent pas diverger. Il se matérialise sans aucune donnée
 locale.
 
-La version bayésienne de Q3 (PyMC, WSL2) consomme le même panel et doit
-retrouver le signe et l'ordre de grandeur de chaque coefficient. Q1 rejoint
-ce dossier une fois le périmètre fixé par le verdict du spike.
+La version bayésienne de Q3 (`gold/attribution_bayes`, expérience MLflow
+`q3_attribution_bayes`) consomme le même panel et retrouve le signe et
+l'ordre de grandeur des coefficients fréquentistes ([ADR 0010](adr/0010-pymc-windows-native.md)).
+Elle tourne en Windows natif : sans compilateur C++, PyTensor compile vers
+Numba (`configure_backend` le règle avant l'import de PyMC). L'asset check
+`sampler_diagnostics` échoue si R-hat atteint 1,01 ou si les divergences
+dépassent 1 % des tirages. Q1 rejoint ce dossier une fois le périmètre fixé par le
+verdict du spike.

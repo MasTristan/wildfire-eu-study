@@ -6,7 +6,7 @@ fixes its scope; Q2 tail risk and Q3 attribution depend only on the gold.
 from datetime import date
 
 import pandas as pd
-from dagster import MaterializeResult, asset
+from dagster import AssetCheckResult, AssetCheckSpec, MaterializeResult, asset
 
 from src import lake
 from src.orchestration.assets import features, gold
@@ -60,6 +60,40 @@ def attribution_countryyear() -> MaterializeResult:
                    "first_year": int(fitted["year"].min()), "last_year": int(fitted["year"].max()),
                    "run_id": active.info.run_id}]).to_parquet(lake.GOLD_MODEL_OUT / "attribution_summary.parquet", index=False)
     return MaterializeResult(metadata={"rows": int(len(fitted)), "r2_within_weather": res.r2_within_weather, "run_id": active.info.run_id})
+
+
+@asset(key_prefix="gold", group_name=GROUP, kinds={"python", "pymc"}, deps=[gold.gold_star],
+       check_specs=[AssetCheckSpec("sampler_diagnostics", asset=["gold", "attribution_bayes"],
+                                   description="R-hat below 1.01 and divergences under 1 % of the draws")],
+       description="Q3 (Bayesian): hierarchical PyMC model on the same panel, partially pooled slopes, posterior coefficients and per-country weather R2")
+def attribution_bayes():
+    from src.models import attribution, tracking
+    from src.models import attribution_bayes as bayes
+
+    fw = pd.read_parquet(lake.GOLD_STAR / "fact_fireweather_countrymonth.parquet")
+    ba = pd.read_parquet(lake.GOLD_STAR / "fact_burntarea_countryyear.parquet")
+    panel = attribution.build_panel(fw, ba)
+    draws, tune, chains, target_accept, min_years = 1000, 1000, 4, 0.99, 4
+    params = {"metrics": attribution.METRICS, "draws": draws, "tune": tune, "chains": chains, "target_accept": target_accept,
+              "min_years": min_years, "priors": bayes.PRIORS}
+    with tracking.run("q3_attribution_bayes", f"hier_{date.today():%Y%m%d}", params) as active:
+        res = bayes.fit_attribution_bayes(panel, min_years=min_years, draws=draws, tune=tune, chains=chains,
+                                          target_accept=target_accept)
+        diag = res.diagnostics
+        tracking.log_metrics({"rhat_max": diag["rhat_max"], "ess_bulk_min": diag["ess_bulk_min"], "ess_tail_min": diag["ess_tail_min"],
+                              "divergences": diag["divergences"], "duration_s": diag["duration_s"],
+                              "r2_weather_overall": diag["r2_weather_overall"], "r2_weather_freq": diag["r2_weather_freq"],
+                              "n_obs": diag["n_obs"], "n_countries": diag["n_countries"]})
+        tracking.log_table(res.coefficients[res.coefficients["level"] != "country"], "coefficients_population")
+    run_id = active.info.run_id
+    lake.ensure_dirs()
+    res.coefficients.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "attribution_bayes_coefficients.parquet", index=False)
+    res.countryyear.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "attribution_bayes_countryyear.parquet", index=False)
+    passed, detail = bayes.check_diagnostics(diag)
+    yield MaterializeResult(metadata={"rows": int(len(res.countryyear)), "run_id": run_id, "rhat_max": diag["rhat_max"],
+                                      "divergences": int(diag["divergences"]), "duration_s": round(diag["duration_s"], 1),
+                                      "dropped_countries": ", ".join(res.dropped_countries)})
+    yield AssetCheckResult(check_name="sampler_diagnostics", passed=passed, metadata=detail)
 
 
 @asset(key_prefix="gold", group_name=GROUP, kinds={"python"}, deps=[features.features_daily, features.grid_cells],
