@@ -29,6 +29,8 @@ dependencies = [
     "mlflow==3.17.1",
     "statsmodels==0.15.0",
     "numcodecs==0.15.1",
+    "pymc==5.28.5",
+    "arviz==0.23.4",
 ]
 
 [dependency-groups]
