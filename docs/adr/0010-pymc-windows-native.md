@@ -31,7 +31,7 @@ paquet déjà présent.
 | Backend Numba, modèle jouet, 4 chaînes x 1000 + 1000 | 37 s d'échantillonnage, 48 s de bout en bout, R-hat 1,00 |
 | Modèle Q3 réel (356 lignes, 40 pays, 4 métriques), 4 x 1000 + 1000, `target_accept` 0,99 | 64 à 73 s |
 | Idem, trois graines (20260101, 7, 99) | R-hat max 1,0062, 1,0083, 1,0095 ; 0 divergence ; ESS bulk min 566, 517, 720 |
-| Idem, asset Dagster `gold/attribution_bayes` (in-process) | 68 s d'échantillonnage, 82 s de bout en bout, R-hat max 1,0062, 0 divergence, ESS bulk min 566 |
+| Idem, asset Dagster `gold/attribution_bayes` (in-process), première version du panel | 68 s mesurés à l'époque, 82 s de bout en bout, R-hat max 1,0062, 0 divergence, ESS bulk min 566 ; le run MLflow de cette version consignait `duration_s` = 55,5 s (voir ci-dessous) |
 
 Le critère est tenu avec un facteur 12 de marge sur la durée. Deux pièges
 rencontrés en chemin, tous deux réglés dans `configure_backend`
@@ -75,6 +75,23 @@ divergences sous 1 % des tirages) et une expérience MLflow
 - Le critère de bascule reste la règle d'acceptation du sampler : si une
   évolution du panel ou du modèle la fait échouer, l'asset check devient rouge
   avant que la table ne soit lue par le rapport.
-- La comparaison avec le modèle fréquentiste se fait sur les mêmes lignes :
-  les pays à moins de 4 années complètes (GE, MD, RU sur les données actuelles)
-  sont écartés des deux côtés.
+- Les deux modèles reçoivent exactement les mêmes lignes, par une seule fonction
+  (`prepare_panel`) : lignes complètes, puis pays à au moins 4 années complètes.
+  Sur les données actuelles, 9 pays sont écartés : EG, IL, JO, LY, PS, SY (anomalie
+  de pluie vide en zone aride) et GE, MD, RU (moins de 4 années). Les tables
+  fréquentiste et bayésienne portent donc les mêmes 356 observations et 40 pays.
+  Dans la première version, la table fréquentiste autonome gardait 360 lignes et
+  43 pays pendant que le comparateur du modèle bayésien en avait 356 et 40 ; la
+  formulation « écartés des deux côtés » ne valait que pour ce comparateur.
+- Deux durées, deux mesures. `duration_s` (MLflow) est le temps de l'appel à
+  `pm.sample`, de l'entrée au retour : démarrage des quatre processus et
+  compilation Numba compris, résumé a posteriori exclu. La ligne que PyMC affiche
+  (« took N seconds ») ne compte que la boucle d'échantillonnage. Sur la version
+  courante (panel corrigé, asset Dagster en processus) : 50 s pour PyMC, 52,4 s
+  pour `duration_s`, 54,1 s pour le pas Dagster entier (échantillonnage, résumé et
+  écriture des tables) ; R-hat max 1,0052, 0 divergence, ESS bulk min 974.
+  Le 68 s du tableau ci-dessus n'est pas `duration_s` (55,5 s pour le run qui
+  l'accompagnait) : le dispositif qui l'a produit n'est pas tracé, donc il n'est
+  pas reproductible ni comparable et il ne sert plus de référence. Les sept
+  variantes de robustesse font de 45 à 59 s chacune (`duration_s`), 6 min 45 s
+  pour l'asset `gold/attribution_robustness` entier ; R-hat max 1,0086.
