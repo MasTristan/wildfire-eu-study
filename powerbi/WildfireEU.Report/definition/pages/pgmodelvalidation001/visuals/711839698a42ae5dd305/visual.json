@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "711839698a42ae5dd305",
+  "position": {
+    "x": 16.0,
+    "y": 172,
+    "z": 2,
+    "width": 1248.0,
+    "height": 96
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Can a model that sees more than the fire-weather index locate the next day's ignitions? Pre-registered test on Spain, Portugal and Greece, 0.25 degree cells, trained on 2019-2021, tested on 2022 and 2023. Criterion frozen before training: Brier score 10 % better and PR-AUC 0.05 higher than the fire-weather-only model, in both years. 2023 passes; 2022 falls short on the Brier gain. Verdict: reduced GO, and the operational forecast was dropped.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

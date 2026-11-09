@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "cdaa4c7222fde3701e6b",
   "position": {
-    "x": 871.81,
+    "x": 740.59,
     "y": 16,
     "z": 20,
-    "width": 87.09,
+    "width": 72.51,
     "height": 44
   },
   "visual": {
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Method'"
+                  "Value": "'Tail risk'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgaboutsourcesnote01'"
+                  "Value": "'pgmodeltailrisk00001'"
                 }
               }
             }
