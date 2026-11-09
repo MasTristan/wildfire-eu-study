@@ -109,3 +109,32 @@ def test_asset_selection_strings_parse_and_resolve(defs):
     assert keys == {AssetKey(["silver", "dim_date"])}
     gold = AssetSelection.from_string('group:"gold"').resolve(graph)
     assert AssetKey(["gold", "fact_burntarea_countryyear"]) in gold
+
+
+def test_every_runbook_selection_resolves_as_the_cli_parses_it(defs):
+    """Each `--select` written in the runbooks is resolved exactly as the
+    Dagster CLI does (comma split, then AssetSelection.from_coercible) and
+    must name existing assets: an executor runs them verbatim."""
+    import re
+    from pathlib import Path
+
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    selections = []
+    for path in sorted(Path("docs/runbooks").glob("*.md")):
+        selections += re.findall(r'--select\s+("[^"]+"|\S+)', path.read_text(encoding="utf-8"))
+    assert selections, "no --select found in the runbooks"
+    for raw in selections:
+        sel = raw.strip('"')
+        keys = AssetSelection.from_coercible(sel.split(",")).resolve(graph)
+        assert keys, f"selection {sel!r} resolves to no asset"
+
+
+def test_group_gold_is_exactly_the_star_schema(defs):
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    keys = AssetSelection.from_coercible(["group:gold"]).resolve(graph)
+    assert keys == {AssetKey(["gold", n]) for n in contracts.ALL_GOLD_TABLES}
+    assert AssetKey(["gold", "features_daily"]) not in keys

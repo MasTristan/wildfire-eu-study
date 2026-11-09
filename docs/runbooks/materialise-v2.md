@@ -74,8 +74,16 @@ uv run dagster asset materialize -m src.orchestration.definitions --select "silv
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_fireevent"
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_fireweather_countrymonth"
 uv run dagster asset materialize -m src.orchestration.definitions --select "silver/fact_hotspot_countrymonth"
-uv run dagster asset materialize -m src.orchestration.definitions --select "gold/*"
+uv run dagster asset list -m src.orchestration.definitions --select group:gold
+uv run dagster asset materialize -m src.orchestration.definitions --select group:gold
 ```
+
+`--select` lit une liste de clés exactes séparées par des virgules, ou une
+expression de sélection comme `group:gold`, écrite sans guillemets pour que
+PowerShell la transmette intacte. La commande `asset list` qui précède la
+dernière matérialisation doit lister exactement les 13 tables gold du schéma
+en étoile (les 12 de la v1 et `fact_season_countryyear`), et aucun asset du
+feature store. Une autre liste : arrêt et rapport.
 
 Les assets silver appellent les fonctions v1 sur les sources déjà sur disque
 (`data/raw`, `data/interim`) : aucun téléchargement nouveau, sauf

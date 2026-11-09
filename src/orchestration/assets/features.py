@@ -88,7 +88,10 @@ def era5_static() -> MaterializeResult:
     return MaterializeResult(metadata={"path": str(STATIC_PATH)})
 
 
-@asset(key_prefix="gold", group_name="gold", kinds={"python"}, partitions_def=yearly,
+# Group "features", not "gold": `group:gold` must select exactly the star schema
+# Power BI reads, and the feature store is not materialised under the reduced GO
+# (ADR 0009).
+@asset(key_prefix="gold", group_name="features", kinds={"python"}, partitions_def=yearly,
        deps=[grid_cells, bronze.cds_fwi_full_raw, era5_daily_raw, era5_static, bronze.edo_spei3_countrymonth, silver.fact_fireevent],
        description="Feature store at cell x day for one year: FWI components, weather, SPEI, static fields, labels and lags")
 def features_daily(context: AssetExecutionContext) -> MaterializeResult:
