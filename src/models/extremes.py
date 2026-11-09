@@ -12,7 +12,9 @@ Conventions:
   per group; the stability table over a grid of candidate thresholds is
   returned for the report rather than hidden;
 - rate: exceedances per year over the observed span, counted in calendar
-  years covered (first to last year with a record, inclusive). Only complete
+  years: from the group's first record of any size to the last complete year
+  of the source, inclusive, so a year without a large fire still counts as
+  observed. Only complete
   years enter: the data end is the latest record of the whole input, and a
   final year that ends before December is dropped (the 2026 extraction stops
   at the end of July, before most of the southern season), since counting it
@@ -150,16 +152,19 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: 
     end = pd.Timestamp(data_end) if data_end is not None else pd.to_datetime(ev["firedate_key"]).max()
     last_complete_year = last_complete_year_of(end)
     ev = ev[pd.to_datetime(ev["firedate_key"]).dt.year <= last_complete_year]
+    # the period runs from the group's first record of any size (its coverage start)
+    # to the source's last complete year, not to the group's last large fire:
+    # years without a large fire are observed years, and dropping them would inflate the rate
+    first_year = pd.to_datetime(ev["firedate_key"]).dt.year.groupby(ev[group]).min()
     ev = ev[ev["area_ha"] >= floor_ha]
     rows = []
     for key, g in ev.groupby(group):
-        dates = pd.to_datetime(g["firedate_key"])
-        # calendar years covered: first-to-last-fire span undercounts complete seasons (9.9 for ten years)
-        years = float(dates.max().year - dates.min().year + 1)
+        start = int(first_year[key])
+        years = float(last_complete_year - start + 1)
         sizes = g["area_ha"].to_numpy(dtype="float64")
         horizon = max_extrapolation * years
-        row: dict = {group: key, "n_fires": int(len(sizes)), "first_year": int(dates.min().year),
-                     "last_year": int(dates.max().year), "years": round(years, 2), "largest_ha": float(sizes.max()),
+        row: dict = {group: key, "n_fires": int(len(sizes)), "first_year": start,
+                     "last_year": last_complete_year, "years": round(years, 2), "largest_ha": float(sizes.max()),
                      "max_return_period_years": round(horizon, 2)}
         emp = empirical_return_levels(sizes, years, periods)
         for T in periods:

@@ -211,8 +211,10 @@ pour les pays méditerranéens et à rapporter telle quelle, sans s'arrêter ;
 nuls par conception : `rl_50y` est vide partout tant que l'historique fait
 une dizaine d'années, de même que `return_period_10k_ha_years` quand il
 dépasse cet horizon. Seules les années complètes entrent : l'extraction
-s'arrêtant fin juillet 2026, `last_year` vaut 2025 et `years` 10 pour les
-pays couverts depuis 2016. Attendu pour Q3 : `days_high_season` à coefficient
+s'arrêtant fin juillet 2026, `last_year` vaut 2025 pour tous les pays, et
+`years` vaut 10 pour les pays couverts depuis 2016 : la période court du
+premier enregistrement du pays, toutes tailles confondues, à la dernière
+année complète de la source, même sans grand feu les dernières années. Attendu pour Q3 : `days_high_season` à coefficient
 positif, un `run_id` non vide dans les deux tables. Tout `shape` négatif
 sous -0,5, un `rl_50y` non nul ou un coefficient `days_high_season` négatif :
 rapporter.

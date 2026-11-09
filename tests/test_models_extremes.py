@@ -88,3 +88,19 @@ def test_tail_risk_table_drops_a_partial_final_year():
 def test_last_complete_year_of():
     assert extremes.last_complete_year_of(pd.Timestamp("2026-07-30")) == 2025
     assert extremes.last_complete_year_of(pd.Timestamp("2025-12-28")) == 2025
+
+
+def test_tail_risk_period_ends_at_the_source_end_not_at_the_last_large_fire():
+    rng = np.random.default_rng(13)
+    es = pd.DataFrame({
+        "country_key": "ES", "area_ha": 30 + rng.pareto(1.5, 1500) * 150,
+        "firedate_key": pd.to_datetime("2016-01-01") + pd.to_timedelta(rng.integers(0, 3653, 1500), unit="D"),
+    })
+    # SI: large fires stop in 2019, small ones (under the floor) start in 2016 and continue
+    si_large = pd.DataFrame({"country_key": "SI", "area_ha": [100.0] * 5,
+                             "firedate_key": pd.date_range("2017-03-01", "2019-08-01", periods=5)})
+    si_small = pd.DataFrame({"country_key": "SI", "area_ha": [2.0] * 3,
+                             "firedate_key": pd.to_datetime(["2016-04-01", "2021-05-01", "2024-07-01"])})
+    table = extremes.tail_risk_table(pd.concat([es, si_large, si_small]), n_boot=10).set_index("country_key")
+    assert table.loc["SI", "first_year"] == 2016 and table.loc["SI", "last_year"] == 2025
+    assert table.loc["SI", "years"] == 10.0
