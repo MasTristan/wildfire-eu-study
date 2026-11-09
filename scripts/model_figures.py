@@ -140,7 +140,7 @@ def q3_coefficients(model_out: Path) -> Path:
                 fmt="s", color=BLUE, capsize=3, label="Bayésien hiérarchique (moyenne, HDI à 94 %)")
     ax.axvline(0, color=GREY, lw=0.9)
     ax.set_yticks(y, labels=pop["label"])
-    ax.set_xlabel("Effet sur le log de la surface brûlée, pour un écart-type de la variable")
+    ax.set_xlabel("Effet sur le log de la surface brûlée, par écart-type de la variable (écart-type du panel entier)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=1, fontsize=8.5)
     ax.set_title("Q3 : mêmes 356 observations, 40 pays, deux méthodes", loc="left", fontsize=11, color=INK)
     ax.grid(axis="y", visible=False)
