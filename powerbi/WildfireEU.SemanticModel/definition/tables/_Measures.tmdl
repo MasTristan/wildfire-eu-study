@@ -605,7 +605,7 @@ table _Measures
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 7a53d113-4ad0-510d-8865-2c1ea76b5366
 
-	measure 'Largest fire (ha)' = MAX ( tail_risk_country[largest_ha] )
+	measure 'Largest fitted fire (ha)' = MAX ( tail_risk_country[largest_ha] )
 		formatString: #,##0
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: b10dcd78-a7e7-50fe-bcd0-7ec81655b3eb
