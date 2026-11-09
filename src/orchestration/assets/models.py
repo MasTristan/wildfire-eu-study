@@ -22,13 +22,15 @@ def tail_risk_country() -> MaterializeResult:
 
     events = pd.read_parquet(lake.GOLD_STAR / "fact_fireevent.parquet")
     events = events[events["source_key"] == "EFFIS_RDA"]
+    dim = pd.read_parquet(lake.GOLD_STAR / "dim_country.parquet")
+    eu_members = frozenset(dim.loc[dim["is_eu"], "country_key"])
     params = {"threshold_ha": extremes.THRESHOLD_HA, "decluster_days": extremes.DECLUSTER_DAYS,
               "min_years": extremes.MIN_YEARS, "min_episodes": extremes.MIN_EPISODES, "n_boot": 500}
     exp = "q2_tail_risk"
     run_params = {**params, "bootstrap": "year_blocks", "perimeter": "EU27",
                   "stability_thresholds_ha": list(extremes.STABILITY_THRESHOLDS_HA), "stability_n_boot": 200}
     with tracking.run(exp, f"country_{date.today():%Y%m%d}", run_params, tags={"published": "false"}) as active:
-        full = extremes.tail_risk_table(events, group="country_key", **params)  # type: ignore[arg-type]
+        full = extremes.tail_risk_table(events, group="country_key", eu_members=eu_members, **params)  # type: ignore[arg-type]
         table = full[full["in_scope"]].reset_index(drop=True)
         stability = extremes.threshold_stability(events, groups=list(table["country_key"]), group="country_key",
                                                  decluster_days=extremes.DECLUSTER_DAYS)

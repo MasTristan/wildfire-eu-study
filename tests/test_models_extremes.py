@@ -3,6 +3,8 @@ import pandas as pd
 
 from src.models import extremes
 
+EU_MEMBERS = frozenset({"ES", "PT", "SI", "FR", "IT", "GR"})  # what dim_country.is_eu provides in production
+
 
 def _events(country: str, sizes, dates) -> pd.DataFrame:
     return pd.DataFrame({"country_key": country, "area_ha": np.asarray(sizes, dtype=float),
@@ -110,7 +112,8 @@ def test_perimeter_and_publication_rule():
     few = _simulated("SI", n_years=12, rate=1.0, shape=0.3, scale=300.0, seed=5, start_year=2010)
     ev = pd.concat([big, short, outside, few])
     ev = pd.concat([ev, _events("PT", [10.0], ["2010-01-01"])])  # PT has a record since 2010: make the span 16
-    t = extremes.tail_risk_table(ev, n_boot=20, data_end=pd.Timestamp("2021-12-31")).set_index("country_key")
+    t = extremes.tail_risk_table(ev, n_boot=20, data_end=pd.Timestamp("2021-12-31"),
+                                 eu_members=EU_MEMBERS).set_index("country_key")
     assert t.loc["ES", "scope_reason"] == "in_scope" and t.loc["ES", "in_scope"]
     assert t.loc["DZ", "scope_reason"] == "not_eu27" and pd.isna(t.loc["DZ", "shape"])
     assert t.loc["SI", "scope_reason"] == "episodes_below_min" and pd.isna(t.loc["SI", "shape"])
@@ -139,7 +142,7 @@ def test_levels_are_withheld_when_the_shape_is_one_or_more_and_beyond_the_horizo
 
 def test_table_schema_is_stable_even_with_nothing_in_scope():
     ev = _events("DZ", [600.0, 700.0], ["2015-05-01", "2016-05-01"])
-    t = extremes.tail_risk_table(ev, n_boot=5, data_end=pd.Timestamp("2016-12-31"))
+    t = extremes.tail_risk_table(ev, n_boot=5, data_end=pd.Timestamp("2016-12-31"), eu_members=EU_MEMBERS)
     assert list(t.columns) == extremes.tail_risk_columns()
     assert list(t["scope_reason"]) == ["not_eu27"]
     full = extremes.tail_risk_table(_simulated("ES", 12, 8.0, 0.3, 300.0, seed=9), n_boot=5)

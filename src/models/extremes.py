@@ -34,7 +34,7 @@ Conventions:
   xi >= 1 the mean excess is infinite and a level is not a stable quantity),
   and only up to MAX_EXTRAPOLATION times the observed span. A level that is not
   published is null and a boolean column says why;
-- published perimeter: EU27 countries with at least MIN_YEARS complete years
+- published perimeter: EU countries (eu_members, taken from dim_country.is_eu; None means no EU filter) with at least MIN_YEARS complete years
   and MIN_EPISODES episodes above the threshold. The other countries stay in the
   table with in_scope = False and a reason, and with null estimates.
 """
@@ -54,13 +54,6 @@ MIN_YEARS = 8
 MIN_EPISODES = 30
 STABILITY_THRESHOLDS_HA = (200.0, 300.0, 500.0, 1000.0)
 STABILITY_MIN_EPISODES = 20
-# Hard-coded on purpose: dim_country.is_eu is not a safe source (Germany is false there).
-EU27 = frozenset({
-    "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU",
-    "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
-})
-
-
 @dataclass(frozen=True)
 class GpdFit:
     threshold: float
@@ -229,7 +222,7 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", threshold_
                     decluster_days: int = DECLUSTER_DAYS, min_years: int = MIN_YEARS,
                     min_episodes: int = MIN_EPISODES, n_boot: int = 500, periods=RETURN_PERIODS,
                     max_extrapolation: float = MAX_EXTRAPOLATION, data_end: pd.Timestamp | None = None,
-                    eu_members: frozenset[str] | None = EU27, seed: int = 42) -> pd.DataFrame:
+                    eu_members: frozenset[str] | None = None, seed: int = 42) -> pd.DataFrame:
     """One row per group seen in the input (see the module docstring for the rules).
 
     n_fires counts the fires above the threshold before declustering; n_exceedances
