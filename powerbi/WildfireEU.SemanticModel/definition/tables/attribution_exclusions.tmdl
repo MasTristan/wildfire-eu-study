@@ -1,0 +1,81 @@
+table attribution_exclusions
+	lineageTag: 35f2ad9b-bf48-5f0c-b7d2-34e641ad392f
+
+	column country_key
+		dataType: string
+		lineageTag: b5eb9f5c-a2f6-5976-a2ab-2c3efd412977
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_in_panel
+		dataType: int64
+		formatString: 0
+		lineageTag: 64698673-86c2-5af5-845a-9d48bf1600a5
+		summarizeBy: none
+		sourceColumn: rows_in_panel
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_missing_metric
+		dataType: int64
+		formatString: 0
+		lineageTag: 65a59066-1b11-51f8-9eed-209f6864e0f9
+		summarizeBy: none
+		sourceColumn: rows_missing_metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column missing_metrics
+		dataType: string
+		lineageTag: 4b40bff9-48fc-548f-b9e6-b76ec9259422
+		summarizeBy: none
+		sourceColumn: missing_metrics
+
+		annotation SummarizationSetBy = Automatic
+
+	column years_kept
+		dataType: int64
+		formatString: 0
+		lineageTag: 735f51d2-2e3b-5d6b-99d1-1e1f907d371a
+		summarizeBy: none
+		sourceColumn: years_kept
+
+		annotation SummarizationSetBy = Automatic
+
+	column kept
+		dataType: boolean
+		lineageTag: f8fe08c7-423e-56d6-98ec-58cbe1a6c813
+		summarizeBy: none
+		sourceColumn: kept
+
+		annotation SummarizationSetBy = Automatic
+
+	column reason
+		dataType: string
+		lineageTag: 3c01b971-f2d6-5437-adab-2fd40b4f75de
+		summarizeBy: none
+		sourceColumn: reason
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: f4bc90e2-bf66-515f-94fd-d0a65696f3f1
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_exclusions = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_exclusions.parquet")),
+				    Selected = Table.SelectColumns(Source, {"country_key", "rows_in_panel", "rows_missing_metric", "missing_metrics", "years_kept", "kept", "reason", "run_id"})
+				in
+				    Selected
+
+	annotation PBI_ResultType = Table

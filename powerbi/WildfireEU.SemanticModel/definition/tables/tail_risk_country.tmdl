@@ -145,12 +145,45 @@ table tail_risk_country
 
 		annotation SummarizationSetBy = Automatic
 
+	column in_scope
+		dataType: boolean
+		lineageTag: b915fc65-02a0-5b29-96ca-accb9ff7a1ef
+		summarizeBy: none
+		sourceColumn: in_scope
+
+		annotation SummarizationSetBy = Automatic
+
+	column scope_reason
+		dataType: string
+		lineageTag: 3b22f691-176e-5264-866e-2b2b21476683
+		summarizeBy: none
+		sourceColumn: scope_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_below_one
+		dataType: boolean
+		lineageTag: 7633523c-d3db-591d-bf17-7f16552aacc2
+		summarizeBy: none
+		sourceColumn: shape_below_one
+
+		annotation SummarizationSetBy = Automatic
+
+	column rate_per_year
+		dataType: double
+		formatString: 0.0
+		lineageTag: 08e9b47b-5231-5f4f-9776-505fc3dc7d3a
+		summarizeBy: none
+		sourceColumn: rate_per_year
+
+		annotation SummarizationSetBy = Automatic
+
 	partition tail_risk_country = m
 		mode: import
 		source =
 				let
 				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\tail_risk_country.parquet")),
-				    Selected = Table.SelectColumns(Source, {"country_key", "n_fires", "first_year", "last_year", "years", "n_exceedances", "threshold_ha", "largest_ha", "shape", "shape_p2.5", "shape_p97.5", "rl_10y", "rl_20y", "return_period_10k_ha_years", "max_return_period_years", "run_id"})
+				    Selected = Table.SelectColumns(Source, {"country_key", "n_fires", "first_year", "last_year", "years", "n_exceedances", "threshold_ha", "largest_ha", "shape", "shape_p2.5", "shape_p97.5", "rl_10y", "rl_20y", "return_period_10k_ha_years", "max_return_period_years", "in_scope", "scope_reason", "shape_below_one", "rate_per_year", "run_id"})
 				in
 				    Selected
 

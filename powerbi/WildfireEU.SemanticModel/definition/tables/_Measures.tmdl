@@ -611,15 +611,67 @@ table _Measures
 		lineageTag: b10dcd78-a7e7-50fe-bcd0-7ec81655b3eb
 
 	measure 'Countries fitted' =
-			VAR fitted = CALCULATE ( COUNTROWS ( tail_risk_country ), NOT ISBLANK ( tail_risk_country[shape] ), REMOVEFILTERS ( dim_country ) )
-			VAR total = CALCULATE ( COUNTROWS ( tail_risk_country ), REMOVEFILTERS ( dim_country ) )
-			RETURN FORMAT ( fitted, "0" ) & " of " & FORMAT ( total, "0" )
+			CALCULATE ( COUNTROWS ( FILTER ( tail_risk_country, tail_risk_country[in_scope] = TRUE () && NOT ISBLANK ( tail_risk_country[shape] ) ) ), REMOVEFILTERS ( dim_country ) )
+		formatString: 0
 		displayFolder: Models\Q2 Tail risk
-		lineageTag: 60eb88b0-7791-528e-8c87-ae7d842bae3e
+		lineageTag: 29c0402d-5e6b-5cae-a0d7-a32b23d8b11a
+
+	measure 'Return levels published' =
+			VAR published = CALCULATE ( DISTINCTCOUNT ( tail_risk_levels[country_key] ), tail_risk_levels[published] = TRUE (), REMOVEFILTERS ( dim_country ) )
+			VAR fitted = CALCULATE ( DISTINCTCOUNT ( tail_risk_levels[country_key] ), REMOVEFILTERS ( dim_country ) )
+			RETURN FORMAT ( published, "0" ) & " of " & FORMAT ( fitted, "0" )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 5d09ea87-df34-5d5f-ae09-3a6e0eda369a
+
+	measure 'Tail shape, Greece' =  CALCULATE ( [Tail shape], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "GR" )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 6aea36de-3d83-5914-8da4-c3b0e4efb1d3
+
+	measure 'Shape by threshold' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 713055bf-e3f2-5e08-9d20-bd8519116962
+
+	measure 'Shape by threshold, 95% low' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape_low] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: d6f2d4d3-621f-5962-a842-51d97a24105c
+
+	measure 'Shape by threshold, 95% high' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape_high] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: cffc6dea-ebed-5c67-a4c6-3cad2cd120f5
+
+	measure 'Episodes per year' =  AVERAGE ( tail_risk_country[rate_per_year] )
+		formatString: 0.0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: b2f1018c-e7cb-57b7-99f8-fe5f3dac8a19
 
 	measure 'Curve country' =
 			VAR sel = SELECTEDVALUE ( dim_country[country_key] )
-			RETURN IF ( ISBLANK ( sel ), "PT", sel )
+			RETURN IF ( ISBLANK ( sel ), "IT", sel )
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 25043fe1-454a-5a2e-b197-8ab2faa7fd78
 
@@ -706,10 +758,25 @@ table _Measures
 		displayFolder: Models\Q3 Attribution
 		lineageTag: cc3a8757-e7e8-52ff-b20b-545c1f445078
 
+	measure 'Weather share, out of sample' = MAX ( attribution_summary[r2_oos_vs_country_mean] )
+		formatString: 0%
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 15c5ac7c-441e-5caf-b92d-1fd53fcf68aa
+
 	measure 'Burnt area multiplier, high-danger days' = CALCULATE ( MAX ( attribution_coefficients[area_multiplier] ), attribution_coefficients[metric] = "days_high_season" )
-		formatString: 0.0
+		formatString: "x"0.00
 		displayFolder: Models\Q3 Attribution
 		lineageTag: ac9d836c-31f1-5a78-afe3-3794887d1a95
+
+	measure 'Burnt area multiplier, spring SPEI' = CALCULATE ( MAX ( attribution_coefficients[area_multiplier] ), attribution_coefficients[metric] = "spei_spring" )
+		formatString: "x"0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 30078596-6bac-51d2-807a-cfb57b7c50c4
+
+	measure 'Coefficient is robust' = IF ( COUNTROWS ( FILTER ( attribution_coefficients, attribution_coefficients[robust] = TRUE () ) ) > 0, 1, 0 )
+		formatString: 0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: b15794b4-d350-5464-8a07-5c2f5ca418c5
 
 	measure 'Coefficient' = AVERAGE ( attribution_coefficients[coef] )
 		formatString: +0.00;-0.00;0.00

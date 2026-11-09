@@ -72,6 +72,22 @@ table tail_risk_levels
 
 		annotation SummarizationSetBy = Automatic
 
+	column shape_below_one
+		dataType: boolean
+		lineageTag: ac0b5208-b3e7-562f-90ad-5d5462cb58d7
+		summarizeBy: none
+		sourceColumn: shape_below_one
+
+		annotation SummarizationSetBy = Automatic
+
+	column published
+		dataType: boolean
+		lineageTag: 9f816dc0-ee7c-56f4-b7a8-e4edac5f7cfb
+		summarizeBy: none
+		sourceColumn: published
+
+		annotation SummarizationSetBy = Automatic
+
 	partition tail_risk_levels = m
 		mode: import
 		source =

@@ -93,3 +93,7 @@ relationship adf0f72d-41c2-5106-a4cc-47315d1e3a4b
 relationship 10cde1f4-0432-54b6-a44b-bab47111b777
 	fromColumn: attribution_countryyear.year_key
 	toColumn: dim_date.date_key
+
+relationship e82a86af-c9b9-52fd-952c-554ba3b25411
+	fromColumn: tail_risk_threshold_stability.country_key
+	toColumn: dim_country.country_key

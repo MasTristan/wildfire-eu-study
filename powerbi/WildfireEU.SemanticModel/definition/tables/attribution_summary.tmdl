@@ -10,12 +10,12 @@ table attribution_summary
 
 		annotation SummarizationSetBy = Automatic
 
-	column r2_within_total
+	column r2_oos_vs_country_mean
 		dataType: double
 		formatString: 0%
-		lineageTag: 3ea81280-0a0b-5d9c-89a9-98956770e441
+		lineageTag: 2bb775c4-4d21-5af8-a5e4-8aca70b81ed7
 		summarizeBy: none
-		sourceColumn: r2_within_total
+		sourceColumn: r2_oos_vs_country_mean
 
 		annotation SummarizationSetBy = Automatic
 

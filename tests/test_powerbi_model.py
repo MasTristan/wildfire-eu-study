@@ -97,3 +97,24 @@ def test_declared_types_match_the_parquet(path: Path):
             continue
         actual = _tmdl_type(schema.field(src).type)
         assert actual == dtype, f"{path.stem}.{col}: model declares {dtype}, {parquet.name} holds {schema.field(src).type}"
+
+
+@pytest.mark.parametrize("path", TABLES, ids=lambda p: p.stem)
+def test_partition_reads_the_parquet_named_after_its_table(path: Path):
+    """A copy-pasted partition that still reads another table's file loads the
+    wrong data silently; the type test cannot see it when the columns overlap."""
+    spec = parse_table(path)
+    if spec["file"]:
+        assert spec["file"] == f"{path.stem}.parquet", f"{path.stem} reads {spec['file']}"
+
+
+def test_every_model_out_table_the_report_needs_is_in_the_model():
+    names = {p.stem for p in TABLES}
+    for needed in (
+        "tail_risk_country", "tail_risk_levels", "tail_risk_threshold_stability",
+        "attribution_coefficients", "attribution_summary", "attribution_robustness",
+        "attribution_exclusions", "q1_criterion", "q1_importance", "q1_metrics",
+    ):
+        assert needed in names, f"{needed} is not in the semantic model"
+    summary = next(p for p in TABLES if p.stem == "attribution_summary").read_text(encoding="utf-8")
+    assert "r2_within_total" not in summary and "r2_oos_vs_country_mean" in summary

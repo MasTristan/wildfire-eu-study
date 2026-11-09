@@ -1,0 +1,115 @@
+table attribution_robustness
+	lineageTag: 4cc8852b-7fd5-5e89-8d01-50625b560ff4
+
+	column model
+		dataType: string
+		lineageTag: 88bc5364-54c3-54b8-aea3-8a68caa89079
+		summarizeBy: none
+		sourceColumn: model
+
+		annotation SummarizationSetBy = Automatic
+
+	column variant
+		dataType: string
+		lineageTag: 09a13da7-5d54-5780-9ded-ac1fa7fdc6b8
+		summarizeBy: none
+		sourceColumn: variant
+
+		annotation SummarizationSetBy = Automatic
+
+	column metric
+		dataType: string
+		lineageTag: d4a47697-c46d-52e8-b7fe-1ad7640e97f1
+		summarizeBy: none
+		sourceColumn: metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column coef
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: db3b1631-8cf3-52f5-bb38-82cb7c886a20
+		summarizeBy: none
+		sourceColumn: coef
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_low
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: ff22cbb5-bc7f-52b9-9c80-16a221eed39f
+		summarizeBy: none
+		sourceColumn: ci_low
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_high
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 884985c1-fd28-578c-aeae-45ae7d9a7d2d
+		summarizeBy: none
+		sourceColumn: ci_high
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_obs
+		dataType: int64
+		formatString: 0
+		lineageTag: f96901fe-ea52-587c-91c7-4991b1984d72
+		summarizeBy: none
+		sourceColumn: n_obs
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_countries
+		dataType: int64
+		formatString: 0
+		lineageTag: 0a16daee-5c55-58e4-ad2a-b3d6224454a3
+		summarizeBy: none
+		sourceColumn: n_countries
+
+		annotation SummarizationSetBy = Automatic
+
+	column base_ci_excludes_zero
+		dataType: boolean
+		lineageTag: 2251025f-27d0-5e02-ad61-7cec5922f7e6
+		summarizeBy: none
+		sourceColumn: base_ci_excludes_zero
+
+		annotation SummarizationSetBy = Automatic
+
+	column same_sign_all_variants
+		dataType: boolean
+		lineageTag: 16cd29f1-f037-514a-8bca-87eea35ae0ee
+		summarizeBy: none
+		sourceColumn: same_sign_all_variants
+
+		annotation SummarizationSetBy = Automatic
+
+	column robust
+		dataType: boolean
+		lineageTag: 3fb32343-b743-5025-b1ba-1aa6ab0fab39
+		summarizeBy: none
+		sourceColumn: robust
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: 4546e769-5e03-5e82-bf6c-0def8eefa793
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_robustness = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_robustness.parquet")),
+				    Selected = Table.SelectColumns(Source, {"model", "variant", "metric", "coef", "ci_low", "ci_high", "n_obs", "n_countries", "base_ci_excludes_zero", "same_sign_all_variants", "robust", "run_id"})
+				in
+				    Selected
+
+	annotation PBI_ResultType = Table

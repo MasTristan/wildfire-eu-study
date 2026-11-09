@@ -89,6 +89,76 @@ table attribution_coefficients
 
 		annotation SummarizationSetBy = Automatic
 
+	column sd_within
+		dataType: double
+		formatString: 0.00
+		lineageTag: 177c4518-3f1e-5dee-80b5-35dfaabd3af6
+		summarizeBy: none
+		sourceColumn: sd_within
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_size
+		dataType: double
+		formatString: 0.0
+		lineageTag: a8687604-8302-5753-895f-6cd03a84085e
+		summarizeBy: none
+		sourceColumn: unit_size
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_label
+		dataType: string
+		lineageTag: d393154c-00b2-5cf2-aba3-12b1ab19fb16
+		summarizeBy: none
+		sourceColumn: unit_label
+
+		annotation SummarizationSetBy = Automatic
+
+	column coef_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 8eab64e0-6f52-58bc-a7a3-2d2e7dab2619
+		summarizeBy: none
+		sourceColumn: coef_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_low_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 21f431a5-34d0-5720-8a2f-c37c34dce069
+		summarizeBy: none
+		sourceColumn: ci_low_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_high_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: c3083d9e-1eb5-5d70-a198-4b09e828367e
+		summarizeBy: none
+		sourceColumn: ci_high_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column multiplier_per_unit
+		dataType: double
+		formatString: 0.00
+		lineageTag: a031c9ac-f26f-51d0-97af-8196b832ab4d
+		summarizeBy: none
+		sourceColumn: multiplier_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column robust
+		dataType: boolean
+		lineageTag: e66e5a60-0c66-5a7c-aad2-4dcc658013f6
+		summarizeBy: none
+		sourceColumn: robust
+
+		annotation SummarizationSetBy = Automatic
+
 	partition attribution_coefficients = m
 		mode: import
 		source =
