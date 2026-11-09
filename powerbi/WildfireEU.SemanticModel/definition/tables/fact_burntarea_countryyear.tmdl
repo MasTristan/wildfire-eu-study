@@ -38,7 +38,8 @@ table fact_burntarea_countryyear
 		annotation SummarizationSetBy = Automatic
 
 	column number_of_fires
-		dataType: int64
+		dataType: double
+		formatString: #,##0
 		lineageTag: f8ef420b-3021-4a30-a22c-08d88f2a2170
 		summarizeBy: none
 		sourceColumn: number_of_fires
