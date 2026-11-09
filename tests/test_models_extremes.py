@@ -36,7 +36,10 @@ def test_tail_risk_table_reports_groups_it_cannot_estimate():
     })
     table = extremes.tail_risk_table(pd.concat([big, small]), n_boot=50).set_index("country_key")
     assert table.loc["ES", "n_exceedances"] >= 30 and np.isfinite(table.loc["ES", "rl_10y"])
-    assert table.loc["ES", "rl_2y"] < table.loc["ES", "rl_50y"]
+    assert table.loc["ES", "rl_2y"] < table.loc["ES", "rl_20y"]
+    # about ten years observed: the horizon is about twenty years, so the 50-year level is null by design
+    assert 19 < table.loc["ES", "max_return_period_years"] <= 20
+    assert pd.isna(table.loc["ES", "rl_50y"]) and pd.isna(table.loc["ES", "rl_50y_p97.5"])
     assert table.loc["ES", "rl_10y_p2.5"] <= table.loc["ES", "rl_10y"] <= table.loc["ES", "rl_10y_p97.5"]
     assert "shape" not in table.columns or pd.isna(table.loc["LU", "shape"])
     assert table.loc["LU", "n_fires"] == 40
@@ -49,3 +52,16 @@ def test_threshold_stability_table_shape():
     tab = extremes.threshold_stability(sizes)
     assert list(tab.columns) == ["quantile", "threshold", "n_exceedances", "shape", "scale", "modified_scale"]
     assert tab["threshold"].is_monotonic_increasing
+
+
+def test_tail_risk_table_horizon_follows_the_observed_span():
+    rng = np.random.default_rng(7)
+    ev = pd.DataFrame({
+        "country_key": "PT", "area_ha": 30 + rng.pareto(1.5, 2000) * 150,
+        "firedate_key": pd.to_datetime("2000-01-01") + pd.to_timedelta(rng.integers(0, 365 * 30, 2000), unit="D"),
+    })
+    row = extremes.tail_risk_table(ev, n_boot=30).iloc[0]
+    assert row["max_return_period_years"] > 50 and np.isfinite(row["rl_50y"])
+    short = extremes.tail_risk_table(ev, n_boot=30, max_extrapolation=1.0).iloc[0]
+    assert pd.isna(short["rl_50y"]) and np.isfinite(short["rl_20y"])
+    assert pd.isna(short["return_period_10k_ha_years"]) or short["return_period_10k_ha_years"] <= short["max_return_period_years"]

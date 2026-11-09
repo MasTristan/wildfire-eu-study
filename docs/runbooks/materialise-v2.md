@@ -197,14 +197,23 @@ nuls supérieur à 10 % sur une colonne : rapporter la colonne et s'arrêter.
 
 ```powershell
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country,gold/attribution_countryyear"
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','n_exceedances','shape','rl_10y','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
+uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','years','n_exceedances','shape','rl_2y','rl_10y','rl_50y','max_return_period_years','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
 uv run python -c "import pandas as pd; c=pd.read_parquet('data/lake/gold/model_out/attribution_coefficients.parquet'); print(c.round(4).to_string()); a=pd.read_parquet('data/lake/gold/model_out/attribution_countryyear.parquet'); print(a.groupby('year')[['burnt_area_ha','adjusted_area_ha']].sum().round(0))"
 ```
 
-Attendu : pour Q2, `shape` entre 0 et 1 pour `PT`, `ES`, `GR`, `IT`, avec
-`rl_10y` supérieur à `rl_2y` ; pour Q3, `days_high_season` à coefficient
+Attendu pour Q2, sur les pays ajustés (au moins 30 dépassements du seuil,
+`min_exceedances`) : `shape` positif, typiquement entre 0,5 et 1,2 ; une
+valeur supérieure ou égale à 1 signale une queue à moyenne infinie, attendue
+pour les pays méditerranéens et à rapporter telle quelle, sans s'arrêter ;
+`rl_10y` supérieur à `rl_2y`. Les pays sous 30 dépassements ont `shape` et
+`rl_*` nuls par construction. Les niveaux au-delà de
+`max_return_period_years` (deux fois la durée observée, environ 20 ans) sont
+nuls par conception : `rl_50y` est vide partout tant que l'historique fait
+une dizaine d'années, de même que `return_period_10k_ha_years` quand il
+dépasse cet horizon. Attendu pour Q3 : `days_high_season` à coefficient
 positif, un `run_id` non vide dans les deux tables. Tout `shape` négatif
-sous -0,5 ou coefficient `days_high_season` négatif : rapporter.
+sous -0,5, un `rl_50y` non nul ou un coefficient `days_high_season` négatif :
+rapporter.
 
 ```powershell
 uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
