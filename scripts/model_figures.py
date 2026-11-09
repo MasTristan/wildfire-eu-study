@@ -5,10 +5,11 @@ spike's committed outputs (`notebooks/spike_q1/out`), writes PNG files to
 `docs/img/models/`. Nothing is recomputed: every plotted number is a cell of
 one of those tables, so a figure and the card that cites it cannot disagree.
 
-    uv run python scripts/model_figures.py
+    uv run python scripts/model_figures.py [--only q1|q2|q3]
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.axes import Axes  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
+from matplotlib.ticker import LogLocator, ScalarFormatter  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -43,9 +45,9 @@ plt.rcParams.update({
     "grid.linewidth": 0.7, "xtick.color": INK, "ytick.color": INK, "legend.frameon": False,
 })
 
-# Q2: the four countries with the largest return levels among the well-fitted ones
-Q2_COUNTRIES = ["PT", "ES", "GR", "IT"]
-COUNTRY_NAMES = {"PT": "Portugal", "ES": "Espagne", "GR": "Grèce", "IT": "Italie"}
+# Q2: the five Mediterranean countries of the model card; the others of the published perimeter appear in the shape figure
+Q2_COUNTRIES = ["PT", "ES", "FR", "IT", "GR"]
+COUNTRY_NAMES = {"PT": "Portugal", "ES": "Espagne", "FR": "France", "IT": "Italie", "GR": "Grèce"}
 
 METRIC_LABELS = {
     "days_high_season": "Jours de danger élevé\n(juin à septembre)",
@@ -73,53 +75,89 @@ def _save(fig: Figure, name: str) -> Path:
 
 
 def q2_return_levels(model_out: Path) -> Path:
-    """Fitted return level with its 95 % bootstrap band, empirical level as points, per country."""
+    """Fitted return level with its 95 % block-bootstrap band where it is published, empirical level as points."""
     levels = pd.read_parquet(model_out / "tail_risk_levels.parquet")
-    fig, axes = plt.subplots(2, 2, figsize=(8.6, 6.4), sharex=True)
-    for ax, key in zip(axes.ravel(), Q2_COUNTRIES, strict=True):
+    fig, axes = plt.subplots(2, 3, figsize=(10.4, 6.4), sharex=True)
+    for ax, key in zip(axes.ravel(), Q2_COUNTRIES, strict=False):
         d = levels[(levels["country_key"] == key) & levels["return_level_ha"].notna()]
         x = d["period_years"].to_numpy()
-        ax.fill_between(x, d["return_level_p2_5"], d["return_level_p97_5"], color=BLUE, alpha=0.18, lw=0,
-                        label="Intervalle à 95 % (bootstrap)")
-        ax.plot(x, d["return_level_ha"], color=BLUE, marker="o", ms=4, label="Niveau de retour ajusté")
+        if len(d):
+            ax.fill_between(x, d["return_level_p2_5"], d["return_level_p97_5"], color=BLUE, alpha=0.18, lw=0,
+                            label="Intervalle à 95 % (bootstrap par années)")
+            ax.plot(x, d["return_level_ha"], color=BLUE, marker="o", ms=4, label="Niveau de retour ajusté")
         emp = levels[(levels["country_key"] == key) & levels["empirical_level_ha"].notna()]
         ax.scatter(emp["period_years"], emp["empirical_level_ha"], color=ORANGE, zorder=3, s=26,
-                   label="Niveau observé (empirique)")
+                   label="Niveau observé (empirique, épisodes)")
+        if not len(d):
+            ax.text(0.97, 0.05, "niveaux ajustés non publiés\n(forme ξ ≥ 1)", transform=ax.transAxes, ha="right",
+                    va="bottom", color=INK, fontsize=8.5)
         ax.set_yscale("log")
         ax.set_xscale("log")
         ax.set_xticks([2, 5, 10, 20], labels=["2", "5", "10", "20"])
         ax.minorticks_off()
+        ax.yaxis.set_major_locator(LogLocator(subs=(1.0, 2.0, 5.0)))
+        ax.yaxis.set_major_formatter(ScalarFormatter())
+        ax.tick_params(labelbottom=True)
         ax.set_title(COUNTRY_NAMES[key], loc="left", fontsize=10.5, color=INK)
-    for ax in axes[1]:
+    axes[1, 2].axis("off")
+    for ax in list(axes[1, :2]) + [axes[0, 0], axes[0, 1], axes[0, 2]]:
         ax.set_xlabel("Période de retour (années)")
     for ax in axes[:, 0]:
         ax.set_ylabel("Taille du feu (hectares, échelle log)")
-    handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.03))
-    fig.suptitle("Q2 : taille du feu dépassée en moyenne une fois par période de retour", x=0.01, ha="left",
+    handles, labels = [], []
+    for ax in axes.ravel():
+        for h, lab in zip(*ax.get_legend_handles_labels(), strict=True):
+            if lab not in labels:
+                handles.append(h)
+                labels.append(lab)
+    axes[1, 2].legend(handles, labels, loc="center", fontsize=8.5)
+    fig.suptitle("Q2 : taille de l'épisode dépassée en moyenne une fois par période de retour", x=0.01, ha="left",
                  fontsize=11, color=INK)
-    fig.tight_layout(rect=(0, 0.03, 1, 0.97))
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
     return _save(fig, "q2_return_levels.png")
 
 
 def q2_shape(model_out: Path) -> Path:
-    """GPD shape parameter with its 95 % interval for every country whose tail could be fitted."""
+    """GPD shape parameter with its 95 % interval for every country of the published perimeter."""
     t = pd.read_parquet(model_out / "tail_risk_country.parquet")
     t = t[t["shape"].notna()].sort_values("shape").reset_index(drop=True)
-    fig, ax = plt.subplots(figsize=(7.2, 6.0))
-    colors = [BLUE if k in Q2_COUNTRIES else SKY for k in t["country_key"]]
+    fig, ax = plt.subplots(figsize=(7.2, 4.2))
+    colors = [ORANGE if s >= 1 else (BLUE if k in Q2_COUNTRIES else SKY) for k, s in zip(t["country_key"], t["shape"], strict=True)]
     ax.barh(t["country_key"], t["shape"], color=colors, height=0.62)
     ax.errorbar(t["shape"], np.arange(len(t)), xerr=[t["shape"] - t["shape_p2.5"], t["shape_p97.5"] - t["shape"]],
                 fmt="none", ecolor=INK, elinewidth=1.0, capsize=2.5)
     ax.axvline(0, color=GREY, lw=0.9)
     ax.axvline(1, color=ORANGE, lw=1.1, ls="--")
-    ax.text(0.99, 1.0, "forme = 1 : moyenne infinie", color=ORANGE, ha="right", va="bottom", fontsize=8.5,
-            transform=ax.get_xaxis_transform())
+    ax.text(0.99, 1.0, "forme = 1 : moyenne infinie (niveaux non publiés au-delà)", color=ORANGE, ha="right", va="bottom",
+            fontsize=8.5, transform=ax.get_xaxis_transform())
     ax.set_xlabel("Paramètre de forme de la loi de Pareto généralisée (sans unité)")
     ax.set_ylabel("Pays (code ISO)")
-    ax.set_title("Q2 : forme de la queue par pays, intervalle à 95 % (bootstrap)", loc="left", fontsize=11, color=INK)
+    ax.set_title("Q2 : forme de la queue par pays, intervalle à 95 % (bootstrap par années)", loc="left", fontsize=11, color=INK)
     ax.grid(axis="y", visible=False)
     return _save(fig, "q2_shape.png")
+
+
+def q2_threshold_stability(model_out: Path) -> Path:
+    """Shape against the threshold (200, 300, 500, 1000 ha), five countries, with 95 % intervals."""
+    s = pd.read_parquet(model_out / "tail_risk_threshold_stability.parquet")
+    thresholds = sorted(s["threshold_ha"].unique())
+    palette = [BLUE, ORANGE, GREEN, PURPLE, SKY]
+    keys = [k for k in Q2_COUNTRIES if k in set(s["country_key"])]
+    fig, ax = plt.subplots(figsize=(8.0, 4.6))
+    for i, (key, color) in enumerate(zip(keys, palette, strict=False)):
+        d = s[(s["country_key"] == key) & s["shape"].notna()].sort_values("threshold_ha")
+        xpos = np.array([thresholds.index(u) for u in d["threshold_ha"]]) + (i - (len(keys) - 1) / 2) * 0.07
+        ax.errorbar(xpos, d["shape"], yerr=[d["shape"] - d["shape_p2.5"], d["shape_p97.5"] - d["shape"]], color=color,
+                    marker="o", ms=4, capsize=2.5, lw=1.3, label=COUNTRY_NAMES[key])
+    ax.axhline(1, color=ORANGE, lw=1.0, ls="--")
+    ax.axhline(0, color=GREY, lw=0.9)
+    ax.set_xticks(range(len(thresholds)), labels=[f"{int(u)}" for u in thresholds])
+    ax.set_xlabel("Seuil (hectares)")
+    ax.set_ylabel("Forme ξ de la loi de Pareto généralisée")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=5, fontsize=8.5)
+    ax.set_title("Q2 : stabilité de la forme selon le seuil, intervalle à 95 % (bootstrap par années)", loc="left",
+                 fontsize=11, color=INK)
+    return _save(fig, "q2_threshold_stability.png")
 
 
 def _bayes_pop(model_out: Path) -> pd.DataFrame:
@@ -244,15 +282,23 @@ def q1_spatial_blocks() -> Path:
     return _save(fig, "q1_spatial_blocks.png")
 
 
-def build_all(model_out: Path | None = None) -> list[Path]:
+def build_all(model_out: Path | None = None, only: str | None = None) -> list[Path]:
+    """Every figure, or only those of one question (only = "q1", "q2" or "q3")."""
     src = model_out or lake.GOLD_MODEL_OUT
-    return [
-        q2_return_levels(src), q2_shape(src),
-        q3_coefficients(src), q3_observed_vs_adjusted(src),
-        q1_reliability(src), q1_pr_auc(src), q1_spatial_blocks(),
-    ]
+    builders = {
+        "q2": [q2_return_levels, q2_shape, q2_threshold_stability],
+        "q3": [q3_coefficients, q3_observed_vs_adjusted],
+        "q1": [q1_reliability, q1_pr_auc],
+    }
+    todo = [only] if only else list(builders)
+    out = [fn(src) for q in todo for fn in builders[q]]
+    if only in (None, "q1"):
+        out.append(q1_spatial_blocks())
+    return out
 
 
 if __name__ == "__main__":
-    for p in build_all():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--only", choices=["q1", "q2", "q3"], help="rebuild the figures of one question only")
+    for p in build_all(only=parser.parse_args().only):
         print(p.relative_to(lake.ROOT))
