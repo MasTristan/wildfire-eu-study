@@ -1,5 +1,5 @@
 {
-  "frozen_at": "2026-11-07T23:24:49+00:00",
+  "frozen_at": "2026-11-09T21:36:13+00:00",
   "tag": "v1.0",
   "tables": {
     "dim_date": {
@@ -32,7 +32,8 @@
         "land_area_km2",
         "forest_area_ha"
       ],
-      "sha256": "24ec36a6520404601896ef4c19204deae59905a80f3daa8985fad17e69f64ca0"
+      "sha256": "c8cc6bd6039067e26e699d4fa72a11ee008262a0e75430e98a784c4d269a8a00",
+      "note": "rebuilt 2026-11 with is_eu=true for Germany (src/transform/reference/country_reference.csv); deliberate deviation from v1, whose dim_country had DE outside the EU. The original v1.0 asset gold-v1.zip is left untouched"
     },
     "dim_commune": {
       "rows": 34969,

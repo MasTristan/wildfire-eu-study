@@ -61,6 +61,13 @@ surface brûlée renvoie du vide.
 La `forest_area_ha` sert à normaliser (surface brûlée en % de forêt), sinon on
 compare l'Espagne au Luxembourg en valeur absolue, ce qui n'a pas de sens.
 
+`is_eu` vaut `true` pour les 26 pays de l'UE27 présents dans la référence (le Luxembourg
+n'a aucune donnée EFFIS et n'a pas de ligne). Corrigé en 2026-11 pour l'Allemagne, qui
+valait `false` en v1 alors que `macro_region` valait `EU`. C'est un écart volontaire à
+la v1 : la référence de parité gelée (`data/reference/v1/manifest.json`, note de
+`dim_country`) a été regelée sur cette table seule. Aucun visuel ni aucune mesure
+Power BI ne filtre sur `is_eu` (les filtres utilisent `macro_region`).
+
 **`Dim_Commune`** (grain commune française, deep-dive uniquement)
 `commune_key, insee_code, name, department_code, department_name, region_code, region_name, country_key (=FR)`
 Snowflake vers `Dim_Country`.
