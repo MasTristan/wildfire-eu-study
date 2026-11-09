@@ -28,3 +28,11 @@ version de données identifiables.
   bénéfice ; introduit en fin de parcours seulement s'il reste du temps.
 - Weights and Biases : service tiers, et le projet ne dépend d'aucune
   licence ni compte payant.
+
+## Note du 2026-11-09
+
+DVC ne fait plus partie de l'environnement du projet : il s'exécute comme
+outil isolé (`uvx --from "dvc[s3]==3.67.1" dvc`, cible `make dvc-status`).
+Sa dépendance `hydra-core` verrouillait `antlr4` en 4.9, ce qui faisait
+planter la sélection d'assets de Dagster 1.13. Le code du projet n'importe
+pas DVC, et la décision ci-dessus est inchangée.

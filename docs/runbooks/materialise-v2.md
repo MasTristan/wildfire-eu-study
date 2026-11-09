@@ -26,6 +26,14 @@ mlflow, statsmodels, dvc), rapporter le message complet.
 make dbt-build
 ```
 
+Sans `make` sous Windows, la commande équivalente, lancée depuis la racine du dépôt :
+
+```powershell
+cd dbt; uv run --project .. dbt build --project-dir . --profiles-dir .; cd ..
+```
+
+dbt doit être lancé depuis `dbt/` : les chemins relatifs de son profil et de ses sources partent du dossier courant.
+
 Attendu : `Completed successfully`, avec 13 modèles `OK created external` et
 tous les tests `PASS`. Dossier `data/lake/gold/star/` contenant 13 Parquet :
 les 12 tables v1 plus `fact_season_countryyear`.
@@ -247,16 +255,16 @@ nom d'utilisateur ; sinon rapporter et ne pas commiter.
 2. Renseigner l'accès localement, jamais dans le dépôt :
 
 ```powershell
-uv run dvc remote modify --local storage endpointurl https://<endpoint-du-fournisseur>
-uv run dvc remote modify --local storage access_key_id <clé>
-uv run dvc remote modify --local storage secret_access_key <secret>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage endpointurl https://<endpoint-du-fournisseur>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage access_key_id <clé>
+uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage secret_access_key <secret>
 ```
 
 3. Suivre et pousser la gold et les sorties de modèles :
 
 ```powershell
-uv run dvc add data/lake/gold/star data/lake/gold/model_out data/lake/gold/features
-uv run dvc push
+uvx --from "dvc[s3]==3.67.1" dvc add data/lake/gold/star data/lake/gold/model_out
+uvx --from "dvc[s3]==3.67.1" dvc push
 git add data/lake/gold/*.dvc .dvc/config
 git commit -m "data: track gold star, features and model outputs with DVC"
 git push origin ccr-9f718573-2htm0s

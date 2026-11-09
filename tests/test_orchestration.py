@@ -95,3 +95,17 @@ def test_model_output_assets_depend_on_the_gold(defs):
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
     q1 = graph.get(AssetKey(["gold", "ignition_eval"]))
     assert AssetKey(["gold", "features_daily"]) in q1.parent_keys
+
+
+def test_asset_selection_strings_parse_and_resolve(defs):
+    """Regression guard: `dagster asset materialize --select` parses its
+    argument with an ANTLR grammar. An antlr4 runtime older than the one the
+    grammar was generated with (4.9.3 came in through DVC's hydra-core) made
+    every --select crash with "ord() expected string of length 1"."""
+    from dagster import AssetSelection
+
+    graph = defs.get_repository_def().asset_graph
+    keys = AssetSelection.from_string('key:"silver/dim_date"').resolve(graph)
+    assert keys == {AssetKey(["silver", "dim_date"])}
+    gold = AssetSelection.from_string('group:"gold"').resolve(graph)
+    assert AssetKey(["gold", "fact_burntarea_countryyear"]) in gold
