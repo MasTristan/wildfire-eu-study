@@ -11,7 +11,7 @@ cité dans une carte se retrouve avec une commande de sa section Reproduire.
 
 | Question | Carte | Modèle | Run MLflow | Statut |
 |---|---|---|---|---|
-| Q1 : un modèle qui voit plus que l'indice météo prédit-il mieux les départs de feu ? | [Q1, spike d'occurrence](q1-ignition-spike.md) | LightGBM, cinq modèles en escalier | aucun (spike antérieur au suivi) | critère non atteint, GO réduit, Ibérie et Grèce 2019 à 2023 |
+| Q1 : un modèle qui voit plus que l'indice météo prédit-il mieux les départs de feu ? | [Q1, spike d'occurrence](q1-ignition-spike.md) | LightGBM, cinq modèles en escalier | `q1_spike`, `73450271a109409e95ea4851cea5ad77` | critère non atteint, GO réduit, Ibérie et Grèce 2019 à 2023 |
 | Q2 : quelle taille ont les feux rares ? | [Q2, queue des tailles de feux](q2-tail-risk.md) | Pareto généralisée au-dessus d'un seuil, par pays | `d5672f4785b64c8f8487e87cf845694c` | 20 pays estimés sur 50 |
 | Q3 : quelle part de la surface brûlée la météo explique-t-elle ? | [Q3, attribution à la météo](q3-attribution.md) | régression à effets fixes et modèle bayésien hiérarchique | `d6dea9f655d043a6900f9d98de10dfd6` (fréquentiste), `7027f2aadd954abeb47823ec9d6e8a61` (bayésien) | deux méthodes d'accord sur le signe des quatre variables |
 
