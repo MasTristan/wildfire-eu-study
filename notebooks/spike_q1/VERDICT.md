@@ -17,10 +17,17 @@ absolute, on 2022 AND on 2023.
 | 2022 | 7.9 % | not met | +0.136 | met | FAIL |
 | 2023 | 13.0 % | met | +0.182 | met | PASS |
 
-The failure is one number, the 2022 Brier gain, 2.1 points under the bar. The
-block-bootstrap interval of that gain, [4.2 %, 11.5 %], contains 10 %, so the
-spike cannot say whether the true gain is under or over the bar. The criterion
-was frozen before training and is applied as written.
+The failure comes from one quantity, the 2022 Brier gain, 2.1 points under the
+bar. The block-bootstrap interval of that gain, [4.2 %, 11.5 %], contains 10 %,
+and the bootstrap resamples test weeks only. E4 (section 11) adds the other
+source of variance, the training sample: over ten seeds the 2022 Brier gain has
+median 5.7 % and range 3.4 % to 7.9 %, and no seed reaches 10 % (0 of 10); in
+2023 the median is 11.3 % and 7 of 10 seeds pass; no seed passes both years.
+The seed-42 value of the verdict (7.9 %) sits at the top of that spread (seed
+42 is not one of the ten seeds). So the miss is not a rounding accident near
+the bar: 2022 fails robustly to the training sample, 2023 passes on most but
+not all draws. The criterion was frozen before training and is applied as
+written.
 
 Reading beyond the criterion (reported, not decisive):
 
@@ -31,10 +38,11 @@ Reading beyond the criterion (reported, not decisive):
   here it is the Brier bar that bites, not the PR-AUC bar.
 - Most of the gain comes from knowing where and when fires happen, not from
   more weather. Model 3b (`lgbm_fwi_space`: FWI components plus static fields,
-  day of year, past-ignition lags and climatology, no ERA5 weather, no SPEI)
+  day of year, counts of recent fires in the cell and climatology, no ERA5
+  weather, no SPEI)
   reaches PR-AUC 0.135 (2022) and 0.213 (2023), that is 90 % and 95 % of the
   full model. Adding ERA5 weather and SPEI on top of 3b gives +0.016 and +0.012
-  PR-AUC and 1.7 % and 0.7 % relative Brier. Feature gain ranking confirms it:
+  PR-AUC and 1.6 % and 0.6 % relative Brier. Feature gain ranking confirms it:
   the two lag counts and the climatology are the top three features, then
   DC, FFMC and day of year.
 - The same models on label (b) VIIRS give a weaker result (section 4).
@@ -44,8 +52,9 @@ Reading beyond the criterion (reported, not decisive):
 - Zone: Spain, Portugal, Greece, 1215 cells of 0.25 degree (ES 847, GR 220,
   PT 148), 2019 to 2023, 2 218 590 cell-days.
 - Positives: label (a) 5 648 cell-days, label (b) 23 349.
-- Train 2019 to 2021 (1 331 640 rows after sampling 1 negative in 20, weight
-  20; 2 546 positives for (a), 15 086 for (b)). Test 2022 and 2023, unsampled,
+- Train 2019 to 2021 (1 331 640 rows before sampling; the fit keeps every
+  positive, 2 546 for (a) and 15 086 for (b), and 1 negative in 20 with weight
+  20). Test 2022 and 2023, unsampled,
   443 475 rows each (positives (a): 1 709 and 1 393).
 - Hyper-parameters chosen on 2021 (training on 2019-2020, climatology from
   2019-2020 only), same grid for models 3, 3b and 4; refit on 2019-2021.
@@ -127,6 +136,25 @@ not supported by the data. Detail: `out/concordance.csv`,
 - The yearly hold-out controls temporal leakage, not spatial autocorrelation.
 - Label (a) misses ignitions below EFFIS mapping size. Label (b) is the
   sensitivity analysis for that.
+- Label (a) is "an EFFIS perimeter starts in the cell on day J", which mixes
+  new ignitions with persistence: 18 % of the positives have a positive in the
+  same cell the day before, and 35 % of the positives fall in January to March
+  (review `docs/internal/review-models-2026-11-09.md`, Q1-2). E3 and E7
+  measure the effect; "ignition" in this document means that label, not a
+  physically new fire.
+- The size floor of the EFFIS perimeters is not constant: about 20 ha until
+  2019, 1 ha or less from 2020, so the label changes definition inside the
+  training years (E6 measures it on a 30 ha floor).
+- Training and test base rates differ (0.0019 against 0.0039 in 2022): the
+  Brier gain also reads calibration level (E5).
+- EFFIS latency: the perimeters are mapped after the fact from satellite
+  imagery and published with a delay, and the `firedate` of a perimeter is an
+  estimate. The lag counts of recent fires use events whose perimeter would
+  not yet be known on day J in real time. The spike therefore says what the
+  recent history of a cell predicts once that history is consolidated, not
+  what a forecaster would have had on the morning of day J. No operational use
+  is planned (Q4 dropped, ADR 0009), and the delays have not been recomputed
+  on VIIRS.
 - The tuning leak found in the review (climatology built with the validation
   year) was fixed before the first training.
 - Side finding, outside the spike: `src/ingest/firms.py` passed the window end
@@ -197,14 +225,15 @@ delivered a month in about five to eight minutes at no queue cost.
 ## 10. What to do with it
 
 Reduced GO. The signal is real (PR-AUC five to ten times the FWI-only model),
-but it is mostly spatial and seasonal memory (lags, climatology, static
-fields). The full plan should not assume that the ERA5 weather and SPEI layer
+but it is mostly persistence and place: the recent fire history of the cell,
+its climatology and its static fields (E2, E3). The full plan should not assume that the ERA5 weather and SPEI layer
 carries the gain; its marginal contribution over model 3b is small.
-Spatial block validation, which the spike did not do, is the first thing to
-check before trusting model 3b.
+Spatial block validation (E1, E8) shows models 3b and 4 transfer to unseen
+cells, within the limits stated in section 12.
 
 Reproduction: `notebooks/spike_q1/s05_build_dataset.py`, then
-`s06_train_evaluate.py a b`, then `s07_concordance.py`. Outputs in
+`s06_train_evaluate.py a b`, then `s07_concordance.py`, then `s08_exploratory.py`
+and `s09_exploratory.py`. Outputs in
 `notebooks/spike_q1/out/`.
 
 ## 11. Exploratory analyses (post-verdict, not decisive)
@@ -278,7 +307,7 @@ Reading: variants keep 72 % and 76 % of 3b without lags (3c), 91 % and 93 % with
 | 2023 | neighbourhood_new_30d | lgbm_fwi_space | 358540 | 252 | 0.0007 | 0.0137 | 19.5 | 0.0007 | 0.181 |
 | 2023 | neighbourhood_new_30d | lgbm_full | 358540 | 252 | 0.0007 | 0.0188 | 26.7 | 0.0007 | 0.181 |
 
-Reading: on cells with no ignition in the previous 30 days (38 % to 39 % of test positives) model 4 keeps +0.014 (2022) and +0.021 (2023) of PR-AUC over model 3, against +0.136 and +0.182 on all days, and on the stricter neighbourhood subset (16 % to 18 % of positives) +0.003 and +0.016, so it does not keep most of its absolute advantage; in lift, model 4 stays 2.6 to 7.4 times above model 3 on the new-ignition subsets (all days: 10.5 and 5.3 times).
+Reading: on cells with no ignition in the previous 30 days (39.5 % of test positives in 2022, 38.2 % in 2023) model 4 keeps +0.014 (2022) and +0.021 (2023) of PR-AUC over model 3, against +0.136 and +0.182 on all days, and on the stricter neighbourhood subset (16 % to 18 % of positives) +0.003 and +0.016, so it does not keep most of its absolute advantage; in lift, model 4 stays 2.6 to 7.4 times above model 3 on the new-ignition subsets (all days: 10.5 and 5.3 times).
 
 ### E4. Sensitivity to the training sample (10 seeds)
 
@@ -288,3 +317,89 @@ Reading: on cells with no ignition in the previous 30 days (38 % to 39 % of test
 | 2023 | 7.3 % | 11.3 % | 13.7 % | 0.2258 | 0.2323 | 0.2491 | 7 / 10 | 0 / 10 |
 
 Reading: no seed passes both years (2022: 0 of 10, 2023: 7 of 10), so the miss of the criterion is robust to the training sample; the 2022 Brier gain stays between 3.4 % and 7.9 % against the 10 % bar.
+
+Note on E3 and the word "ignition": on all days, label (a) counts persistence
+of the same activity together with new starts; the subsets above isolate the
+cells without a positive in the previous 30 days. Where E3 shows that the gain
+depends on that persistence, this document says persistence and place, not
+ignition.
+
+## 12. Exploratory analyses E5 to E8 (post-verdict, not decisive)
+
+Pre-declared in `EXPLORATORY.md` (addendum of 2026-11-09, committed before the
+run), run by `s09_exploratory.py`, outputs `out/exploratory_recalibration.csv`,
+`exploratory_label30ha.csv`, `exploratory_no_winter.csv` and
+`exploratory_spatial_blocks_clim.csv`. Hyper-parameters unchanged, same shared
+negative sample as `s06`. None of them changes the verdict of section 1.
+
+### E5. Brier after intercept recalibration (shift learned on 2021)
+
+| Year | Model | Logit shift | Obs/pred before | Obs/pred after | Brier before | Brier after |
+|---|---|---|---|---|---|---|
+| 2022 | 3 | +0.326 | 2.02 | 1.46 | 0.00383 | 0.00382 |
+| 2022 | 4 | -0.187 | 1.13 | 1.32 | 0.00352 | 0.00351 |
+| 2023 | 3 | +0.326 | 1.57 | 1.13 | 0.00309 | 0.00308 |
+| 2023 | 4 | -0.187 | 0.95 | 1.11 | 0.00269 | 0.00269 |
+
+Relative Brier gain of model 4 over model 3 after recalibration: 8.2 % (2022,
+7.9 % before) and 12.9 % (2023, 13.0 % before). Reading: the 2022 miss is not a
+calibration-level effect, the base-rate shift moves both models alike. Limit:
+the shift is learned in-sample (2021 is a training year) on a year whose base
+rate (0.0026) is below 2022 (0.0039), so the models remain under-predicting.
+
+### E6. Label restricted to perimeters of 30 ha or more
+
+| Year | Positives | Base rate | Model 3 PR-AUC | Model 4 PR-AUC | Model 4 lift | Brier gain | PR-AUC gain |
+|---|---|---|---|---|---|---|---|
+| 2022 | 653 | 0.00147 | 0.0048 | 0.0653 | 44.3 | 2.3 % | +0.060 |
+| 2023 | 438 | 0.00099 | 0.0313 | 0.1525 | 154.4 | 5.5 % | +0.121 |
+
+Reading: the skill in lift and the advantage over model 3 hold on a label with a
+constant size floor; the Brier gain is under 10 % in both years, so the miss
+of the criterion does not come from the size-floor change. Model 3b is above
+model 4 in PR-AUC in 2023 (0.1555 against 0.1525).
+
+### E7. Without January to March
+
+| Year | Test positives removed | Model 4 lift | Lift on all months | Brier gain | PR-AUC gain | PR-AUC gain on all months |
+|---|---|---|---|---|---|---|
+| 2022 | 35.6 % | 28.7 | 39.0 | 4.2 % | +0.087 | +0.136 |
+| 2023 | 54.5 % | 48.9 | 71.3 | 2.7 % | +0.087 | +0.182 |
+
+Reading: by the declared 30 % rule the verdict rests partly on the winter
+positives: the lift drops by 26 % and 31 %, the PR-AUC advantage over model 3
+by 36 % and 52 %, and the 2023 pass of the Brier bar (13.0 %) does not survive
+their removal (2.7 %). The lift stays high (28.7 and 48.9), so the ranking skill
+outside January to March is real. In 2023, 54.5 % of the test positives fall
+in those three months, and the pre-registered 2023 pass leans on them.
+
+### E8. E1 with a climatology that never saw the held-out blocks
+
+| Year | Model | PR-AUC blocked | PR-AUC unblocked | Relative drop | E1 relative drop |
+|---|---|---|---|---|---|
+| 2022 | 3 | 0.0097 | 0.0143 | 32.4 % | 32.4 % |
+| 2022 | 3b | 0.1220 | 0.1347 | 9.5 % | -8.1 % |
+| 2022 | 4 | 0.1311 | 0.1503 | 12.8 % | -4.3 % |
+| 2023 | 3 | 0.0263 | 0.0419 | 37.3 % | 37.3 % |
+| 2023 | 3b | 0.2008 | 0.2126 | 5.5 % | -5.0 % |
+| 2023 | 4 | 0.1734 | 0.2241 | 22.6 % | 2.9 % |
+
+Reading: 3b and 4 stay within 30 % of their unblocked PR-AUC, so the E1
+conclusion stands; E1 overstated the transfer of model 4 by 0.026 (2022) and
+0.044 (2023) of PR-AUC, and the margin of model 4 in 2023 is smaller (22.6 %).
+The lag counts of held-out cells are kept, so the local history is not
+dispensable (see the limits of section 6).
+
+### What E5 to E8 change in the reading
+
+The criterion and the reduced GO stay as pre-registered. The statement "the
+skill is mostly persistence and place" is unchanged by E5, E6 and E8. E7 adds
+a qualification: the 2023 pass and a third to a half of the PR-AUC advantage
+rest on January to March positives.
+
+## 13. Traceability
+
+The files of `out/`, `criterion_a.json` and the criterion metrics are logged in
+the MLflow run `q1_spike` (experiment `q1_spike`) by `log_spike_run` in
+`src/models/spike_results.py`, and the `q1_*` tables of `gold/model_out` carry
+its `run_id`.

@@ -190,3 +190,43 @@ Reading rule, fixed now (E1's rule): a pooled PR-AUC within 30 percent
 the 30 percent line here and not in E1, the E1 reading is withdrawn.
 
 This analysis does not modify the verdict.
+
+## Reading of E5 to E8 (run 2026-11-09, `s09_exploratory.py`)
+
+Applied to the rules written above. None changes the verdict.
+
+- **E5.** The logit shift learned on 2021 is +0.33 for model 3 and -0.19 for
+  model 4. After recalibration the relative Brier gain of model 4 over model 3
+  is 8.2 percent in 2022 (7.9 before) and 12.9 percent in 2023 (13.0 before).
+  The 2022 miss is therefore not a calibration-level effect: the pair of
+  models is shifted in nearly the same way. What recalibration does show is how
+  large the shift is. The observed-over-predicted ratio of model 3 is 2.02 in
+  2022 and stays at 1.46 after the shift (model 4: 1.13 before, 1.32 after),
+  because 2021 has a base rate of 0.0026 against 0.0039 in 2022. The declared
+  limit holds: the shift is learned in-sample and on a year that is itself
+  lower than 2022.
+- **E6.** On perimeters of 30 ha or more, the base rate is 0.0010 (training),
+  0.0015 (2022) and 0.0010 (2023). Model 4 reaches PR-AUC 0.0653 (lift 44.3)
+  in 2022 and 0.1525 (lift 154.4) in 2023 against 0.0048 and 0.0313 for model
+  3, so it keeps a lift above 5 and its advantage over model 3. The relative
+  Brier gain is 2.3 percent (2022) and 5.5 percent (2023), under 10 percent in
+  both years. By the rule, the miss of the criterion does not depend on the
+  label's size floor; the skill in lift does not either. On this label model
+  3b is above model 4 in 2023 (PR-AUC 0.1555 against 0.1525).
+- **E7.** Without January to March, 35.6 percent of the training positives and
+  35.6 percent (2022) and 54.5 percent (2023) of the test positives are
+  removed. Model 4 keeps a lift of 28.7 (2022) and 48.9 (2023) against 39.0 and
+  71.3, a drop of 26 and 31 percent, but its PR-AUC advantage over model 3 falls
+  to +0.087 and +0.087 against +0.136 and +0.182 (drops of 36 and 52 percent),
+  and the relative Brier gain falls to 4.2 and 2.7 percent. By the rule (30
+  percent), the verdict rests partly on the winter positives, in particular the
+  2023 pass of the Brier bar, which does not survive their removal. The lift
+  stays high, so the ranking skill outside the winter is real.
+- **E8.** With held-out cells given the regional climatology instead of their
+  own, the pooled PR-AUC of model 4 is 0.1311 (2022) and 0.1734 (2023), a drop
+  of 12.8 and 22.6 percent against the unblocked values (E1: -4.3 and +2.9
+  percent); model 3b drops 9.5 and 5.5 percent (E1: -8.1 and -5.0). Model 3
+  is unchanged (it does not use the climatology) and still does not transfer.
+  Models 3b and 4 stay within 30 percent, so the reading of E1 stands, with a
+  smaller margin for model 4 in 2023. E1 overstated the transfer of model 4 by
+  0.026 and 0.044 of PR-AUC.

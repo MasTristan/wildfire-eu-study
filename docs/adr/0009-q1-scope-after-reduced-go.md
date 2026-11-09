@@ -51,3 +51,24 @@ La météo ERA5 et le SPEI ajoutent peu au-delà.
   feux cartographiés par EFFIS.
 - Un résultat négatif sur le critère, publié avec ses intervalles, sert la
   crédibilité du projet. C'est la raison d'être de la pré-inscription.
+
+## Note du 2026-11-09 : analyses postérieures à la décision
+
+La décision ci-dessus n'est pas réécrite. Deux précisions et un renvoi.
+
+- Le point 2 parle de trois analyses exploratoires ; `EXPLORATORY.md` en compte
+  maintenant huit. E4 (sensibilité au tirage des négatifs, dix graines) a été
+  ajoutée le 2026-11-08 avant son exécution. E5 à E8 ont été déclarées le
+  2026-11-09, avant leur exécution : recalibration d'intercept (E5), étiquette
+  restreinte aux périmètres de 30 ha ou plus (E6), sans janvier à mars (E7),
+  blocs spatiaux avec climatologie sans les blocs écartés (E8).
+- Lecture de E4 à E8 (détail dans la section 12 de `VERDICT.md`) : le critère
+  et le GO réduit ne changent pas. L'échec de 2022 résiste au tirage des
+  négatifs (0 graine sur 10) et à la recalibration ; il ne tient pas au plancher
+  de taille des périmètres. En revanche, sans janvier à mars, le gain de Brier
+  de 2023 tombe de 13,0 % à 2,7 % : le succès de 2023 repose en partie sur les
+  départs d'hiver. Le transfert à des cellules jamais vues (E1) résiste à E8.
+- Le récit de la conséquence 2 doit se lire avec « persistance et lieu »
+  plutôt que « départs » : l'étiquette mêle départs nouveaux et persistance du
+  même foyer, et les périmètres EFFIS sont connus avec un délai, donc le spike
+  ne dit pas ce qu'aurait su un prévisionniste le matin du jour J.
