@@ -222,6 +222,7 @@ def q1_pr_auc(model_out: Path) -> Path:
 def q1_spatial_blocks() -> Path:
     """PR-AUC with and without holding out 2 degree spatial blocks (E1 of the spike)."""
     e1 = pd.read_csv(SPIKE_OUT / "exploratory_spatial_blocks.csv")
+    e8 = pd.read_csv(SPIKE_OUT / "exploratory_spatial_blocks_clim.csv")
     keys = ["lgbm_fwi", "lgbm_fwi_space", "lgbm_full"]
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.6), sharey=True)
     for ax, year in zip(axes, (2022, 2023), strict=True):
@@ -231,16 +232,19 @@ def q1_spatial_blocks() -> Path:
             ax.plot([r["pr_auc"], r["pr_auc_unblocked"]], [y, y], color=GREY, lw=1.4, zorder=1)
         ax.scatter(d["pr_auc_unblocked"], ypos, color=BLUE, s=38, zorder=3, label="Sans blocs (verdict)")
         ax.scatter(d["pr_auc"], ypos, color=ORANGE, s=38, zorder=3, marker="s", label="Blocs spatiaux exclus de l'entraînement")
+        d8 = e8[e8["year"] == year].set_index("model").loc[keys]
+        ax.scatter(d8["pr_auc"], ypos, color=GREEN, s=44, zorder=4, marker="D",
+                   label="Idem, climatologie des cellules écartées remplacée par la moyenne régionale")
         ax.set_title(f"Test {year}", loc="left", fontsize=10.5, color=INK)
         ax.set_xlabel("PR-AUC")
         ax.grid(axis="y", visible=False)
     _models(axes[0], keys)
     axes[0].invert_yaxis()
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.04), fontsize=8.5)
+    fig.legend(handles, labels, loc="lower center", ncol=1, bbox_to_anchor=(0.5, -0.12), fontsize=8.5)
     fig.suptitle("Q1 : la compétence se transfère-t-elle à des cellules jamais vues ? (blocs de 2 degrés, 5 plis)",
                  x=0.01, ha="left", fontsize=11, color=INK)
-    fig.tight_layout(rect=(0, 0.04, 1, 0.94))
+    fig.tight_layout(rect=(0, 0.08, 1, 0.94))
     return _save(fig, "q1_spatial_blocks.png")
 
 
