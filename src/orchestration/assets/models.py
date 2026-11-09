@@ -15,24 +15,38 @@ GROUP = "model_out"
 
 
 @asset(key_prefix="gold", group_name=GROUP, kinds={"python"}, deps=[gold.gold_star],
-       description="Q2: GPD tail of EFFIS fire sizes per country, return levels with bootstrap intervals")
+       description="Q2: GPD tail of declustered EFFIS fire episodes above 500 ha per EU27 country, return levels with year-block bootstrap intervals, threshold stability")
 def tail_risk_country() -> MaterializeResult:
     from src.models import extremes, tracking
 
     events = pd.read_parquet(lake.GOLD_STAR / "fact_fireevent.parquet")
     events = events[events["source_key"] == "EFFIS_RDA"]
-    params = {"floor_ha": 30.0, "threshold_quantile": 0.90, "min_exceedances": 30, "n_boot": 500}
-    with tracking.run("q2_tail_risk", f"country_{date.today():%Y%m%d}", params) as active:
-        table = extremes.tail_risk_table(events, group="country_key", **params)  # type: ignore[arg-type]
-        table["run_id"] = active.info.run_id
+    params = {"threshold_ha": extremes.THRESHOLD_HA, "decluster_days": extremes.DECLUSTER_DAYS,
+              "min_years": extremes.MIN_YEARS, "min_episodes": extremes.MIN_EPISODES, "n_boot": 500}
+    exp = "q2_tail_risk"
+    run_params = {**params, "bootstrap": "year_blocks", "perimeter": "EU27",
+                  "stability_thresholds_ha": list(extremes.STABILITY_THRESHOLDS_HA), "stability_n_boot": 200}
+    with tracking.run(exp, f"country_{date.today():%Y%m%d}", run_params, tags={"published": "false"}) as active:
+        full = extremes.tail_risk_table(events, group="country_key", **params)  # type: ignore[arg-type]
+        table = full[full["in_scope"]].reset_index(drop=True)
+        stability = extremes.threshold_stability(events, groups=list(table["country_key"]), group="country_key",
+                                                 decluster_days=extremes.DECLUSTER_DAYS)
+        run_id = active.info.run_id
+        table["run_id"] = run_id
         tracking.log_table(table, "tail_risk_country")
-        tracking.log_metrics({"groups": len(table), "groups_estimated": int(table.get("shape", pd.Series(dtype=float)).notna().sum())})
+        tracking.log_table(full[["country_key", "years", "n_fires", "n_exceedances", "in_scope", "scope_reason"]], "perimeter")
+        tracking.log_table(stability, "threshold_stability")
+        tracking.log_metrics({"groups_seen": len(full), "groups_published": len(table),
+                              "groups_shape_below_one": int(table["shape_below_one"].fillna(False).astype(bool).sum()),
+                              **{f"episodes_{k}": n for k, n in zip(full["country_key"], full["n_exceedances"], strict=True)}})
     lake.ensure_dirs()
     out = lake.GOLD_MODEL_OUT / "tail_risk_country.parquet"
     table.to_parquet(out, index=False)
-    extremes.return_levels_long(table).assign(run_id=active.info.run_id).to_parquet(
+    extremes.return_levels_long(table).assign(run_id=run_id).to_parquet(
         lake.GOLD_MODEL_OUT / "tail_risk_levels.parquet", index=False)
-    return MaterializeResult(metadata={"rows": int(len(table)), "run_id": active.info.run_id, "path": str(out)})
+    stability.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "tail_risk_threshold_stability.parquet", index=False)
+    tracking.mark_published(exp, run_id)  # only once the three tables are written
+    return MaterializeResult(metadata={"rows": int(len(table)), "run_id": run_id, "path": str(out)})
 
 
 @asset(key_prefix="gold", group_name=GROUP, kinds={"python"}, deps=[gold.gold_star],

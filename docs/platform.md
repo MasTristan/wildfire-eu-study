@@ -137,7 +137,7 @@ un seul paramètre à régler).
 
 | Page | Tables | Asset |
 |---|---|---|
-| 10 Tail risk | `tail_risk_country`, `tail_risk_levels` (niveaux de retour en format long, une ligne par pays et période) | `gold/tail_risk_country` |
+| 10 Tail risk | `tail_risk_country`, `tail_risk_levels` (niveaux de retour en format long, une ligne par pays et période), `tail_risk_threshold_stability` (forme selon le seuil, par pays) | `gold/tail_risk_country` |
 | 11 Attribution | `attribution_countryyear`, `attribution_coefficients` (nom lisible, intervalle à 95 %, multiplicateur de surface), `attribution_summary` (R² intra-pays) | `gold/attribution_countryyear` |
 | (pas de page) | `attribution_bayes_coefficients` (niveaux population, écart-type entre pays et pays : moyenne, écart-type, intervalle à 94 %, coefficient fréquentiste en regard, R-hat, ESS), `attribution_bayes_countryyear` (composante météo avec intervalle, surface ajustée, R² bayésien par pays) ; `run_id` sur chaque ligne | `gold/attribution_bayes` |
 | 12 Validation | `q1_metrics`, `q1_criterion`, `q1_importance` ; `q1_reliability` est écrite pour le site | `gold/q1_spike_results` |

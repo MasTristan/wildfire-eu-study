@@ -1,8 +1,9 @@
 # Carte de modèle : Q2, queue des tailles de feux
 
-Run MLflow : `d5672f4785b64c8f8487e87cf845694c` (expérience `q2_tail_risk`, run
-`country_20261109`), 2026-11-09. Les deux tables `tail_risk_country` et
-`tail_risk_levels` portent ce `run_id` sur chaque ligne.
+Run MLflow : `919e872312014525961c955053b1f8b5` (expérience `q2_tail_risk`, run
+`country_20261109`, tag `published=true`), 2026-11-09. Les tables
+`tail_risk_country`, `tail_risk_levels` et `tail_risk_threshold_stability` portent
+ce `run_id` sur chaque ligne.
 
 ## Question
 
@@ -14,14 +15,22 @@ qui est dominée par la saison la plus sèche de la période.
 ## Données
 
 - Table `fact_fireevent`, lignes EFFIS : un feu cartographié, sa surface en
-  hectares, sa date de départ, son pays.
-- Plancher de 30 ha : les feux plus petits ne sont pas modélisés.
-- 50 pays ou territoires, 41 578 feux au total. 28 pays ont 10 années complètes
-  (2016 à 2025) ; les 22 autres entrent plus tard dans le registre et ont de 1 à 9
-  années, l'Ukraine 6 (2020 à 2025).
+  hectares, sa date de départ, son pays. 50 pays ou territoires dans le registre.
+- Seuil absolu de 500 ha, le même partout (voir Méthode). Les feux plus petits ne
+  sont pas modélisés.
 - Seules les années complètes comptent : l'extraction 2026 s'arrête en juillet,
   avant la plus grande part de la saison du Sud, et la compter comme une année
-  entière ferait baisser le taux de feux.
+  entière ferait baisser le taux. La période de chaque pays va de son premier
+  enregistrement, de toute taille, à 2025 : 2016 à 2025 pour les 28 pays les plus
+  anciens du registre.
+- **Périmètre publié : 8 pays sur 50.** Pays de l'UE27 avec au moins 8 années
+  complètes et au moins 30 épisodes au-dessus du seuil : Bulgarie, Croatie,
+  Espagne, France, Grèce, Italie, Portugal, Roumanie. Les 42 autres sont exclus :
+  24 hors UE27 (Algérie, Ukraine, Turquie, Syrie et d'autres, dont la complétude du
+  registre n'est pas évaluée), 15 de l'UE27 avec moins de 30 épisodes (dont
+  l'Allemagne : 7), 3 de l'UE27 avec moins de 8 années (Autriche, Lituanie,
+  Slovaquie). Le motif est dans la colonne `scope_reason` de la table complète,
+  loguée comme artefact `perimeter` du run.
 
 ## Méthode
 
@@ -29,155 +38,175 @@ Une loi de probabilité ajustée sur tous les feux décrirait surtout les petits
 On ne modélise donc que la queue, par la méthode des dépassements de seuil
 (peaks over threshold), pays par pays :
 
-1. **Seuil** : le quantile 90 % des surfaces du pays (`threshold_quantile=0.9`).
-   Pour le Portugal, 835,7 ha. Les feux au-dessus du seuil sont les
-   dépassements : 214 sur 10 ans, soit un taux de 21,4 par an.
-2. **Loi de Pareto généralisée (GPD)** sur l'excès de chaque dépassement au-dessus
-   du seuil, ajustée par maximum de vraisemblance. Deux paramètres : une échelle
+1. **Seuil absolu de 500 ha.** Un quantile des tailles du pays dépendrait du plancher de
+   cartographie EFFIS, qui est passé de 15 à 24 ha avant 2020 à 0 à 1 ha après : le
+   quantile 90 d'un mélange qui change de composition. Le nombre annuel de feux de
+   plus de 500 ha ne dépend pas de ce plancher.
+2. **Déclustering par épisode.** Dans un même pays, les feux au-dessus du seuil dont
+   les dates sont séparées de 3 jours ou moins sont fusionnés en un épisode, chaîné
+   (chaque feu est comparé au précédent dépassement). On garde le plus gros feu de
+   l'épisode. Les dépassements groupés sont un même épisode météo et ne sont pas
+   indépendants, ce que la loi suppose. Le Portugal passe ainsi de 313 feux de plus
+   de 500 ha à 63 épisodes.
+3. **Loi de Pareto généralisée (GPD)** sur l'excès de chaque épisode au-dessus du
+   seuil, ajustée par maximum de vraisemblance. Deux paramètres : une échelle
    et une **forme** ξ. La forme dit à quelle vitesse la queue s'amincit. ξ = 0 :
    décroissance exponentielle. ξ > 0 : queue lourde, les très gros feux restent
    plausibles. ξ ≥ 1 : l'espérance de l'excès n'existe plus, c'est-à-dire que la
-   moyenne des plus gros feux n'est pas bornée par le modèle.
-3. **Niveau de retour** x_T : la taille dépassée en moyenne une fois toutes les
-   T années, `x_T = u + (sigma / xi) * ((T * taux)^xi - 1)`. C'est ce que montre la
-   courbe : on lit « un feu d'au moins x hectares une fois tous les T ans ».
-4. **Intervalle** : 500 rééchantillonnages bootstrap des dépassements, refit à
-   chaque fois, percentiles 2,5 % et 97,5 % (`n_boot=500`).
-5. **Horizon publié** : un niveau n'est publié que jusqu'à deux fois la durée
-   observée. Avec 10 ans de données, les niveaux à 2, 5, 10 et 20 ans sont
-   publiés, celui à 50 ans est nul par construction.
-6. **Seuil d'estimabilité** : moins de 30 dépassements, le pays reste dans la
-   table avec des estimations nulles. Ici 20 pays sur 50 sont estimés ; le plus
-   petit a 34 dépassements, le plus gros pays non estimé en a 26.
+   moyenne des plus gros feux n'est pas bornée par le modèle. Le taux est le
+   nombre d'épisodes par année observée.
+4. **Niveau de retour** x_T : la taille de l'épisode dépassée en moyenne une fois
+   toutes les T années, `x_T = u + (sigma / xi) * ((T * taux)^xi - 1)`.
+5. **Intervalle par bootstrap par blocs d'années.** 500 réplicats : on tire
+   autant d'années que d'années observées, avec remise, chaque année apportant tous
+   ses épisodes (une année sans épisode n'en apporte aucun), puis on réajuste.
+   L'incertitude sur le nombre d'épisodes par an est donc dans la bande, de même que
+   la dépendance à l'intérieur d'une année. Percentiles 2,5 % et 97,5 %.
+6. **Règle de publication d'un niveau.** Un niveau n'est publié que si ξ ponctuel
+   est strictement inférieur à 1 et si la période de retour ne dépasse pas deux
+   fois la durée observée (20 ans avec 10 ans de registre : le niveau à 50 ans est
+   nul par construction). Un niveau absent est nul et deux colonnes disent pourquoi :
+   `shape_below_one` (pays) et `within_horizon` (niveau), `published` valant leur
+   conjonction dans `tail_risk_levels`.
+7. **Stabilité du seuil.** Table `tail_risk_threshold_stability` : pour chaque pays du
+   périmètre, ξ et son intervalle (200 réplicats) aux seuils 200, 300, 500 et
+   1 000 ha, avec re-déclustering à chaque seuil.
 
 Le niveau empirique est affiché en regard : c'est la taille du k-ième plus gros
-feu observé, avec k = années / T. À 10 ans, c'est donc le plus gros feu de la
+épisode observé, avec k = années / T. À 10 ans, c'est donc le plus gros feu de la
 période.
 
 ## Validation
 
-- Tests (`tests/test_models_extremes.py`) : la GPD retrouve des paramètres connus
-  sur un échantillon simulé, le niveau de retour et la période de retour sont des
-  fonctions inverses, l'horizon suit la durée observée, une année finale partielle
-  est exclue, les pays inestimables sont listés et non supprimés.
+- Tests (`tests/test_models_extremes.py`) : des feux espacés de 1 ou 2 jours forment un
+  seul épisode et 4 jours en font deux ; la GPD ajustée sur des épisodes simulés
+  retrouve ξ = 0,4, l'échelle et le taux connus (400 années simulées) ; le bootstrap
+  par blocs donne une bande plus large qu'un rééchantillonnage des épisodes à taux fixe quand le taux
+  varie beaucoup d'une année à l'autre ; le périmètre et ses trois motifs d'exclusion ; la
+  règle de publication (ξ ≥ 1 et horizon) ; le schéma des trois tables ; une année finale
+  partielle est exclue ; le tag `published` ne reste que sur le dernier run.
 - Contrôle visuel sur les données réelles : la figure ci-dessous place le niveau
-  empirique sur la courbe ajustée, pour quatre pays.
+  empirique sur la courbe ajustée, là où elle est publiée.
 
-![Niveaux de retour ajustés avec intervalle à 95 %, niveaux observés en points, Portugal, Espagne, Grèce, Italie](../img/models/q2_return_levels.png)
+![Niveaux de retour ajustés avec intervalle à 95 %, niveaux observés en points, Portugal, Espagne, France, Italie, Grèce](../img/models/q2_return_levels.png)
 
 Aucun test d'adéquation de la GPD (Anderson-Darling ou autre) n'est calculé dans
-le dépôt. La table de stabilité du seuil (`threshold_stability` dans
-`src/models/extremes.py`) existe mais n'est pas matérialisée dans `model_out`.
+le dépôt.
 
 ## Limites
 
-**Dix années de registre ne permettent pas de vérifier un niveau de retour au-delà
-de dix à vingt ans, et pour le Portugal et l'Espagne le plus gros feu observé est
-sous la borne basse de l'intervalle à 95 % du niveau décennal ajusté.** Un niveau
-décennal n'est pas atteint dans dix ans environ une fois sur trois (e^-1, soit
-37 %), donc un maximum observé sous le niveau ajusté n'est pas anormal en soi. Mais
-sortir de l'intervalle par le bas, comme ici, signale que le modèle et les données ne
-s'accordent pas bien, ou que l'intervalle est trop étroit. Les deux lectures sont
-possibles avec ce qu'on a calculé.
+**Le Portugal et la Grèce n'ont pas de niveau de retour publié : leur forme
+ponctuelle est au-dessus de 1 (1,64 et 1,28).** Ce n'est pas un défaut de
+présentation, c'est le résultat : avec 10 ans de registre, le modèle ne décrit
+pas une queue dont la moyenne est finie pour ces deux pays, et un niveau de
+retour y serait une extrapolation sans borne. L'ancienne version (seuil au
+quantile 90, tous les feux, bootstrap des feux) publiait pour le Portugal un
+niveau à 10 ans de 286 596 ha, 4,2 fois le plus gros feu observé.
 
-- **Intervalle trop étroit par construction.** Le bootstrap rééchantillonne les
-  dépassements, mais le seuil et le taux annuel sont tenus fixes dans chaque
-  réplique. L'incertitude sur le nombre de gros feux par an n'est pas dans la bande.
-- **Indépendance supposée.** La GPD suppose des dépassements indépendants. Dans les
-  faits, les gros feux se regroupent dans les années sèches et dans les mêmes
-  régions. Pas de tendance, pas de covariable.
-- **Forme proche ou au-dessus de 1.** Au Portugal ξ = 1,04 : l'extrapolation au-delà
-  de la plus grande observation est très sensible à ce paramètre, ce qui explique la
-  largeur des intervalles (niveau à 20 ans : 182 365 à 1 583 842 ha).
-- **Surface cartographiée.** Le plancher de 30 ha et le périmètre EFFIS fixent ce
-  qu'on appelle un feu. Les pays hors de l'Union (Algérie, Ukraine, Turquie et
-  d'autres) sont couverts par un registre dont la complétude n'est pas évaluée dans cette carte.
-- **30 pays sans estimation.** Pour eux, la table ne dit rien de la queue.
+- **ξ n'est pas stable selon le seuil.** Au Portugal, ξ vaut 1,80, 1,65, 1,64 puis 0,80
+  aux seuils 200, 300, 500 et 1 000 ha. Il est plus bas à 1 000 ha qu'à 200 ha dans les
+  cinq pays détaillés (Italie : 0,85 à 0,36), sans être monotone partout. Le régime asymptotique n'est donc pas atteint à
+  500 ha pour les pays ibériques et la Grèce, ou 10 ans ne permettent pas de le
+  voir. À 1 000 ha, les intervalles de quatre des cinq pays contiennent ou touchent 1.
+- **Seulement 10 ans.** Un niveau à 10 ans est lui-même proche de la durée du
+  registre, et un maximum observé inférieur au niveau ajusté n'a rien d'anormal : un
+  niveau décennal n'est pas atteint en dix ans environ une fois sur trois (e^-1, soit 37 %).
+- **Intervalles larges, par blocs de 10 années.** Avec 10 blocs, le bootstrap
+  par années est grossier. Il propage l'incertitude du taux, mais ne l'estime pas
+  finement. L'Espagne est publiée avec ξ = 0,96, à la limite de la règle ; son niveau
+  à 20 ans va de 35 772 à 611 014 ha.
+- **Seuil de 500 ha et déclustering de 3 jours** sont des choix, pas des estimations.
+  La fenêtre de 3 jours fusionne les feux d'un même épisode météo, mais pas
+  deux vagues séparées d'une semaine. La tendance et les covariables ne sont pas modélisées.
+- **Registre EFFIS.** Le périmètre cartographié fixe ce qu'on appelle un feu. Les pays
+  exclus du périmètre (hors UE27 surtout) ne sont pas décrits par cette carte.
+- **42 pays hors périmètre.** La table ne dit rien de leur queue.
 
 ## Résultats
 
-La figure suivante donne la forme ξ et son intervalle pour les 20 pays estimés.
-Les barres sombres sont les quatre pays détaillés plus bas.
+La figure suivante donne la forme ξ et son intervalle pour les 8 pays du périmètre.
+Orange : ξ ponctuel au-dessus de 1, niveaux non publiés.
 
 ![Paramètre de forme de la GPD par pays avec intervalle à 95 %](../img/models/q2_shape.png)
 
-- La forme médiane est 0,60. Elle va de 0,001 (Croatie) à 1,036 (Portugal). Un seul
-  pays dépasse 1 en estimation ponctuelle, cinq ont leur borne haute à 1 ou plus,
-  trois ont leur borne basse sous 0 (Croatie, Tunisie, Kosovo). Un intervalle qui
-  contient 0 ne distingue pas la queue d'une exponentielle.
-- Les pays à queue la plus lourde sont les pays ibériques et la France (Portugal
-  1,04, France 0,95, Espagne 0,87). L'Italie (0,60) a la plus grande base de feux
-  parmi les quatre (455 dépassements) et l'intervalle le plus étroit.
+Cinq pays, comparaison avec l'ancienne version (tailles en hectares, intervalles à
+95 %). « Avant » : seuil au quantile 90 des feux de 30 ha et plus, tous les feux,
+bootstrap des feux. « Après » : seuil de 500 ha, épisodes, bootstrap par années.
 
-Quatre pays, niveau décennal (tailles en hectares, intervalles à 95 %) :
-
-| Pays | Feux ≥ 30 ha | Seuil | Dépassements | Forme ξ | Niveau à 10 ans ajusté | Plus gros feu observé |
-|---|---|---|---|---|---|---|
-| Portugal | 2 140 | 836 | 214 | 1,04 [0,76 ; 1,28] | 286 596 [106 371 ; 653 881] | 67 521 |
-| Espagne | 2 846 | 559 | 285 | 0,87 [0,66 ; 1,06] | 131 517 [61 459 ; 283 575] | 40 081 |
-| Grèce | 638 | 1 139 | 64 | 0,69 [0,13 ; 1,10] | 45 557 [14 772 ; 130 925] | 96 610 |
-| Italie | 4 549 | 297 | 455 | 0,60 [0,47 ; 0,72] | 13 150 [8 039 ; 23 204] | 13 278 |
+| Pays | Dépassements avant | Épisodes après | ξ avant | ξ après | Niveau à 10 ans avant | Niveau à 10 ans après | Plus gros feu observé |
+|---|---|---|---|---|---|---|---|
+| Portugal | 214 | 63 | 1,04 [0,76 ; 1,28] | 1,64 [1,06 ; 2,24] | 286 596 [106 371 ; 653 881] | non publié (ξ ≥ 1) | 67 521 |
+| Espagne | 285 | 113 | 0,87 [0,66 ; 1,06] | 0,96 [0,59 ; 1,29] | 131 517 [61 459 ; 283 575] | 79 517 [22 980 ; 255 627] | 40 081 |
+| France | 172 | 37 | 0,95 [0,68 ; 1,18] | 0,73 [0,15 ; 1,02] | 19 585 [7 861 ; 45 468] | 12 913 [3 007 ; 24 556] | 13 116 |
+| Italie | 455 | 63 | 0,60 [0,47 ; 0,72] | 0,53 [0,04 ; 0,87] | 13 150 [8 039 ; 23 204] | 9 150 [4 650 ; 15 709] | 13 278 |
+| Grèce | 64 | 57 | 0,69 [0,13 ; 1,10] | 1,28 [0,35 ; 2,70] | 45 557 [14 772 ; 130 925] | non publié (ξ ≥ 1) | 96 610 |
 
 Lecture :
 
-- **Italie** : niveau ajusté et plus gros feu observé coïncident (13 150 contre
-  13 278 ha).
-- **Grèce** : le plus gros feu observé (96 610 ha) est plus du double du niveau
-  ajusté (45 557 ha) mais reste dans l'intervalle. Seulement 64 dépassements, d'où
-  l'intervalle de forme le plus large des 20 pays estimés (0,97 de large).
-- **Portugal, Espagne** : niveau ajusté 4,2 et 3,3 fois le plus gros feu observé,
-  observé hors de l'intervalle (voir Limites).
-- Fréquence des feux de 10 000 ha ou plus selon le modèle : une fois tous les 0,40 an
-  au Portugal, 0,54 an en Espagne, 1,29 an en Grèce, 6,33 ans en Italie.
+- **La borne basse du niveau à 10 ans ne dépasse plus le plus gros feu observé**, pour
+  les trois pays où un niveau est publié (Espagne 22 980 contre 40 081, France 3 007
+  contre 13 116, Italie 4 650 contre 13 278). Pour le Portugal et la Grèce, la question
+  ne se pose pas : pas de niveau.
+- **France et Italie** : le plus gros feu observé est dans l'intervalle du niveau à 10 ans.
+  En France il coïncide presque avec le niveau ajusté (13 116 contre 12 913 ha) ; en Italie il est au-dessus
+  (13 278 contre 9 150 ha).
+- **Espagne** : le niveau ajusté est 2 fois le plus gros feu observé, intervalle de 22 980
+  à 255 627 ha, la limite haute de ξ est à 1,29.
+- **Fréquence des feux de 10 000 ha ou plus** (pays publiés avec un ajustement fini) :
+  une fois tous les 1,2 an en Espagne, 7,2 ans en France, 11,7 ans en Italie.
+- **Bulgarie, Croatie, Roumanie** (ξ de 0,46, 0,24 et 0,35) ont les queues les moins
+  lourdes. Leur borne basse de ξ est sous 0 pour la Bulgarie et la Croatie, à 0,00
+  pour la Roumanie : l'intervalle ne distingue pas la queue d'une exponentielle.
 
 À prendre ainsi : un classement des pays par queue de distribution, avec ses
-intervalles, et un ordre de grandeur des niveaux jusqu'à 20 ans. Pas une
-prévision de la taille du prochain grand feu.
+limites, et un ordre de grandeur des niveaux à 10 et 20 ans pour six pays. Pas une
+prévision de la taille du prochain grand feu, et pas de chiffre pour le Portugal ni la Grèce.
+
+Stabilité du seuil, cinq pays :
+
+![Forme ξ selon le seuil (200, 300, 500, 1 000 ha), intervalle à 95 %](../img/models/q2_threshold_stability.png)
 
 ## Reproduire
 
 Les chiffres ci-dessus sortent de ces commandes, lancées à la racine du dépôt
-(tables dans `data/lake/gold/model_out/`, locales et non versionnées).
+(tables dans `data/lake/gold/model_out/`, locales et non versionnées). Les données
+d'entrée sont lues avec les variables d'environnement de l'étape de reconstruction
+ci-dessous ; les commandes de lecture n'en ont pas besoin.
 
-Tableau des quatre pays (feux, seuil, dépassements, forme, niveau à 10 ans, plus
-gros feu, `run_id`) :
-
-```bash
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[t.country_key.isin(['PT','ES','GR','IT'])][['country_key','n_fires','threshold_ha','n_exceedances','shape','shape_p2.5','shape_p97.5','rl_10y','rl_10y_p2.5','rl_10y_p97.5','rl_20y_p2.5','rl_20y_p97.5','largest_ha','return_period_10k_ha_years','run_id']].round(2).to_string())"
-```
-
-Comptes et statistiques de forme (50 pays, 20 estimés, 41 578 feux, médiane 0,60,
-un seul pays au-dessus de 1, cinq avec borne haute à 1 ou plus, trois avec borne
-basse sous 0, dépassements minimal et maximal) :
+Tableau des cinq pays (feux, épisodes, forme, niveau à 10 ans, plus gros feu, `run_id`) :
 
 ```bash
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); s=t['shape']; print(len(t), s.notna().sum(), t.n_fires.sum(), round(s.median(),3), (s>1).sum(), (t['shape_p97.5']>=1).sum(), (t['shape_p2.5']<0).sum(), t[s.notna()].n_exceedances.min(), t[s.isna()].n_exceedances.max()); print(t[s.notna()].sort_values('shape')[['country_key','shape','shape_p2.5','shape_p97.5']].round(3).to_string())"
+uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[t.country_key.isin(['PT','ES','FR','IT','GR'])][['country_key','n_fires','n_exceedances','shape','shape_p2.5','shape_p97.5','shape_below_one','rl_10y','rl_10y_p2.5','rl_10y_p97.5','rl_20y_p2.5','rl_20y_p97.5','largest_ha','return_period_10k_ha_years','run_id']].round(2).to_string())"
 ```
 
-Période observée par pays (10 ans, Ukraine 6) :
+Stabilité du seuil :
 
 ```bash
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t.groupby(['first_year','years']).size())"
+uv run python -c "import pandas as pd; s=pd.read_parquet('data/lake/gold/model_out/tail_risk_threshold_stability.parquet'); print(s.round(2).to_string())"
 ```
 
-Niveaux de retour de la figure (2, 5, 10, 20 ans, ajustés et empiriques) :
+Périmètre (motif d'exclusion de chacun des 50 pays), à partir des données d'entrée :
 
 ```bash
-uv run python -c "import pandas as pd; l=pd.read_parquet('data/lake/gold/model_out/tail_risk_levels.parquet'); print(l[l.country_key.isin(['PT','ES','GR','IT'])].round(0).to_string())"
+uv run python -c "import pandas as pd; from src import lake; from src.models import extremes; e=pd.read_parquet(lake.GOLD_STAR/'fact_fireevent.parquet'); e=e[e.source_key=='EFFIS_RDA']; t=extremes.tail_risk_table(e,n_boot=2); print(t.scope_reason.value_counts()); print(t[['country_key','years','n_fires','n_exceedances','scope_reason']].to_string())"
 ```
 
-Paramètres et métriques du run :
+Paramètres et métriques du run (seuil, fenêtre de déclustering, épisodes par pays) :
 
 ```bash
-uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('d5672f4785b64c8f8487e87cf845694c'); print(r.data.params, r.data.metrics)"
+uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('919e872312014525961c955053b1f8b5'); print(r.data.tags['published'], r.data.params, r.data.metrics)"
 ```
 
-Reconstruire la table (nouveau `run_id`) puis les figures :
+Reconstruire les tables (nouveau `run_id`, environ 4 minutes), puis les figures Q2 sans
+toucher à celles de Q1 et Q3 :
 
 ```bash
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country"
-uv run python scripts/model_figures.py
+uv run python scripts/model_figures.py --only q2
 ```
 
-Si la table est reconstruite, le `run_id` en tête de cette page change : la page cite
-celui des tables actuellement dans `model_out`.
+Variables utilisées pour ce run : `WILDFIRE_GOLD_STAR` et `WILDFIRE_SILVER` pointent
+vers les données d'un autre checkout, `WILDFIRE_GOLD` vers le `data/lake/gold` de
+celui-ci. Si la table est reconstruite, le `run_id` en tête de cette page change et le
+tag `published=true` passe sur le nouveau run : la page cite celui des tables
+actuellement dans `model_out`.
