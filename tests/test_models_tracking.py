@@ -18,3 +18,13 @@ def test_run_is_recorded_in_a_file_store(tmp_path, monkeypatch):
     card = tracking.write_model_card(tmp_path / "card.md", name="t", run_id=run_id, experiment="test_exp", date="d",
                                      question="q", data="d", method="m", validation="v", results="r", limits="l", reproduce="p")
     assert run_id in card.read_text()
+
+
+def test_model_card_states_limits_before_results(tmp_path):
+    """Plan rule: the limit sentence is written before the result is shown."""
+    headings = [line for line in tracking.MODEL_CARD_TEMPLATE.splitlines() if line.startswith("## ")]
+    assert headings == ["## Question", "## Data", "## Method", "## Validation", "## Limits", "## Results", "## Reproduce"]
+    card = tracking.write_model_card(tmp_path / "c.md", name="t", run_id="r", experiment="e", date="d", question="q",
+                                     data="d", method="m", validation="v", limits="LIM", results="RES", reproduce="p")
+    text = card.read_text(encoding="utf-8")
+    assert text.index("LIM") < text.index("RES")

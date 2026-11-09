@@ -86,11 +86,11 @@ Run: `{run_id}` (experiment `{experiment}`), {date}.
 ## Validation
 {validation}
 
-## Results
-{results}
-
 ## Limits
 {limits}
+
+## Results
+{results}
 
 ## Reproduce
 {reproduce}
