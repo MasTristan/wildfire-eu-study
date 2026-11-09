@@ -1,7 +1,7 @@
 """Q3, attribution of the year-to-year variability of burnt area to fire
 weather: a country x year panel with country fixed effects, frequentist
 version (statsmodels OLS, standard errors clustered by country). The
-Bayesian hierarchical version (PyMC, run under WSL2) consumes the same
+Bayesian hierarchical version (attribution_bayes.py, PyMC) consumes the same
 panel and must agree on the sign and magnitude of every coefficient.
 
 Outputs, per country and year: the fitted log burnt area, the weather
