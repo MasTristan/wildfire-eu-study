@@ -125,30 +125,38 @@ def q2_shape(model_out: Path) -> Path:
 def _bayes_pop(model_out: Path) -> pd.DataFrame:
     b = pd.read_parquet(model_out / "attribution_bayes_coefficients.parquet")
     pop = b[b["level"] == "population"].copy()
-    pop["label"] = pop["metric"].map(METRIC_LABELS)
+    verdict = pop["robust"].map({True: "robuste", False: "non distinguable de zéro"})
+    pop["label"] = pop["metric"].map(METRIC_LABELS) + "\n(" + verdict + ")"
     return pop.reset_index(drop=True)
 
 
+def _q3_size(model_out: Path) -> tuple[int, int]:
+    """Observations and countries of the single Q3 panel (both models fit exactly these rows)."""
+    cy = pd.read_parquet(model_out / "attribution_bayes_countryyear.parquet")
+    return len(cy), int(cy["country_key"].nunique())
+
+
 def q3_coefficients(model_out: Path) -> Path:
-    """Population slope per metric: frequentist estimate (95 % interval) against Bayesian posterior (94 % HDI)."""
+    """Population slope per metric: frequentist estimate (95 % interval) against Bayesian posterior (95 % HDI)."""
     pop = _bayes_pop(model_out)
     y = np.arange(len(pop))[::-1].astype(float)
     fig, ax = plt.subplots(figsize=(7.6, 4.4))
     ax.errorbar(pop["freq_coef"], y + 0.12, xerr=[pop["freq_coef"] - pop["freq_ci_low"], pop["freq_ci_high"] - pop["freq_coef"]],
                 fmt="o", color=ORANGE, capsize=3, label="Fréquentiste (MCO, intervalle à 95 %)")
     ax.errorbar(pop["mean"], y - 0.12, xerr=[pop["mean"] - pop["hdi_low"], pop["hdi_high"] - pop["mean"]],
-                fmt="s", color=BLUE, capsize=3, label="Bayésien hiérarchique (moyenne, HDI à 94 %)")
+                fmt="s", color=BLUE, capsize=3, label="Bayésien hiérarchique (moyenne, HDI à 95 %)")
     ax.axvline(0, color=GREY, lw=0.9)
     ax.set_yticks(y, labels=pop["label"])
-    ax.set_xlabel("Effet sur le log de la surface brûlée, par écart-type de la variable (écart-type du panel entier)")
+    ax.set_xlabel("Effet sur le log de la surface brûlée, par écart-type intra-pays de la variable (écart d'une année à l'autre)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=1, fontsize=8.5)
-    ax.set_title("Q3 : mêmes 356 observations, 40 pays, deux méthodes", loc="left", fontsize=11, color=INK)
+    n_obs, n_c = _q3_size(model_out)
+    ax.set_title(f"Q3 : mêmes {n_obs} observations, {n_c} pays, deux méthodes", loc="left", fontsize=11, color=INK)
     ax.grid(axis="y", visible=False)
     return _save(fig, "q3_coefficients.png")
 
 
 def q3_observed_vs_adjusted(model_out: Path) -> Path:
-    """Burnt area summed over the 40 countries of both fits, observed against weather-adjusted, per year."""
+    """Burnt area summed over the countries of the single panel, observed against weather-adjusted, per year."""
     bay = pd.read_parquet(model_out / "attribution_bayes_countryyear.parquet")
     freq = pd.read_parquet(model_out / "attribution_countryyear.parquet")
     freq = freq[freq["country_key"].isin(bay["country_key"].unique())]
@@ -161,11 +169,48 @@ def q3_observed_vs_adjusted(model_out: Path) -> Path:
     ax.plot(adj_b.index, adj_b.to_numpy(), color=BLUE, marker="s", ms=4, label="Ajustée de la météo, bayésien")
     ax.set_xticks(list(obs.index))
     ax.set_xlabel("Année")
-    ax.set_ylabel("Surface brûlée, somme des 40 pays (milliers d'hectares)")
+    ax.set_ylabel(f"Surface brûlée, somme des {_q3_size(model_out)[1]} pays (milliers d'hectares)")
     ax.legend(loc="upper left", fontsize=8.5)
     ax.set_title("Q3 : surface observée et surface qu'aurait donnée une météo moyenne", loc="left", fontsize=11, color=INK)
     ax.grid(axis="x", visible=False)
     return _save(fig, "q3_observed_vs_adjusted.png")
+
+
+VARIANT_LABELS = {
+    "base": "Base", "year_effects": "Effets année", "linear_trend": "Tendance linéaire", "eu_only": "UE seule",
+    "mediterranean_only": "Méditerranée seule", "min_area_100ha": "Sans lignes < 100 ha", "prior_n02": "A priori N(0, 2)",
+}
+UNIT_AXIS = {
+    "days_high_season": "par 10 jours", "spei_spring": "par unité de SPEI",
+    "precip_anom_season": "par 10 points de %", "temp_season": "par °C",
+}
+
+
+def q3_robustness(model_out: Path) -> Path:
+    """Effect per physical unit of each metric under every variant, both models, with the `robust` verdict in the title."""
+    r = pd.read_parquet(model_out / "attribution_robustness.parquet")
+    variants = [v for v in VARIANT_LABELS if v in set(r["variant"])]
+    y = np.arange(len(variants))[::-1].astype(float)
+    fig, axes = plt.subplots(1, 4, figsize=(12.5, 4.6), sharey=True)
+    for ax, m in zip(axes, METRIC_LABELS, strict=True):
+        for model, color, marker, off in (("frequentist", ORANGE, "o", 0.14), ("bayesian", BLUE, "s", -0.14)):
+            d = r[(r["metric"] == m) & (r["model"] == model)].set_index("variant").reindex(variants)
+            ok = d["coef_per_unit"].notna().to_numpy()
+            ax.errorbar(d["coef_per_unit"][ok], (y + off)[ok], xerr=[(d["coef_per_unit"] - d["ci_low_per_unit"])[ok],
+                        (d["ci_high_per_unit"] - d["coef_per_unit"])[ok]], fmt=marker, color=color, ms=4, capsize=2, lw=1.1,
+                        label="Fréquentiste (IC 95 %)" if model == "frequentist" else "Bayésien (HDI 95 %)")
+        ax.axvline(0, color=GREY, lw=0.9)
+        fl = r[(r["metric"] == m)].drop_duplicates("model").set_index("model")["robust"]
+        ax.set_title(f"{METRIC_LABELS[m].splitlines()[0]}\nfréq. : {'robuste' if fl.get('frequentist') else 'non robuste'}"
+                     f", bayés. : {'robuste' if fl.get('bayesian') else 'non robuste'}", fontsize=9, loc="left", color=INK)
+        ax.set_xlabel(f"Effet sur le log de la surface\n{UNIT_AXIS[m]}", fontsize=8.5)
+        ax.grid(axis="y", visible=False)
+    axes[0].set_yticks(y, labels=[VARIANT_LABELS[v] for v in variants])
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.02), fontsize=8.5)
+    fig.suptitle("Q3 : l'effet de chaque variable change-t-il quand on change de spécification ?", x=0.01, ha="left", fontsize=11, color=INK)
+    fig.tight_layout(rect=(0, 0.05, 1, 0.94))
+    return _save(fig, "q3_robustness.png")
 
 
 def _models(ax: Axes, keys: list[str]) -> None:
@@ -248,7 +293,7 @@ def build_all(model_out: Path | None = None) -> list[Path]:
     src = model_out or lake.GOLD_MODEL_OUT
     return [
         q2_return_levels(src), q2_shape(src),
-        q3_coefficients(src), q3_observed_vs_adjusted(src),
+        q3_coefficients(src), q3_observed_vs_adjusted(src), q3_robustness(src),
         q1_reliability(src), q1_pr_auc(src), q1_spatial_blocks(),
     ]
 
