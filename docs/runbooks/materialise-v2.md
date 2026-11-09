@@ -197,7 +197,7 @@ nuls supérieur à 10 % sur une colonne : rapporter la colonne et s'arrêter.
 
 ```powershell
 uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country,gold/attribution_countryyear"
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','years','n_exceedances','shape','rl_2y','rl_10y','rl_50y','max_return_period_years','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
+uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','first_year','last_year','years','n_exceedances','shape','rl_2y','rl_10y','rl_50y','max_return_period_years','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
 uv run python -c "import pandas as pd; c=pd.read_parquet('data/lake/gold/model_out/attribution_coefficients.parquet'); print(c.round(4).to_string()); a=pd.read_parquet('data/lake/gold/model_out/attribution_countryyear.parquet'); print(a.groupby('year')[['burnt_area_ha','adjusted_area_ha']].sum().round(0))"
 ```
 
@@ -210,7 +210,9 @@ pour les pays méditerranéens et à rapporter telle quelle, sans s'arrêter ;
 `max_return_period_years` (deux fois la durée observée, environ 20 ans) sont
 nuls par conception : `rl_50y` est vide partout tant que l'historique fait
 une dizaine d'années, de même que `return_period_10k_ha_years` quand il
-dépasse cet horizon. Attendu pour Q3 : `days_high_season` à coefficient
+dépasse cet horizon. Seules les années complètes entrent : l'extraction
+s'arrêtant fin juillet 2026, `last_year` vaut 2025 et `years` 10 pour les
+pays couverts depuis 2016. Attendu pour Q3 : `days_high_season` à coefficient
 positif, un `run_id` non vide dans les deux tables. Tout `shape` négatif
 sous -0,5, un `rl_50y` non nul ou un coefficient `days_high_season` négatif :
 rapporter.

@@ -12,7 +12,11 @@ Conventions:
   per group; the stability table over a grid of candidate thresholds is
   returned for the report rather than hidden;
 - rate: exceedances per year over the observed span, counted in calendar
-  years covered (first to last year with a record, inclusive);
+  years covered (first to last year with a record, inclusive). Only complete
+  years enter: the data end is the latest record of the whole input, and a
+  final year that ends before December is dropped (the 2026 extraction stops
+  at the end of July, before most of the southern season), since counting it
+  as a full year would bias the rate down;
 - return level x_T: the size exceeded on average once every T years,
   x_T = u + sigma / xi * ((T * rate)^xi - 1), the Gumbel limit when xi ~ 0;
 - reliable horizon: a return level (or return period) is published only up
@@ -127,9 +131,15 @@ def empirical_return_levels(sizes: np.ndarray, years: float, periods=RETURN_PERI
     return out
 
 
+def last_complete_year_of(data_end: pd.Timestamp) -> int:
+    """Latest calendar year fully covered by data ending at data_end."""
+    return int(data_end.year) if data_end.month == 12 else int(data_end.year) - 1
+
+
 def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: float = 30.0,
                     threshold_quantile: float = 0.90, min_exceedances: int = 30, n_boot: int = 500,
-                    periods=RETURN_PERIODS, max_extrapolation: float = MAX_EXTRAPOLATION) -> pd.DataFrame:
+                    periods=RETURN_PERIODS, max_extrapolation: float = MAX_EXTRAPOLATION,
+                    data_end: pd.Timestamp | None = None) -> pd.DataFrame:
     """One row per group: threshold, exceedances, rate, GPD parameters with
     intervals, fitted and empirical return levels. Groups with too few
     exceedances are listed with null estimates rather than dropped, so the
@@ -137,6 +147,9 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: 
     10 000 ha return period beyond max_extrapolation times the observed span
     are null; the horizon is given in max_return_period_years."""
     ev = events.dropna(subset=["area_ha", "firedate_key"])
+    end = pd.Timestamp(data_end) if data_end is not None else pd.to_datetime(ev["firedate_key"]).max()
+    last_complete_year = last_complete_year_of(end)
+    ev = ev[pd.to_datetime(ev["firedate_key"]).dt.year <= last_complete_year]
     ev = ev[ev["area_ha"] >= floor_ha]
     rows = []
     for key, g in ev.groupby(group):
@@ -145,7 +158,8 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: 
         years = float(dates.max().year - dates.min().year + 1)
         sizes = g["area_ha"].to_numpy(dtype="float64")
         horizon = max_extrapolation * years
-        row: dict = {group: key, "n_fires": int(len(sizes)), "years": round(years, 2), "largest_ha": float(sizes.max()),
+        row: dict = {group: key, "n_fires": int(len(sizes)), "first_year": int(dates.min().year),
+                     "last_year": int(dates.max().year), "years": round(years, 2), "largest_ha": float(sizes.max()),
                      "max_return_period_years": round(horizon, 2)}
         emp = empirical_return_levels(sizes, years, periods)
         for T in periods:

@@ -65,3 +65,26 @@ def test_tail_risk_table_horizon_follows_the_observed_span():
     short = extremes.tail_risk_table(ev, n_boot=30, max_extrapolation=1.0).iloc[0]
     assert pd.isna(short["rl_50y"]) and np.isfinite(short["rl_20y"])
     assert pd.isna(short["return_period_10k_ha_years"]) or short["return_period_10k_ha_years"] <= short["max_return_period_years"]
+
+
+def test_tail_risk_table_drops_a_partial_final_year():
+    rng = np.random.default_rng(11)
+    full = pd.DataFrame({
+        "country_key": "ES", "area_ha": 30 + rng.pareto(1.5, 2000) * 150,
+        "firedate_key": pd.to_datetime("2016-01-01") + pd.to_timedelta(rng.integers(0, 3653, 2000), unit="D"),
+    })
+    partial = pd.DataFrame({  # January to July of the next year, as in the 2026 extraction
+        "country_key": "ES", "area_ha": [5_000.0] * 50,
+        "firedate_key": pd.date_range("2026-01-15", "2026-07-30", periods=50),
+    })
+    row = extremes.tail_risk_table(pd.concat([full, partial]), n_boot=20).iloc[0]
+    assert row["last_year"] == 2025 and row["years"] == 10.0
+    assert row["n_fires"] == int((full["area_ha"] >= 30).sum())
+    # an explicit end in December keeps the year
+    kept = extremes.tail_risk_table(pd.concat([full, partial]), n_boot=20, data_end=pd.Timestamp("2026-12-31")).iloc[0]
+    assert kept["last_year"] == 2026 and kept["years"] == 11.0
+
+
+def test_last_complete_year_of():
+    assert extremes.last_complete_year_of(pd.Timestamp("2026-07-30")) == 2025
+    assert extremes.last_complete_year_of(pd.Timestamp("2025-12-28")) == 2025
