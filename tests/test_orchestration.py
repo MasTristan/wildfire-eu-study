@@ -89,7 +89,7 @@ def test_raw_sources_are_partitioned(defs):
 
 def test_model_output_assets_depend_on_the_gold(defs):
     graph = defs.get_repository_def().asset_graph
-    for name in ("tail_risk_country", "attribution_countryyear"):
+    for name in ("tail_risk_country", "attribution_countryyear", "attribution_bayes"):
         node = graph.get(AssetKey(["gold", name]))
         assert node.group_name == "model_out"
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
@@ -154,3 +154,8 @@ def test_group_gold_is_exactly_the_star_schema(defs):
     keys = AssetSelection.from_coercible(["group:gold"]).resolve(graph)
     assert keys == {AssetKey(["gold", n]) for n in contracts.ALL_GOLD_TABLES}
     assert AssetKey(["gold", "features_daily"]) not in keys
+
+
+def test_bayesian_attribution_has_its_sampler_check(defs):
+    check_keys = {(c.asset_key, c.name) for c in defs.get_repository_def().asset_graph.asset_check_keys}
+    assert (AssetKey(["gold", "attribution_bayes"]), "sampler_diagnostics") in check_keys
