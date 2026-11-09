@@ -127,6 +127,23 @@ Le jour où une couche analytique Python ou Streamlit arrive, le mart devient
 utile et se construit alors comme **sortie parallèle**, sans y basculer Power
 BI. Pas avant.
 
+## Sources de référence figées (2026-11-09)
+
+`dim_country` (surfaces de terres et de forêt, Banque mondiale) et
+`dim_commune` (géographie communale, geo.api.gouv.fr) ne lisent plus les API
+vivantes pendant une construction. Ils relisent deux instantanés versionnés
+dans `src/transform/reference/` : `worldbank_areas.csv` et
+`geo_communes.csv.gz`, chacun daté par sa colonne `retrieved_on`. Cause : le
+2026-11-09, une reconstruction a fait échouer la parité, parce que 16 % des
+surfaces de terres avaient été révisées par la Banque mondiale depuis le gel
+d'octobre. Les communes françaises, elles, fusionnent chaque 1er janvier.
+
+Les deux instantanés reprennent exactement les valeurs du gel v1 du
+2026-10-15. Un rafraîchissement est une décision explicite, faite par
+`python src/transform/dimensions.py --refresh-worldbank` ou
+`--refresh-communes`, puis commitée et suivie d'un regel de la parité, comme
+pour la table des hotspots.
+
 ## Défaut connu de la v1 : fenêtres FIRMS décalées (corrigé le 2026-10-15)
 
 L'API « area » de FIRMS prend dans son chemin la **date de début** de la

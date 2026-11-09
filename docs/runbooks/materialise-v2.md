@@ -78,6 +78,11 @@ uv run dagster asset list -m src.orchestration.definitions --select group:gold
 uv run dagster asset materialize -m src.orchestration.definitions --select group:gold
 ```
 
+Depuis le 2026-11-09, `silver/dim_country` et `silver/dim_commune` lisent
+des instantanés versionnés, sans réseau. Leur matérialisation ne doit
+afficher aucun appel à `api.worldbank.org` ni à `geo.api.gouv.fr`. Elle
+imprime une ligne « from snapshot … (retrieved 2026-10-15) ».
+
 `--select` lit une liste de clés exactes séparées par des virgules, ou une
 expression de sélection comme `group:gold`, écrite sans guillemets pour que
 PowerShell la transmette intacte. La commande `asset list` qui précède la
