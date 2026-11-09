@@ -82,16 +82,39 @@ def _remote_names() -> dict[str, str]:
     return {year: name for name, year in names}
 
 
-def download_year(year: str, remote: dict[str, str]) -> Path | None:
-    if year not in remote:
+def cached_year(year: str) -> Path | None:
+    """The year's file if it is already on disk and non-empty, else None."""
+    for path in sorted(_raw_dir().glob(f"{_VAR}_m_edo_{year}*_t.nc")):
+        if path.stat().st_size > 0:
+            return path
+    return None
+
+
+class _RemoteIndex:
+    """The EDO directory index, read on first use only: a run whose years are
+    all cached on disk makes no network call."""
+
+    def __init__(self) -> None:
+        self._names: dict[str, str] | None = None
+
+    def get(self) -> dict[str, str]:
+        if self._names is None:
+            self._names = _remote_names()
+        return self._names
+
+
+def download_year(year: str, remote: dict[str, str] | _RemoteIndex) -> Path | None:
+    cached = cached_year(year)
+    if cached is not None:
+        print(f"  {year}: cached ({cached.stat().st_size / 1e6:.1f} MB)")
+        return cached
+    names = remote.get() if isinstance(remote, _RemoteIndex) else remote
+    if year not in names:
         print(f"  {year}: not published by EDO, skipped (no imputation)")
         return None
-    target = _raw_dir() / remote[year]
-    if target.exists() and target.stat().st_size > 0:
-        print(f"  {year}: cached ({target.stat().st_size / 1e6:.1f} MB)")
-        return target
-    print(f"  {year}: downloading {remote[year]} ...")
-    resp = requests.get(f"{EDO_BASE}/{remote[year]}", timeout=_TIMEOUT)
+    target = _raw_dir() / names[year]
+    print(f"  {year}: downloading {names[year]} ...")
+    resp = requests.get(f"{EDO_BASE}/{names[year]}", timeout=_TIMEOUT)
     resp.raise_for_status()
     target.write_bytes(resp.content)
     print(f"    {target.stat().st_size / 1e6:.1f} MB")
@@ -135,7 +158,7 @@ def aggregate_file(nc_path: Path, mask: pd.DataFrame | None = None) -> tuple[pd.
 def build(years: list[str] | None = None) -> Path:
     years = years or _YEARS
     print(f"EDO: SPEI-3 drought index, {years[0]}-{years[-1]}")
-    remote = _remote_names()
+    remote = _RemoteIndex()
 
     frames: list[pd.DataFrame] = []
     mask: pd.DataFrame | None = None

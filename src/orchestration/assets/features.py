@@ -12,6 +12,7 @@ from dagster import AssetExecutionContext, MaterializeResult, StaticPartitionsDe
 
 from src import config, grid, lake
 from src.orchestration.assets import bronze, silver
+from src.orchestration.assets.bronze import SINGLE_RUN
 from src.orchestration.partitions import yearly
 
 CELLS_PATH = lake.SILVER / "grid_cells.parquet"
@@ -46,15 +47,18 @@ def grid_cells() -> MaterializeResult:
     return MaterializeResult(metadata={"cells": int(len(cells)), "countries": int(cells["country_key"].nunique())})
 
 
-@asset(key_prefix="bronze", group_name="bronze", kinds={"python"}, partitions_def=monthly,
-       description="ERA5 hourly fields for one month over Europe, reduced locally to UTC daily values (ADR 0007)")
+@asset(key_prefix="bronze", group_name="bronze", kinds={"python"}, partitions_def=monthly, backfill_policy=SINGLE_RUN,
+       description="ERA5 hourly fields per month over Europe, reduced locally to UTC daily values (ADR 0007)")
 def era5_daily_raw(context: AssetExecutionContext) -> MaterializeResult:
     from src.ingest import era5_daily
 
-    year, month = (int(v) for v in context.partition_key.split("-"))
-    target = era5_daily.daily_path(ERA5_DAILY_DIR, "europe", year, month)
-    era5_daily.download_month(year, month, era5_daily.EUROPE, target)
-    return MaterializeResult(metadata={"path": str(target), "bytes": target.stat().st_size})
+    written = 0
+    for key in context.partition_keys:
+        year, month = (int(v) for v in key.split("-"))
+        target = era5_daily.daily_path(ERA5_DAILY_DIR, "europe", year, month)
+        era5_daily.download_month(year, month, era5_daily.EUROPE, target)
+        written += target.stat().st_size
+    return MaterializeResult(metadata={"months": len(context.partition_keys), "bytes": written})
 
 
 @asset(key_prefix="bronze", group_name="bronze", kinds={"python"}, deps=[grid_cells],
@@ -91,14 +95,22 @@ def era5_static() -> MaterializeResult:
 # Group "features", not "gold": `group:gold` must select exactly the star schema
 # Power BI reads, and the feature store is not materialised under the reduced GO
 # (ADR 0009).
-@asset(key_prefix="gold", group_name="features", kinds={"python"}, partitions_def=yearly,
+@asset(key_prefix="gold", group_name="features", kinds={"python"}, partitions_def=yearly, backfill_policy=SINGLE_RUN,
        deps=[grid_cells, bronze.cds_fwi_full_raw, era5_daily_raw, era5_static, bronze.edo_spei3_countrymonth, silver.fact_fireevent],
        description="Feature store at cell x day for one year: FWI components, weather, SPEI, static fields, labels and lags")
 def features_daily(context: AssetExecutionContext) -> MaterializeResult:
+    rows, positives = 0, 0
+    for key in context.partition_keys:
+        df = _features_year(int(key))
+        rows += int(len(df))
+        positives += int(df["y_a"].sum())
+    return MaterializeResult(metadata={"years": ",".join(context.partition_keys), "rows": rows, "positives": positives})
+
+
+def _features_year(year: int) -> pd.DataFrame:
     from src.features import daily
     from src.ingest import era5_daily, openmeteo
 
-    year = int(context.partition_key)
     cells = pd.read_parquet(CELLS_PATH)
     dates = pd.date_range(f"{year}-01-01", f"{year}-12-31", freq="D")
     fwi = daily.fwi_daily([_fwi_year_path(str(year))], cells)
@@ -121,4 +133,5 @@ def features_daily(context: AssetExecutionContext) -> MaterializeResult:
     out = lake.GOLD_FEATURES / f"daily_{year}.parquet"
     lake.ensure_dirs()
     df.to_parquet(out, index=False)
-    return MaterializeResult(metadata={"rows": int(len(df)), "positives": int(df["y_a"].sum()), "path": str(out)})
+    return df
+
