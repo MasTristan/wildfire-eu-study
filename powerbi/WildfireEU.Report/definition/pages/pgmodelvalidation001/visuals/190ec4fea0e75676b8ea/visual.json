@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "190ec4fea0e75676b8ea",
+  "position": {
+    "x": 16,
+    "y": 700,
+    "z": 3,
+    "width": 1248,
+    "height": 88
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Label: EFFIS ignitions, 1 215 cells, 443 475 cell-days per test year. Lift: PR-AUC divided by the share of cell-days with an ignition (0.39 % in 2022). Brier gain is relative, PR-AUC gain absolute. Most of the signal comes from where and when fires already happen, not from more weather. Protocol, exploratory analyses and every number: notebooks/spike_q1/VERDICT.md.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

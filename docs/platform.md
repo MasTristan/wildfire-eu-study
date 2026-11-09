@@ -23,10 +23,11 @@ dossier temporaire.
 Les fonctions de transformation v1 écrivent dans `data/processed`. Tant
 qu'elles ne sont pas réécrites, **ce dossier est la silver** : les assets
 silver appellent les fonctions v1 telles quelles, dbt lit la silver et produit
-la gold. Power BI continue de lire `data/processed` jusqu'à ce que le test de
+la gold. Power BI a lu `data/processed` jusqu'à ce que le test de
 parité (`tests/test_gold_parity.py`) prouve que `gold/star` lui est égale
-valeur pour valeur ; son paramètre `DataFolder` bascule alors sur `gold/star`.
-Aucun fichier n'est déplacé à la main à aucun moment.
+valeur pour valeur ; son paramètre `DataFolder` a basculé sur `gold/star` le
+2026-11-09, sans qu'aucun chiffre du rapport ne change. Aucun fichier n'est
+déplacé à la main à aucun moment.
 
 ## Dagster (`src/orchestration/`)
 
@@ -126,6 +127,23 @@ appels uniques : leurs sources ne se découpent pas.
 | `attribution.py` | Q3, part de la météo dans la variabilité annuelle | panel pays x année, effets fixes pays, erreurs groupées par pays, composante météo et surface ajustée du climat par pays et année, R² intra-pays, contrôle leave-one-year-out | signal synthétique retrouvé (signe, ordre de grandeur), années à saison incomplète exclues et non imputées |
 | `validation.py` | protocole commun | découpes par année tenue et par blocs spatiaux de 2°, métriques du critère pré-enregistré, fiabilité par décile, bootstrap par blocs sur les différences | partition exacte des lignes, blocs jamais scindés, intervalles qui séparent deux modèles de qualité connue |
 | `tracking.py` | traçabilité | MLflow en SQLite local sans serveur, un identifiant de run sur chaque table publiée, gabarit de carte de modèle | run relu depuis le store |
+
+### Tables lues par le rapport
+
+Trois pages Power BI lisent `gold/model_out`, dans le dossier voisin de celui
+que désigne `DataFolder` (le chemin est dérivé dans chaque requête, il reste
+un seul paramètre à régler).
+
+| Page | Tables | Asset |
+|---|---|---|
+| 10 Tail risk | `tail_risk_country`, `tail_risk_levels` (niveaux de retour en format long, une ligne par pays et période) | `gold/tail_risk_country` |
+| 11 Attribution | `attribution_countryyear`, `attribution_coefficients` (nom lisible, intervalle à 95 %, multiplicateur de surface), `attribution_summary` (R² intra-pays) | `gold/attribution_countryyear` |
+| 12 Validation | `q1_metrics`, `q1_criterion`, `q1_importance` ; `q1_reliability` est écrite pour le site | `gold/q1_spike_results` |
+
+`gold/q1_spike_results` ne recalcule rien : il remet en forme les sorties
+gelées et commitées du spike (`notebooks/spike_q1/out`), si bien que la page et
+`VERDICT.md` ne peuvent pas diverger. Il se matérialise sans aucune donnée
+locale.
 
 La version bayésienne de Q3 (PyMC, WSL2) consomme le même panel et doit
 retrouver le signe et l'ordre de grandeur de chaque coefficient. Q1 rejoint

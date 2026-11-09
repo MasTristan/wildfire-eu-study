@@ -1,0 +1,105 @@
+table attribution_countryyear
+	lineageTag: 919357f4-3b09-5fbe-a0dd-d1e3035bf900
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: dac06464-ca33-5f6b-8158-2bc10c3e525a
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a3695b9d-150b-5e23-bbdf-222e1d907341
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_key
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: 35050f16-64b7-5c02-9689-e689bfc31c2e
+		summarizeBy: none
+		sourceColumn: year_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column burnt_area_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: 0b7039b3-0032-54ff-a435-9a57a77e4072
+		summarizeBy: none
+		sourceColumn: burnt_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column log_area
+		dataType: double
+		formatString: 0.00
+		lineageTag: a2373c34-548f-5caf-89fd-7ec1451594ae
+		summarizeBy: none
+		sourceColumn: log_area
+
+		annotation SummarizationSetBy = Automatic
+
+	column fitted
+		dataType: double
+		formatString: 0.00
+		lineageTag: 2f7d6f12-855c-540d-ba59-f67974b1b9ca
+		summarizeBy: none
+		sourceColumn: fitted
+
+		annotation SummarizationSetBy = Automatic
+
+	column weather_component
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 878b8d9e-a108-588a-a1cf-c42c731a850d
+		summarizeBy: none
+		sourceColumn: weather_component
+
+		annotation SummarizationSetBy = Automatic
+
+	column residual
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 45672b08-d3a5-5f3a-807d-2fbbd195be25
+		summarizeBy: none
+		sourceColumn: residual
+
+		annotation SummarizationSetBy = Automatic
+
+	column adjusted_area_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: c669f572-0c9f-56a3-8fb8-58af0df33c93
+		summarizeBy: none
+		sourceColumn: adjusted_area_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: ca150234-9409-50fb-9867-741688c4ad24
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_countryyear = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_countryyear.parquet")),
+				    WithKey = Table.AddColumn(Source, "year_key", each #datetime([year], 1, 1, 0, 0, 0), type datetime)
+				in
+				    WithKey
+
+	annotation PBI_ResultType = Table

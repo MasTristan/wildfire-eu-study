@@ -1,0 +1,100 @@
+table attribution_coefficients
+	lineageTag: a3c070ad-b01c-58fe-a89b-9f4a399fb095
+
+	column metric
+		dataType: string
+		isHidden
+		lineageTag: 7300e571-8df2-51c7-bb16-4ccc809358f3
+		summarizeBy: none
+		sourceColumn: metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column metric_name
+		dataType: string
+		lineageTag: fcb1a8e2-778f-50a7-a1b9-f78e72a931a2
+		summarizeBy: none
+		sourceColumn: metric_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column coef
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: ca84bec4-fbf9-5582-ad12-5d9c5d65dce4
+		summarizeBy: none
+		sourceColumn: coef
+
+		annotation SummarizationSetBy = Automatic
+
+	column se
+		dataType: double
+		formatString: 0.00
+		lineageTag: 351886c5-70f2-5243-a95f-50a0e3a4af09
+		summarizeBy: none
+		sourceColumn: se
+
+		annotation SummarizationSetBy = Automatic
+
+	column p_value
+		dataType: double
+		formatString: 0.0000
+		lineageTag: b3edd198-9aa6-521e-b552-2f0a95cd0ab5
+		summarizeBy: none
+		sourceColumn: p_value
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_low
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 05e4f6c0-9c86-5e8c-81cf-66afbb8ef740
+		summarizeBy: none
+		sourceColumn: ci_low
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_high
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: e0d4eecc-488b-51de-bbca-914880477ee8
+		summarizeBy: none
+		sourceColumn: ci_high
+
+		annotation SummarizationSetBy = Automatic
+
+	column area_multiplier
+		dataType: double
+		formatString: 0.00
+		lineageTag: e57feb9a-01f2-596d-ae99-9bb7794a555f
+		summarizeBy: none
+		sourceColumn: area_multiplier
+
+		annotation SummarizationSetBy = Automatic
+
+	column significant
+		dataType: boolean
+		lineageTag: 96abff7d-3cd9-5f47-b51e-c1b914188375
+		summarizeBy: none
+		sourceColumn: significant
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: e04d35f5-5b21-50b4-9e2f-126751a59d26
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_coefficients = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_coefficients.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

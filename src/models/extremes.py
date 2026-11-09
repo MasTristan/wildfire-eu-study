@@ -189,3 +189,22 @@ def tail_risk_table(events: pd.DataFrame, group: str = "country_key", floor_ha: 
         row["return_period_10k_ha_years"] = rp if rp <= horizon else nan
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def return_levels_long(table: pd.DataFrame, group: str = "country_key", periods=RETURN_PERIODS) -> pd.DataFrame:
+    """The return levels of tail_risk_table in long form, one row per group and
+    period: the shape a report needs to draw a return-level curve with its band.
+    Periods beyond the reliable horizon keep their row with null levels, so a
+    curve stops visibly where the data stop."""
+    rows = []
+    for _, r in table.iterrows():
+        for T in periods:
+            rows.append({
+                group: r[group], "period_years": int(T),
+                "return_level_ha": r.get(f"rl_{T}y", np.nan),
+                "return_level_p2_5": r.get(f"rl_{T}y_p2.5", np.nan),
+                "return_level_p97_5": r.get(f"rl_{T}y_p97.5", np.nan),
+                "empirical_level_ha": r.get(f"empirical_rl_{T}y", np.nan),
+                "within_horizon": bool(T <= r["max_return_period_years"]),
+            })
+    return pd.DataFrame(rows)

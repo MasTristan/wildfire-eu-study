@@ -78,3 +78,18 @@ relationship 8f2a1a10-0006-4a00-9a01-000000000001
 	fromColumn: fact_fireevent.cause_key
 	toColumn: dim_firecause.cause_key
 
+relationship 60ead89f-ce07-5065-8a29-ac47b9136a79
+	fromColumn: tail_risk_country.country_key
+	toColumn: dim_country.country_key
+
+relationship a200e4a0-2f6c-556f-bc1b-4b47ab6c6d9f
+	fromColumn: tail_risk_levels.country_key
+	toColumn: dim_country.country_key
+
+relationship adf0f72d-41c2-5106-a4cc-47315d1e3a4b
+	fromColumn: attribution_countryyear.country_key
+	toColumn: dim_country.country_key
+
+relationship 10cde1f4-0432-54b6-a44b-bab47111b777
+	fromColumn: attribution_countryyear.year_key
+	toColumn: dim_date.date_key

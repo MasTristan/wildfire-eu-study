@@ -95,6 +95,22 @@ def test_model_output_assets_depend_on_the_gold(defs):
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
     q1 = graph.get(AssetKey(["gold", "ignition_eval"]))
     assert AssetKey(["gold", "features_daily"]) in q1.parent_keys
+    assert graph.get(AssetKey(["gold", "q1_spike_results"])).group_name == "model_out"
+
+
+def test_q1_spike_results_materialises_without_data(tmp_path, monkeypatch):
+    """The validation page's tables come from committed spike outputs only."""
+    from dagster import materialize
+
+    from src import lake
+    from src.orchestration.assets import models
+
+    monkeypatch.setattr(lake, "GOLD_MODEL_OUT", tmp_path / "model_out")
+    for attr in ("SILVER", "GOLD_STAR", "GOLD_FEATURES"):
+        monkeypatch.setattr(lake, attr, tmp_path / attr.lower())
+    assert materialize([models.q1_spike_results]).success
+    names = sorted(p.stem for p in (tmp_path / "model_out").glob("*.parquet"))
+    assert names == ["q1_criterion", "q1_importance", "q1_metrics", "q1_reliability"]
 
 
 def test_asset_selection_strings_parse_and_resolve(defs):

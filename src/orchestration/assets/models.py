@@ -30,6 +30,8 @@ def tail_risk_country() -> MaterializeResult:
     lake.ensure_dirs()
     out = lake.GOLD_MODEL_OUT / "tail_risk_country.parquet"
     table.to_parquet(out, index=False)
+    extremes.return_levels_long(table).assign(run_id=active.info.run_id).to_parquet(
+        lake.GOLD_MODEL_OUT / "tail_risk_levels.parquet", index=False)
     return MaterializeResult(metadata={"rows": int(len(table)), "run_id": active.info.run_id, "path": str(out)})
 
 
@@ -51,7 +53,12 @@ def attribution_countryyear() -> MaterializeResult:
     lake.ensure_dirs()
     out = lake.GOLD_MODEL_OUT / "attribution_countryyear.parquet"
     fitted.to_parquet(out, index=False)
-    res.coefficients.assign(run_id=active.info.run_id).to_parquet(lake.GOLD_MODEL_OUT / "attribution_coefficients.parquet", index=False)
+    attribution.report_coefficients(res.coefficients).assign(run_id=active.info.run_id).to_parquet(
+        lake.GOLD_MODEL_OUT / "attribution_coefficients.parquet", index=False)
+    pd.DataFrame([{"r2_within_weather": res.r2_within_weather, "r2_within_total": res.r2_within_total,
+                   "n_obs": res.n_obs, "n_countries": int(fitted["country_key"].nunique()),
+                   "first_year": int(fitted["year"].min()), "last_year": int(fitted["year"].max()),
+                   "run_id": active.info.run_id}]).to_parquet(lake.GOLD_MODEL_OUT / "attribution_summary.parquet", index=False)
     return MaterializeResult(metadata={"rows": int(len(fitted)), "r2_within_weather": res.r2_within_weather, "run_id": active.info.run_id})
 
 
@@ -77,3 +84,17 @@ def ignition_eval() -> MaterializeResult:
     summary.to_parquet(lake.GOLD_MODEL_OUT / "ignition_monthly_country.parquet", index=False)
     res["metrics"].assign(run_id=active.info.run_id).to_parquet(lake.GOLD_MODEL_OUT / "ignition_metrics.parquet", index=False)
     return MaterializeResult(metadata={"test_years": str(test_years), "all_pass": res["criterion"]["all_pass"], "run_id": active.info.run_id})
+
+
+@asset(key_prefix="gold", group_name=GROUP, kinds={"python"},
+       description="Q1 spike results for the report: metrics, criterion, calibration and feature gain, read from the frozen spike outputs")
+def q1_spike_results() -> MaterializeResult:
+    from src.models import spike_results
+
+    lake.ensure_dirs()
+    tables = spike_results.all_tables()
+    for name, df in tables.items():
+        df.to_parquet(lake.GOLD_MODEL_OUT / f"{name}.parquet", index=False)
+    crit = tables["q1_criterion"]
+    return MaterializeResult(metadata={**{name: int(len(df)) for name, df in tables.items()},
+                                       "all_pass": bool(crit["all_pass"].iloc[0])})

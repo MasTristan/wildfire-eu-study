@@ -4,7 +4,9 @@
 quand dans l'année, quels feux comptent réellement, et ce que faisait la
 météo-feu au même moment. Deux deep dives, par pays et sur la France.
 
-Le rapport Power BI compte 10 pages, une question par page. La couche données
+Le rapport Power BI compte 13 pages : dix pages descriptives, une question
+par page, et trois pages de modèles (queue des tailles de feu, part de la
+météo dans la surface brûlée, validation du modèle d'occurrence). La couche données
 est en Python, le modèle sémantique est écrit à la main en TMDL : 5 tables de
 faits (un grain chacune), 6 dimensions conformes, une table de mesures dédiée,
 un groupe de calcul temporel, drill-through, segments synchronisés, paramètre
@@ -87,11 +89,14 @@ des parquets est donc un paramètre, déclaré **une seule fois** dans
 `powerbi/WildfireEU.SemanticModel/definition/expressions.tmdl` :
 
 ```
-expression DataFolder = "C:\...\wildfire-eu-study\data\processed"
+expression DataFolder = "C:\...\wildfire-eu-study\data\lake\gold\star"
 ```
 
 Modifiez cette ligne, ou passez par Accueil > Transformer les données > Gérer
-les paramètres dans Desktop.
+les paramètres dans Desktop. Les tables des pages de modèles se lisent dans le
+dossier voisin `gold\model_out`, dérivé du même paramètre : il n'y a toujours
+qu'un chemin à régler. Ce fichier contient alors un chemin personnel : ne pas
+le commiter.
 
 ## Comptes
 

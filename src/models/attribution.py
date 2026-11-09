@@ -21,6 +21,12 @@ import statsmodels.formula.api as smf
 SEASON_MONTHS = (6, 7, 8, 9)
 SPRING_MONTHS = (3, 4, 5)
 METRICS = ["days_high_season", "spei_spring", "precip_anom_season", "temp_season"]
+METRIC_NAMES = {
+    "days_high_season": "High fire-danger days, June to September",
+    "spei_spring": "Spring water balance (SPEI), March to May",
+    "precip_anom_season": "Rainfall anomaly, June to September",
+    "temp_season": "Mean temperature, June to September",
+}
 
 
 def build_panel(fireweather: pd.DataFrame, burntarea: pd.DataFrame, source_key: str = "EFFIS_RDA") -> pd.DataFrame:
@@ -125,3 +131,16 @@ def leave_one_year_out_r2(panel: pd.DataFrame, metrics: list[str] | None = None)
         rows.append({"held_year": int(held), "n": len(te), "rmse_model": float(np.sqrt(np.mean(err**2))),
                      "rmse_country_mean": float(np.sqrt(np.mean(naive**2)))})
     return pd.DataFrame(rows)
+
+
+def report_coefficients(coefficients: pd.DataFrame, z: float = 1.96) -> pd.DataFrame:
+    """Coefficients as the report reads them: a readable name, a 95 % interval,
+    and the multiplier on burnt area for one standard deviation of the metric
+    (the outcome is log burnt area, so exp(coef) is a ratio)."""
+    df = coefficients.copy()
+    df["metric_name"] = df["metric"].map(METRIC_NAMES).fillna(df["metric"])
+    df["ci_low"] = df["coef"] - z * df["se"]
+    df["ci_high"] = df["coef"] + z * df["se"]
+    df["area_multiplier"] = np.exp(df["coef"])
+    df["significant"] = df["p_value"] < 0.05
+    return df

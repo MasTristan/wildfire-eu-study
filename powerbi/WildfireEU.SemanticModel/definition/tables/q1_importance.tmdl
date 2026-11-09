@@ -1,0 +1,64 @@
+table q1_importance
+	lineageTag: 5b6ebf17-d8c0-54e0-829e-6c3f018cde44
+
+	column feature
+		dataType: string
+		isHidden
+		lineageTag: 37235a2c-3a2a-53f8-823e-f2e2edbb316a
+		summarizeBy: none
+		sourceColumn: feature
+
+		annotation SummarizationSetBy = Automatic
+
+	column feature_name
+		dataType: string
+		lineageTag: 8dd50b13-1f36-51d9-ac31-48ed5fb9434c
+		summarizeBy: none
+		sourceColumn: feature_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column feature_group
+		dataType: string
+		lineageTag: 6d7767b5-812e-538d-b8f5-cc1268a8564b
+		summarizeBy: none
+		sourceColumn: feature_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column gain
+		dataType: double
+		formatString: #,##0
+		lineageTag: 5e05f4bc-54c4-5b68-8d75-398ccf7d0174
+		summarizeBy: none
+		sourceColumn: gain
+
+		annotation SummarizationSetBy = Automatic
+
+	column share
+		dataType: double
+		formatString: 0.0%
+		lineageTag: e8bc9fb6-f486-5e8b-8408-e53ae9874e66
+		summarizeBy: none
+		sourceColumn: share
+
+		annotation SummarizationSetBy = Automatic
+
+	column rank
+		dataType: int64
+		formatString: 0
+		lineageTag: feda0f34-f38e-5193-a605-e3bc4d09b5bb
+		summarizeBy: none
+		sourceColumn: rank
+
+		annotation SummarizationSetBy = Automatic
+
+	partition q1_importance = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\q1_importance.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

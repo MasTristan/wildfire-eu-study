@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "bcbf34350d4150569581",
+  "position": {
+    "x": 16,
+    "y": 172,
+    "z": 2,
+    "width": 1248,
+    "height": 60
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "A country by year panel, 2016 to 2025, with country fixed effects, so each country is compared with itself. Seasonal fire weather (high-danger days, rainfall, temperature) and spring drought explain part of the swings in burnt area. The weather-adjusted area is what each year would have burnt under that country's average weather: the gap between the two lines is the weather's doing.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

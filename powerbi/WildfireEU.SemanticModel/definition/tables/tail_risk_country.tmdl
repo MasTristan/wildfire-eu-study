@@ -1,0 +1,157 @@
+table tail_risk_country
+	lineageTag: 51ca98df-d7f6-5f26-8a7d-0a151157760a
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 32abe721-c749-5427-90b8-911206a8fc7a
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_fires
+		dataType: int64
+		formatString: #,##0
+		lineageTag: 9888e998-4355-51c0-9773-7b7e87bec493
+		summarizeBy: none
+		sourceColumn: n_fires
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_year
+		dataType: int64
+		formatString: 0
+		lineageTag: d2def52a-75e0-5ad8-8429-11cc09a143ab
+		summarizeBy: none
+		sourceColumn: first_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_year
+		dataType: int64
+		formatString: 0
+		lineageTag: 351e653d-fc83-52ab-a45b-f630a67b1686
+		summarizeBy: none
+		sourceColumn: last_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column years
+		dataType: double
+		formatString: 0
+		lineageTag: cc8efc04-7b4d-5138-8664-fcf37f694362
+		summarizeBy: none
+		sourceColumn: years
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_exceedances
+		dataType: int64
+		formatString: #,##0
+		lineageTag: 833907d9-aebe-5e19-be33-9daf4f4d6fa5
+		summarizeBy: none
+		sourceColumn: n_exceedances
+
+		annotation SummarizationSetBy = Automatic
+
+	column threshold_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: 3f63da56-0f3c-512f-8dc7-2d73d5b0de6b
+		summarizeBy: none
+		sourceColumn: threshold_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column largest_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: c7b53d6d-c64b-5c3a-b9ed-f49897f4baf3
+		summarizeBy: none
+		sourceColumn: largest_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape
+		dataType: double
+		formatString: 0.00
+		lineageTag: 792a97f2-7440-5c48-a563-47bc7ca2e81f
+		summarizeBy: none
+		sourceColumn: shape
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_low
+		dataType: double
+		formatString: 0.00
+		lineageTag: c0d8bb30-47fe-53fc-95c6-188b18c272f4
+		summarizeBy: none
+		sourceColumn: shape_p2.5
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_high
+		dataType: double
+		formatString: 0.00
+		lineageTag: 681445b9-98f6-5042-8105-91292fef4d49
+		summarizeBy: none
+		sourceColumn: shape_p97.5
+
+		annotation SummarizationSetBy = Automatic
+
+	column rl_10y
+		dataType: double
+		formatString: #,##0
+		lineageTag: 325bf1e9-4d90-55a3-a275-a12577887fc5
+		summarizeBy: none
+		sourceColumn: rl_10y
+
+		annotation SummarizationSetBy = Automatic
+
+	column rl_20y
+		dataType: double
+		formatString: #,##0
+		lineageTag: 822105a5-ea53-539d-8e14-2a1cbc9ac40d
+		summarizeBy: none
+		sourceColumn: rl_20y
+
+		annotation SummarizationSetBy = Automatic
+
+	column return_period_10k_ha_years
+		dataType: double
+		formatString: 0.0
+		lineageTag: f4dfe7cf-f4f4-5565-b9fa-7ff103450069
+		summarizeBy: none
+		sourceColumn: return_period_10k_ha_years
+
+		annotation SummarizationSetBy = Automatic
+
+	column max_return_period_years
+		dataType: double
+		formatString: 0
+		lineageTag: 52470011-732b-5af8-8957-7c694b08195d
+		summarizeBy: none
+		sourceColumn: max_return_period_years
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: 373c7cb8-3474-5b87-a655-5aba7d2c89d1
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition tail_risk_country = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\tail_risk_country.parquet")),
+				    Selected = Table.SelectColumns(Source, {"country_key", "n_fires", "first_year", "last_year", "years", "n_exceedances", "threshold_ha", "largest_ha", "shape", "shape_p2.5", "shape_p97.5", "rl_10y", "rl_20y", "return_period_10k_ha_years", "max_return_period_years", "run_id"})
+				in
+				    Selected
+
+	annotation PBI_ResultType = Table

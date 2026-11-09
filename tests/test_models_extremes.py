@@ -104,3 +104,18 @@ def test_tail_risk_period_ends_at_the_source_end_not_at_the_last_large_fire():
     table = extremes.tail_risk_table(pd.concat([es, si_large, si_small]), n_boot=10).set_index("country_key")
     assert table.loc["SI", "first_year"] == 2016 and table.loc["SI", "last_year"] == 2025
     assert table.loc["SI", "years"] == 10.0
+
+
+def test_return_levels_long_has_one_row_per_period_and_keeps_the_horizon():
+    rng = np.random.default_rng(17)
+    ev = pd.DataFrame({
+        "country_key": "ES", "area_ha": 30 + rng.pareto(1.5, 1500) * 150,
+        "firedate_key": pd.to_datetime("2016-01-01") + pd.to_timedelta(rng.integers(0, 3653, 1500), unit="D"),
+    })
+    table = extremes.tail_risk_table(ev, n_boot=10)
+    long = extremes.return_levels_long(table)
+    assert list(long["period_years"]) == list(extremes.RETURN_PERIODS)
+    row10 = long.set_index("period_years").loc[10]
+    assert row10["return_level_ha"] == table.iloc[0]["rl_10y"] and row10["within_horizon"]
+    row50 = long.set_index("period_years").loc[50]
+    assert not row50["within_horizon"] and pd.isna(row50["return_level_ha"])

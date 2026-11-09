@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "92522d5d1ba25cdbacf3",
+  "position": {
+    "x": 16,
+    "y": 700,
+    "z": 3,
+    "width": 1248,
+    "height": 88
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Peaks over threshold: threshold at the 90th percentile of each country's fire sizes, at least 30 exceedances required to fit (20 of 50 countries qualify), maximum likelihood, 500 bootstrap resamples for the 95 % intervals. Observed level: the size exceeded about once every N years in the record. Reliable horizon: twice the observed period. A description of the 2016-2025 record, not a forecast. Every table carries the MLflow run that produced it.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

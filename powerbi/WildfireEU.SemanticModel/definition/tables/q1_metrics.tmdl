@@ -1,0 +1,112 @@
+table q1_metrics
+	lineageTag: 12cab312-3f4a-5227-aac8-51665d6ab230
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: ec06ddc2-f7c3-5962-92af-eaf270211007
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column model
+		dataType: string
+		isHidden
+		lineageTag: f928c21a-3d59-5315-988b-36fb89939295
+		summarizeBy: none
+		sourceColumn: model
+
+		annotation SummarizationSetBy = Automatic
+
+	column model_order
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4b76dee9-bc69-5721-9229-1455d13ff81a
+		summarizeBy: none
+		sourceColumn: model_order
+
+		annotation SummarizationSetBy = Automatic
+
+	column model_name
+		dataType: string
+		lineageTag: b41b4fe7-76c5-599a-9a64-baaea2da1f28
+		summarizeBy: none
+		sourceColumn: model_name
+		sortByColumn: model_order
+
+		annotation SummarizationSetBy = Automatic
+
+	column n
+		dataType: int64
+		formatString: #,##0
+		lineageTag: fa6fcdfb-be44-5490-8c0e-f26ab8e9f01d
+		summarizeBy: none
+		sourceColumn: n
+
+		annotation SummarizationSetBy = Automatic
+
+	column positives
+		dataType: int64
+		formatString: #,##0
+		lineageTag: 5214ee9e-bf70-502d-8ee0-0b548f741c25
+		summarizeBy: none
+		sourceColumn: positives
+
+		annotation SummarizationSetBy = Automatic
+
+	column base_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: f9b254e4-4fa5-5aa5-b910-0d452329d18e
+		summarizeBy: none
+		sourceColumn: base_rate
+
+		annotation SummarizationSetBy = Automatic
+
+	column pr_auc
+		dataType: double
+		formatString: 0.000
+		lineageTag: c489e45d-4981-5437-9d3e-fda99880e7a9
+		summarizeBy: none
+		sourceColumn: pr_auc
+
+		annotation SummarizationSetBy = Automatic
+
+	column lift
+		dataType: double
+		formatString: 0.0
+		lineageTag: be0ca77d-048e-5e40-9147-27f23e012204
+		summarizeBy: none
+		sourceColumn: lift
+
+		annotation SummarizationSetBy = Automatic
+
+	column brier
+		dataType: double
+		formatString: 0.00000
+		lineageTag: ae5abb1c-6322-5c33-b259-6d0cda6b4029
+		summarizeBy: none
+		sourceColumn: brier
+
+		annotation SummarizationSetBy = Automatic
+
+	column logloss
+		dataType: double
+		formatString: 0.0000
+		lineageTag: 86430bd0-384d-5ff7-97a4-f89754d45d4d
+		summarizeBy: none
+		sourceColumn: logloss
+
+		annotation SummarizationSetBy = Automatic
+
+	partition q1_metrics = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\q1_metrics.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

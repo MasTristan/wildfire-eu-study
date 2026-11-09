@@ -1,0 +1,144 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "82d2162e3a74548983dc",
+  "position": {
+    "x": 16,
+    "y": 544,
+    "z": 10,
+    "width": 1248,
+    "height": 148
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Test year"
+                }
+              },
+              "queryRef": "q1_criterion.Test year",
+              "nativeQueryRef": "Test year"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Quantity"
+                }
+              },
+              "queryRef": "q1_criterion.Quantity",
+              "nativeQueryRef": "Quantity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Observed"
+                }
+              },
+              "queryRef": "q1_criterion.Observed",
+              "nativeQueryRef": "Observed"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Interval low"
+                }
+              },
+              "queryRef": "q1_criterion.Interval low",
+              "nativeQueryRef": "Interval low"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Interval high"
+                }
+              },
+              "queryRef": "q1_criterion.Interval high",
+              "nativeQueryRef": "Interval high"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Threshold"
+                }
+              },
+              "queryRef": "q1_criterion.Threshold",
+              "nativeQueryRef": "Threshold"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Meets threshold"
+                }
+              },
+              "queryRef": "q1_criterion.Meets threshold",
+              "nativeQueryRef": "Meets threshold"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {},
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Pre-registered criterion, full model against the fire-weather-only model (95 % block-bootstrap interval)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

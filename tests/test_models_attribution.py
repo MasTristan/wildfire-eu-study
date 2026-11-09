@@ -51,3 +51,11 @@ def test_incomplete_season_years_are_dropped_not_imputed():
     fw = fw[~((fw["country_key"] == "ES") & (fw["month_key"] == "2025-09-01"))]  # September missing
     panel = at.build_panel(fw, ba)
     assert not ((panel["country_key"] == "ES") & (panel["year"] == 2025)).any()
+
+
+def test_report_coefficients_adds_interval_and_multiplier():
+    c = pd.DataFrame({"metric": ["days_high_season"], "coef": [1.12], "se": [0.25], "p_value": [0.0001]})
+    r = at.report_coefficients(c).iloc[0]
+    assert r["metric_name"].startswith("High fire-danger days")
+    assert abs(r["ci_low"] - (1.12 - 1.96 * 0.25)) < 1e-12 and r["ci_high"] > r["coef"]
+    assert abs(r["area_multiplier"] - np.exp(1.12)) < 1e-12 and r["significant"]
