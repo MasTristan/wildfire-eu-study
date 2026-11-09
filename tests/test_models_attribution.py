@@ -95,9 +95,9 @@ def test_coefficient_per_unit_is_the_physical_slope():
                          "log_area": 6 + c + 0.03 * days + rng.normal(0, 0.2)})
     panel = pd.DataFrame(rows).assign(burnt_area_ha=lambda d: np.expm1(d["log_area"]))
     res = at.fit_attribution(panel, ["days_high_season"])
-    c = res.coefficients.iloc[0]
-    assert abs(c["coef_per_unit"] - 0.3) < 0.05                # 0.03 per day, 10 days
-    assert abs(c["coef"] - 0.03 * c["sd_within"]) < 0.03 * 1.0
+    row = res.coefficients.iloc[0]
+    assert abs(row["coef_per_unit"] - 0.3) < 0.05              # 0.03 per day, 10 days
+    assert abs(row["coef"] - 0.03 * row["sd_within"]) < 0.03 * 1.0
 
 
 def test_single_exclusion_rule_and_report():

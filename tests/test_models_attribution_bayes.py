@@ -3,6 +3,8 @@ fit receive exactly the same panel, and the published tables keep their schema. 
 kept small so the module stays within CI time; the sampling itself is exercised once
 (module-scoped fixture), plus one short two-variant robustness run.
 """
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,7 +14,7 @@ from src.models import attribution_bayes as ab
 
 TRUE_SLOPE = {"days_high_season": 0.8, "spei_spring": -0.4}   # per within-country standard deviation
 METRICS = list(TRUE_SLOPE)
-SHORT = dict(draws=150, tune=250, chains=2, cores=1, seed=3)
+SHORT: dict[str, Any] = dict(draws=150, tune=250, chains=2, cores=1, seed=3)
 
 
 def _panel(seed: int = 0, n_countries: int = 8, n_years: int = 10) -> pd.DataFrame:
