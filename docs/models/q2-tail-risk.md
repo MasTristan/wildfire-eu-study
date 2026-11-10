@@ -1,6 +1,6 @@
 # Carte de modèle : Q2, queue des tailles de feux
 
-Run MLflow : `919e872312014525961c955053b1f8b5` (expérience `q2_tail_risk`, run
+Run MLflow : `134ab87a9c8745acb1766a8e34dc94e3` (expérience `q2_tail_risk`, run
 `country_20261109`, tag `published=true`), 2026-11-09. Les tables
 `tail_risk_country`, `tail_risk_levels` et `tail_risk_threshold_stability` portent
 ce `run_id` sur chaque ligne.
@@ -169,9 +169,7 @@ Stabilité du seuil, cinq pays :
 ## Reproduire
 
 Les chiffres ci-dessus sortent de ces commandes, lancées à la racine du dépôt
-(tables dans `data/lake/gold/model_out/`, locales et non versionnées). Les données
-d'entrée sont lues avec les variables d'environnement de l'étape de reconstruction
-ci-dessous ; les commandes de lecture n'en ont pas besoin.
+(tables dans `data/lake/gold/model_out/`, locales et non versionnées).
 
 Tableau des cinq pays (feux, épisodes, forme, niveau à 10 ans, plus gros feu, `run_id`) :
 
@@ -194,7 +192,7 @@ uv run python -c "import pandas as pd; from src import lake; from src.models imp
 Paramètres et métriques du run (seuil, fenêtre de déclustering, épisodes par pays) :
 
 ```bash
-uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('919e872312014525961c955053b1f8b5'); print(r.data.tags['published'], r.data.params, r.data.metrics)"
+uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('134ab87a9c8745acb1766a8e34dc94e3'); print(r.data.tags['published'], r.data.params, r.data.metrics)"
 ```
 
 Reconstruire les tables (nouveau `run_id`, environ 4 minutes), puis les figures Q2 sans
@@ -205,8 +203,6 @@ uv run dagster asset materialize -m src.orchestration.definitions --select "gold
 uv run python scripts/model_figures.py --only q2
 ```
 
-Variables utilisées pour ce run : `WILDFIRE_GOLD_STAR` et `WILDFIRE_SILVER` pointent
-vers les données d'un autre checkout, `WILDFIRE_GOLD` vers le `data/lake/gold` de
-celui-ci. Si la table est reconstruite, le `run_id` en tête de cette page change et le
-tag `published=true` passe sur le nouveau run : la page cite celui des tables
-actuellement dans `model_out`.
+Si la table est reconstruite, son `run_id` change et le tag `published=true` passe
+sur le nouveau run. La page doit alors citer le nouveau : `tests/test_published_claims.py`
+échoue tant que le `run_id` cité ici n'est pas celui des tables de `model_out`.

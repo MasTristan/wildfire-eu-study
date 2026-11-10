@@ -4,9 +4,9 @@ Trois jeux de tables, tous issus des mêmes lignes :
 
 | Version | Expérience MLflow | `run_id` | Tables |
 |---|---|---|---|
-| Fréquentiste (MCO, effets fixes pays) | `q3_attribution`, run `ols_fe_20261109` | `72c0037dfa794f6084fc61ebd957896a` | `attribution_coefficients`, `attribution_countryyear`, `attribution_summary`, `attribution_exclusions` |
-| Bayésienne hiérarchique (PyMC) | `q3_attribution_bayes`, run `hier_20261109` | `0129c59bccc34016a1db1d93d0d00704` | `attribution_bayes_coefficients`, `attribution_bayes_countryyear` |
-| Robustesse (7 variantes, les deux modèles) | `q3_attribution_robustness`, run `variants_20261109` | `715878eedfb14cb8b3c2bf2e2f0a1392` | `attribution_robustness` |
+| Fréquentiste (MCO, effets fixes pays) | `q3_attribution`, run `ols_fe_20261109` | `31eb92ec7227401cb036848ecf438a60` | `attribution_coefficients`, `attribution_countryyear`, `attribution_summary`, `attribution_exclusions` |
+| Bayésienne hiérarchique (PyMC) | `q3_attribution_bayes`, run `hier_20261109` | `e1b00cc4742b4bd58a6ff0825c8f7e7b` | `attribution_bayes_coefficients`, `attribution_bayes_countryyear` |
+| Robustesse (7 variantes, les deux modèles) | `q3_attribution_robustness`, run `variants_20261109` | `9a6e2948b6e147c3b1f2fd46d8f6bc23` | `attribution_robustness` |
 
 Les trois runs datent du 2026-11-09 ; chaque ligne des tables porte le `run_id` de
 sa version.
@@ -54,7 +54,11 @@ petit, la méthode neutralise ce niveau propre à chaque pays.
 - **Unité de chaque variable.** Chaque variable est centrée sur la moyenne de son pays
   puis divisée par son **écart-type intra-pays** (l'écart-type des valeurs une fois la
   moyenne de chaque pays retirée). Un coefficient se lit « pour un écart d'une année
-  à l'autre, typique à l'intérieur d'un pays ». L'écart-type du panel entier, utilisé
+  à l'autre, typique à l'intérieur d'un pays ». C'est une seule valeur pour tout le
+  panel, pas l'écart-type propre à chaque pays : pour les jours de danger, la dispersion
+  d'un pays d'une année à l'autre va de zéro (pays du Nord qui n'en comptent jamais) à
+  plus de deux fois la valeur commune (Balkans, Ukraine). L'effet par unité physique,
+  donné à côté, ne dépend pas de ce choix. L'écart-type du panel entier, utilisé
   avant, mêlait les écarts entre pays aux écarts dans le temps et gonflait les
   multiplicateurs de la température et des jours de danger (voir Limites).
   Chaque effet est aussi publié **par unité physique** : par 10 jours de danger, par
@@ -112,7 +116,7 @@ une variable est dite **robuste** si son intervalle à 95 % de la spécification
 base exclut zéro **et** si son signe est le même dans toutes les variantes. Une variable
 non robuste est présentée comme non distinguable de zéro. Variantes (table
 `attribution_robustness`, comparées par effet par unité physique) : base, effets année,
-tendance linéaire, UE seule (24 pays, 205 observations), pays méditerranéens seuls (8
+tendance linéaire, UE seule (25 pays, 215 observations), pays méditerranéens seuls (8
 pays, 79 observations : PT ES FR IT GR HR CY SI, Malte est absente du panel),
 sans les lignes sous 100 ha (36 pays, 309 observations, le plancher de cartographie
 d'EFFIS rend ces lignes peu fiables), et, côté bayésien seulement, a priori `N(0, 2)` sur
@@ -186,7 +190,7 @@ Concrètement :
 - **Température et pluie non distinguables de zéro.** L'intervalle de base contient
   zéro dans les deux méthodes. La température change de signification selon la
   spécification : son intervalle exclut zéro avec les effets année (fréquentiste,
-  0,27 par °C), pas sans, et l'effet chute à 0,06 à 0,09 par °C sur l'UE seule ou les pays
+  0,27 par °C), pas sans, et l'effet tombe à 0,13 à 0,14 par °C sur l'UE seule et à 0,06 à 0,08 sur les pays
   méditerranéens. Pour la pluie, le signe change entre variantes côté bayésien. Elles
   sont présentées comme non distinguables de zéro, pas comme sans effet. Ce que le modèle
   établit, ce sont les jours de danger et le déficit hydrique de printemps.
@@ -239,9 +243,13 @@ Lecture :
   les variantes.
 - **Accord entre méthodes.** Même signe pour les quatre variables en base. Le bayésien
   donne un effet des jours de danger plus grand de 0,08 (0,38 contre 0,30 par écart-type
-  intra-pays), plausiblement parce que les pentes propres à chaque pays, pondérées par
-  leur précision, ne pèsent pas comme la pente commune du modèle MCO ; cette explication
-  n'est pas testée ici. Les intervalles se recouvrent largement.
+  intra-pays). L'écart vient de la pluie : son effet diffère selon les pays (voir
+  ci-dessous), ce que le modèle hiérarchique autorise et que la régression à pente
+  commune interdit. Pluie et jours de danger sont liés (corrélation intra-pays -0,47),
+  si bien qu'une pente de pluie libre par pays rend aux jours de danger ce que la pente
+  commune leur prenait : la même régression avec une pente de pluie par pays donne 0,49
+  pour les jours de danger, le bayésien, qui ne libère les pentes qu'en partie, 0,38.
+  Les intervalles des deux méthodes se recouvrent largement.
 - **Hétérogénéité entre pays** (écart-type des pentes, bayésien, par écart-type
   intra-pays) : jours de danger 0,08, SPEI 0,11, pluie 0,29, température 0,14.
   Seule la pluie a un intervalle qui exclut nettement zéro.
@@ -302,7 +310,7 @@ Contrôle hors échantillon (RMSE du modèle et de la moyenne du pays, par anné
 de côté, puis pondérées) :
 
 ```bash
-uv run python -c "import json, pandas as pd, numpy as np; j=json.load(open('mlruns/artifacts/72c0037dfa794f6084fc61ebd957896a/artifacts/leave_one_year_out.json')); d=pd.DataFrame(j['data'],columns=j['columns']); print(d.round(3).to_string()); w=d.n; print(np.sqrt((d.rmse_model**2*w).sum()/w.sum()).round(3), np.sqrt((d.rmse_country_mean**2*w).sum()/w.sum()).round(3), (d.rmse_model<d.rmse_country_mean).sum())"
+uv run python -c "import json, pandas as pd, numpy as np; j=json.load(open('mlruns/artifacts/31eb92ec7227401cb036848ecf438a60/artifacts/leave_one_year_out.json')); d=pd.DataFrame(j['data'],columns=j['columns']); print(d.round(3).to_string()); w=d.n; print(np.sqrt((d.rmse_model**2*w).sum()/w.sum()).round(3), np.sqrt((d.rmse_country_mean**2*w).sum()/w.sum()).round(3), (d.rmse_model<d.rmse_country_mean).sum())"
 ```
 
 Écart-type intra-pays et écart-type du panel de chaque variable (table fréquentiste) :
@@ -320,7 +328,7 @@ uv run python -c "import pandas as pd; M='data/lake/gold/model_out/'; b=pd.read_
 Diagnostics du sampler, paramètres et durée du run bayésien :
 
 ```bash
-uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('0129c59bccc34016a1db1d93d0d00704'); print(r.data.params); print(r.data.metrics)"
+uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('e1b00cc4742b4bd58a6ff0825c8f7e7b'); print(r.data.params); print(r.data.metrics)"
 ```
 
 Reconstruire les tables (nouveaux `run_id`, une dizaine de minutes pour les sept
