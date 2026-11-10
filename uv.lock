@@ -4031,14 +4031,14 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "duckdb", specifier = ">=1.5.6" },
+    { name = "duckdb", specifier = "==1.5.6" },
     { name = "lightgbm", specifier = "==4.6.0" },
-    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "matplotlib", specifier = "==3.11.2" },
     { name = "mkdocs-material", specifier = "==9.7.7" },
     { name = "mypy", specifier = "==1.14.1" },
     { name = "pytest", specifier = "==8.3.4" },
     { name = "ruff", specifier = "==0.8.4" },
-    { name = "scikit-learn", specifier = ">=1.9.1" },
+    { name = "scikit-learn", specifier = "==1.9.1" },
     { name = "types-requests", specifier = "==2.32.0.20241016" },
     { name = "types-tqdm", specifier = "==4.67.0.20241221" },
 ]
