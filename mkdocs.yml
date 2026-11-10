@@ -1,5 +1,5 @@
 site_name: Wildfire EU Study
-site_description: Feux de végétation en Europe, 2006 à 2026. Plateforme de données, modèles et rapport.
+site_description: Feux de végétation en Europe, 2016 à 2026. Plateforme de données, modèles et rapport.
 repo_url: https://github.com/mastristan/wildfire-eu-study
 docs_dir: docs
 exclude_docs: |
@@ -27,7 +27,7 @@ nav:
   - Plateforme: platform.md
   - Modèle de données: data-model.md
   - Sources: sources.md
-  - Spécification du rapport: dashboard-spec.md
+  - Conception du rapport: dashboard-spec.md
   - Modèles:
       - Cartes de modèle: models/index.md
       - Q1 occurrence (spike): models/q1-ignition-spike.md

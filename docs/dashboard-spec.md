@@ -1,7 +1,11 @@
-# Spécification de l'outil exploratoire
+# Conception du rapport
 
-Statut : proposition, à valider. Nature : analytique exploratoire, factuel, neutre.
-Pas de thèse imposée. L'utilisateur mène sa propre enquête.
+Statut : note de conception de la v1, conservée pour ses principes. Elle décrit
+l'intention des dix pages descriptives : analytique exploratoire, factuel,
+neutre, sans thèse imposée. Deux choses ont changé depuis : l'explorateur
+Streamlit envisagé plus bas n'a pas été construit, et le rapport a gagné trois
+pages de modèles, décrites dans [Plateforme](platform.md) et dans les
+[cartes de modèle](models/index.md).
 
 ## Principe directeur
 
@@ -43,7 +47,7 @@ de mélanger hotspots (comptage) et surface brûlée (hectares).
 
 - **Power BI** : cœur exploratoire faceté. Vue d'ensemble + drill-through
   pays -> commune -> feu, slicers, cross-filter, infobulles. Son point fort.
-- **Streamlit** : exploration cartographique lourde (densité hotspots FIRMS,
+- **Streamlit** (envisagé, non construit) : exploration cartographique lourde (densité hotspots FIRMS,
   périmètres réels, curseur temporel) et explorateur de corrélation climat
   (l'utilisateur choisit la variable à croiser avec la surface brûlée).
 
