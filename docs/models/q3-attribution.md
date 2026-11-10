@@ -11,11 +11,26 @@ Trois jeux de tables, tous issus des mêmes lignes :
 Les trois runs datent du 2026-11-09 ; chaque ligne des tables porte le `run_id` de
 sa version.
 
+!!! abstract "En bref"
+    La météo de la saison explique environ 30 % de ce qui fait varier la surface
+    brûlée d'un pays d'une année à l'autre, mesuré sur le logarithme de la surface.
+    Deux effets tiennent dans toutes les variantes et dans les deux méthodes : dix
+    jours de danger élevé en plus vont avec une surface multipliée par 1,3 environ,
+    un printemps plus sec d'une unité de SPEI avec un facteur 1,75. La température
+    et la pluie ne se distinguent pas de zéro. **Limite principale : dix années par
+    pays, une attribution statistique et non causale, et des variables météo liées
+    entre elles.**
+
 ## Question
 
 Quand un pays brûle beaucoup plus qu'une année ordinaire, quelle part de l'écart
 s'explique par la météo de la saison ? Et quelle surface aurait brûlé la même année
 avec la météo moyenne du pays ?
+
+Ce qui est estimé est plus étroit que la question : la part de la variance du
+**logarithme** de la surface d'un pays, d'une année à l'autre, que quatre variables
+météo expliquent. Ce n'est pas une part d'hectares, et un pays qui brûle peu compte
+autant qu'un pays qui brûle beaucoup.
 
 La question porte sur les écarts d'un pays à lui-même d'une année sur l'autre.
 Elle ne compare pas les pays entre eux : un pays grand et boisé brûle plus qu'un
@@ -198,9 +213,22 @@ Concrètement :
   entre pays de la pente de la pluie est 0,29 (intervalle 0,05 à 0,54), seul des quatre à
   exclure nettement zéro. Un pays donné peut s'écarter de la pente moyenne.
 - **Pays écartés.** Voir Données : six pays arides sont absents faute d'anomalie de
-  pluie, la couverture ne vaut pas pour les zones arides. Le panel passe de 28 pays en
-  2016 à 47 en 2025, et le plancher de cartographie d'EFFIS change en 2020 ; la variante
+  pluie, la couverture ne vaut pas pour les zones arides. Le panel n'est pas équilibré :
+  25 pays en 2016, 40 en 2025 (la source EFFIS passe elle-même de 28 à 47 pays), et le
+  plancher de cartographie d'EFFIS change en 2020 ; la variante
   sans les lignes sous 100 ha laisse les signes inchangés.
+- **Poids de l'Ukraine et de la Turquie.** L'Ukraine porte 21,6 % des hectares du
+  panel et la Turquie 8,5 %, et les feux ukrainiens depuis 2022 ne relèvent pas que de la
+  météo. En hectares, elles dominent toute somme ; dans la régression, chaque pays pèse
+  par ses années, mais l'Ukraine a aussi l'une des plus fortes dispersions de jours de danger, donc
+  un fort levier sur cette pente. La variante « UE seule » retire les deux (25 pays, 215
+  observations) : les deux effets robustes y sont un peu plus forts, pas plus faibles
+  (jours de danger 0,35 contre 0,30, SPEI -0,42 contre -0,37). La somme des surfaces
+  ajustées sur tous les pays, elle, reste dominée par ces deux pays et par la
+  composition du panel : elle se lit par pays.
+- **Quatre coefficients, treize ajustements, pas de correction de multiplicité.** La règle
+  `robust` (intervalle de base hors de zéro et même signe partout) est plus stricte
+  qu'un seuil à 5 % par test, mais ce n'est pas une correction formelle.
 - **Surface ajustée, mise en garde d'usage.** Elle se calcule sur l'échelle logarithmique
   puis revient en hectares. La somme de plusieurs pays d'une surface ajustée n'est
   pas une espérance de la surface totale ; c'est un repère visuel pour comparer

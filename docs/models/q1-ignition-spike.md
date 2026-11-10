@@ -11,6 +11,17 @@ Le détail du spike est dans `notebooks/spike_q1/VERDICT.md`.
 Périmètre : Espagne, Portugal et Grèce, 2019 à 2023, feux cartographiés par EFFIS.
 Pas d'extension à l'Europe ([ADR 0009](../adr/0009-q1-scope-after-reduced-go.md)).
 
+!!! abstract "En bref"
+    Le critère écrit avant l'entraînement n'est pas atteint : gain de Brier de 7,9 %
+    en 2022 pour un seuil de 10 %, et aucun des dix tirages de contrôle ne passe.
+    À l'échelle d'une maille et d'un jour, l'indice de danger ne localise presque pas
+    les débuts de feu ; le modèle complet le fait 39 à 71 fois mieux que le hasard,
+    mais ce gain vient du lieu et de l'activité récente, la météo ajoute très peu.
+    **Limite principale : l'étiquette est « un périmètre EFFIS commence ici », connue
+    avec retard ; le modèle apprend surtout la persistance, ce n'est pas une
+    prévision.** Sur une maille sans feu depuis 30 jours, sa précision moyenne
+    tombe à 1,8 % et 2,8 %.
+
 ## Question
 
 Un modèle qui voit plus que les composantes de l'indice météo d'incendie (FWI)
@@ -131,6 +142,16 @@ le modèle sait surtout, c'est que le feu revient là où il vient de brûler.**
   Le spike dit ce que l'historique consolidé d'une cellule prédit, pas ce qu'on saurait
   en temps réel. Aucun usage opérationnel n'est prévu (Q4 abandonné) et les délais n'ont
   pas été recalculés sur VIIRS.
+- **Ce que le critère compare.** Le critère oppose le modèle 4 au modèle 3 : entre les
+  deux, il y a à la fois le lieu, la saison, l'activité récente et la météo. Il ne teste
+  donc pas « la météo ajoute-t-elle quelque chose à l'indice ». Le modèle 3b, ajouté
+  par la revue du protocole avant tout entraînement, isole cette question : du 3b au 4, la météo ERA5 et le
+  SPEI apportent 1,6 % et 0,6 % de Brier, et +0,016 et +0,012 de PR-AUC.
+- **Un seuil de Brier sans référence.** Les modèles 1 à 3 ont le score de Brier d'une
+  prévision constante au taux de base : leur compétence (1 moins le rapport au Brier
+  de cette prévision constante) est nulle, de -0,1 % à 1,2 % selon le modèle et l'année.
+  Celle du modèle complet est de 8,2 % en 2022 et 14,0 % en 2023. Le critère exprimé en
+  gain relatif sur le modèle 3 revient donc presque à un seuil de compétence absolue.
 - **Le critère de 2023 s'appuie sur l'hiver.** Sans janvier à mars (54,5 % des positifs
   de 2023), le gain de Brier de 2023 tombe de 13,0 % à 2,7 % (E7).
 - **Substitutions** de CORINE, de GHSL, absence de `et0` et `vpd_max`.
@@ -209,7 +230,10 @@ depuis 30 jours (16 % à 18 % des positifs), le lift du modèle 4 est 5,9 et 26,
 Une grande part du gain est donc la persistance d'un même foyer, et le modèle reste
 nettement au-dessus du modèle 3 en lift sur les départs nouveaux
 (2,6 à 7,4 fois). Sur un départ nouveau, le lift du modèle 4 est environ 30 %
-de son lift moyen (11,3 sur 39,0 en 2022, 22,4 sur 71,3 en 2023).
+de son lift moyen (11,3 sur 39,0 en 2022, 22,4 sur 71,3 en 2023). En valeur absolue,
+la précision moyenne (PR-AUC) du modèle complet sur ces mailles sans départ depuis 30
+jours est de 0,018 en 2022 et 0,028 en 2023, pour des taux de base de 0,0016 et 0,0013 :
+un lift de 11 sur un événement aussi rare reste une précision de moins de 3 %.
 
 **3. « La météo ajoute peu. » Confirmé en moyenne, nuancé sur les départs nouveaux.**
 Du modèle 3b au modèle 4, le gain de PR-AUC est de +0,016 (2022) et +0,012 (2023) et le
@@ -239,7 +263,7 @@ foyer ; la météo ajoute peu ; le gain de 2023 dépend en partie des départs d
 ## Reproduire
 
 Depuis la racine du dépôt. Les fichiers `notebooks/spike_q1/out/` sont commités ;
-les tables `q1_*` de `data/lake/gold/model_out/` sont locales (asset
+les tables `q1_*` de `data/lake/gold/model_out/` le sont aussi (asset
 `gold/q1_spike_results`).
 
 Critère, intervalles, scores et lift (tables `q1_criterion`, `q1_metrics`) :
@@ -253,6 +277,13 @@ cellules-jours d'apprentissage du verdict) :
 
 ```bash
 uv run python -c "import pandas as pd; c=pd.read_csv('notebooks/spike_q1/out/concordance.csv'); n=c[c.year.astype(str).isin(['2019','2020','2021'])].a_positives.sum(); print(n, round(n/1331640,5))"
+```
+
+Compétence de Brier de chaque modèle contre une prévision constante au taux de base, et
+précision moyenne sur les mailles sans départ depuis 30 jours :
+
+```bash
+uv run python -c "import pandas as pd; m=pd.read_parquet('data/lake/gold/model_out/q1_metrics.parquet'); m['skill']=1-m.brier/(m.base_rate*(1-m.base_rate)); print(m[['year','model','skill']].round(4).to_string()); n=pd.read_csv('notebooks/spike_q1/out/exploratory_new_ignitions.csv'); print(n[(n.subset=='cell_new_30d')&(n.model=='lgbm_full')][['year','base_rate','pr_auc','lift']].round(4).to_string())"
 ```
 
 Gain de Brier du modèle 3b au modèle 4 et rapport observé sur prédit (calibration) :
