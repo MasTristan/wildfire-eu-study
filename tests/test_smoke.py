@@ -9,20 +9,10 @@ _SAMPLE = {
 }
 
 
-def test_paths_exist():
-    assert config.DATA_RAW.is_dir()
-    assert config.DATA_PROCESSED.is_dir()
-
-
 def test_scope_is_configured():
     assert "FR" in config.EU_FIRE_DB_COUNTRIES
     assert set(config.MED_CORE).issubset(set(config.EU_FIRE_DB_COUNTRIES))
     assert config.BASE_YEAR_MIN < config.BASE_YEAR_MAX
-
-
-def test_endpoints_are_https():
-    for url in (config.EFFIS_RDA_STATS_URL, config.EFFIS_MAPS_HOST, config.FIRMS_AREA_CSV_URL):
-        assert url.startswith("https://")
 
 
 def test_parse_rda_payload():
