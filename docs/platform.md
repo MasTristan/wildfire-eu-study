@@ -68,8 +68,9 @@ profil), un fichier par table.
 - 3 rollups en SQL qui remplacent `src/transform/rollups.py` :
   `fact_burntarea_countrymonth`, `fact_burntarea_countryyear` (avec les lignes
   d'émissions GWIS sur leur propre source), `fact_burntarea_landcover`.
-- 1 table propre à la v2, `fact_season_countryyear`, absente de la référence
-  de parité puisque la v1 ne l'avait pas.
+- 1 table propre à la v2, `fact_season_countryyear` (début, fin et durée de la
+  saison des feux), absente de la référence de parité puisque la v1 ne l'avait
+  pas. Rien ne la lit encore en aval.
 - Tests dbt : grain (`unique_combination_of_columns`), valeurs admises,
   `non_negative`, `no_source_mixing` (une ligne GWIS ne porte jamais de
   surface, une ligne EFFIS ou BDIFF jamais d'émissions).

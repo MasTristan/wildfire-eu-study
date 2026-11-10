@@ -1,6 +1,9 @@
-# Modèle de données cible
+# Modèle de données
 
-Statut : proposition, à valider avant de construire les transformations.
+Statut : construit. Ce document décrit le schéma en étoile de la couche
+descriptive, écrit dans `data/lake/gold/star` et lu par Power BI. Les sorties
+de modèles (`data/lake/gold/model_out`) sont décrites dans
+[Plateforme](platform.md) et dans les [cartes de modèle](models/index.md).
 
 ## Principe
 
@@ -25,21 +28,25 @@ Trois garde-fous structurants :
 
 ## Grains
 
-| Table de faits | Grain | Source(s) | Phase |
-|---|---|---|---|
-| `Fact_FireEvent` | feu individuel | EFFIS périmètres, BDIFF | MVP |
-| `Fact_BurntArea_CountryMonth` | pays x mois x source | rollup de `Fact_FireEvent` | MVP |
-| `Fact_BurntArea_CountryYear` | pays x année x source | rollup + cross-check EFFIS stats / GWIS | MVP |
-| `Fact_BurntArea_LandCover` | pays x année x land cover x source | EFFIS périmètres agrégés | MVP |
-| `Fact_FireWeather_CountryMonth` | pays x mois | CDS FWI / ERA5 agrégé | 2 (post-compte CDS) |
-| `Fact_Hotspot_CountryMonth` | pays x mois x capteur | FIRMS agrégé | 2 (post-compte FIRMS) |
+| Table de faits | Grain | Source(s) |
+|---|---|---|
+| `Fact_FireEvent` | feu individuel | EFFIS périmètres, BDIFF |
+| `Fact_BurntArea_CountryMonth` | pays x mois x source | rollup de `Fact_FireEvent` |
+| `Fact_BurntArea_CountryYear` | pays x année x source | rollup + cross-check EFFIS stats / GWIS |
+| `Fact_BurntArea_LandCover` | pays x année x land cover x source | EFFIS périmètres agrégés |
+| `Fact_FireWeather_CountryMonth` | pays x mois | CDS FWI, ERA5 et SPEI agrégés |
+| `Fact_Hotspot_CountryMonth` | pays x mois x capteur | FIRMS agrégé |
+
+Une septième table, `fact_season_countryyear` (début, fin et durée de la saison
+des feux par pays, année et source), est écrite et testée par dbt. Ni le
+rapport ni les modèles ne la lisent à ce jour.
 
 `Fact_FireEvent` est la source primaire granulaire (périmètres EFFIS, date de
 feu, surface, land cover). Les agrégats mois et année en dérivent par rollup ;
 les totaux EFFIS stats servent de contrôle de cohérence, pas de source
 concurrente. Les colonnes climat (FWI, température, précipitations, humidité,
-SPEI) sont remplies depuis la phase 3, voir
-`docs/specs/phase3-climate-explanatory.md`.
+SPEI) viennent de trois ingestions distinctes, assemblées par
+`src/transform/fireweather.py`.
 
 **Les émissions ne sont pas un attribut de la surface brûlée.** GWIS/GFAS
 mesure le feu indépendamment d'EFFIS, donc `co2_emissions_t` vit sur ses
