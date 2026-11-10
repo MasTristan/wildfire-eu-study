@@ -1,6 +1,6 @@
 # 0002. DuckDB et dbt pour la gold, Parquet comme contrat
 
-Statut : proposé le 2026-10-15.
+Statut : proposé le 2026-10-15, accepté le 2026-11-09 : la gold dbt reproduit la v1 valeur pour valeur (test de parité vert sur les données réelles).
 
 ## Contexte
 

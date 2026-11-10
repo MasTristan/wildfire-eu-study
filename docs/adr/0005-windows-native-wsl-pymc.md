@@ -1,6 +1,6 @@
 # 0005. Pipeline sous Windows natif, WSL2 réservé à PyMC
 
-Statut : proposé le 2026-10-15. La partie WSL2 est remplacée par [0010](0010-pymc-windows-native.md) :
+Statut : proposé le 2026-10-15, accepté le 2026-11-09 pour le pipeline en Windows natif. La partie WSL2 est remplacée par [0010](0010-pymc-windows-native.md) :
 PyMC tourne en Windows natif. Le reste tient (pipeline sous Windows natif, Dagster in-process).
 
 ## Contexte

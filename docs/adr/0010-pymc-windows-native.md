@@ -8,7 +8,7 @@ Windows natif, Dagster in-process) reste en vigueur.
 
 L'ADR 0005 réservait WSL2 à PyMC, au motif qu'une chaîne C++ y est fournie par
 conda-forge. WSL2 n'est pas installé sur la machine et l'installer est un
-changement système réservé au propriétaire. Le pilote a donc demandé de tenter
+changement système réservé au propriétaire. La décision a donc été de tenter
 PyMC en Windows natif, avec un critère de bascule fixé avant de toucher au vrai
 modèle : le modèle Q3 réel doit échantillonner 4 chaînes x 1000 tirages (après
 1000 de chauffe) en moins de 15 minutes, avec R-hat inférieur à 1,01 et zéro
