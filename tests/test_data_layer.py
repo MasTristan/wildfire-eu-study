@@ -173,8 +173,7 @@ def test_fact_fireweather_countrymonth_schema_if_present():
 
 
 # --- Phase 3: the climate explanatory layer ---------------------------------------
-# Each test below maps to one line of the verification table in
-# docs/specs/phase3-climate-explanatory.md.
+# Each test below guards one invariant of the climate tables.
 
 def test_fireweather_reaches_the_effis_horizon():
     """Lot 1. The FWI series must start no later than 2016, the EFFIS perimeter

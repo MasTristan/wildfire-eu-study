@@ -8,13 +8,13 @@ whole pipeline at a temporary tree:
     silver   one table per source, clean, typed      (v1: data/processed, see below)
     gold     star schema for Power BI, feature store, model outputs
 
-Migration bridge, phase 1 of PLAN.md: the v1 transform functions write their
+Migration bridge: the v1 transform functions write their
 tables to data/processed. Until they are rewritten, that folder IS the silver
 layer: the Dagster silver assets call the v1 builders unchanged, and dbt reads
-silver to produce gold/star. Power BI keeps reading data/processed until the
-parity gate (tests/test_gold_parity.py) proves gold/star equal, then its
-DataFolder parameter moves to gold/star and data/processed becomes silver for
-good. No file is relocated by hand at any point.
+silver to produce gold/star. Power BI read data/processed until the parity gate
+(tests/test_gold_parity.py) proved gold/star equal; its DataFolder parameter
+now points at gold/star and data/processed is silver for good. No file was
+relocated by hand at any point.
 """
 from __future__ import annotations
 

@@ -89,8 +89,8 @@ stays reported as written. The lift is reported next to it.
 
 ## Addendum, 2026-11-09, written before any of E5 to E8 was run
 
-The adversarial review of the models (`docs/internal/review-models-2026-11-09.md`,
-findings Q1-1 to Q1-6) names four things that E1 to E4 do not measure. They
+The adversarial review of the models (2026-11-09, findings Q1-1 to Q1-6, restated
+in the questions below) names four things that E1 to E4 do not measure. They
 become E5 to E8, declared here and committed before any execution. Script:
 `s09_exploratory.py`, outputs `out/exploratory_*.csv`. As for E1 to E4, the
 verdict pipeline is reused unchanged: same functions of `s06_train_evaluate.py`,

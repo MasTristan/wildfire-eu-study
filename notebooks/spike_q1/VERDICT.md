@@ -6,7 +6,9 @@ ignition days better than the fire-weather components alone?
 ## 1. Verdict
 
 **The pre-registered criterion is not met: reduced GO** (PROTOCOL.md, rule
-"Otherwise", PLAN.md section 5 phase 0).
+"Otherwise"). A reduced GO keeps Q1 at the scale of this spike and drops its
+Europe-wide extension and the daily forecast that depended on it
+(docs/adr/0009-q1-scope-after-reduced-go.md).
 
 Criterion, label (a) EFFIS, model 4 (`lgbm_full`) against model 3 (`lgbm_fwi`):
 Brier lower by at least 10 percent relative AND PR-AUC higher by at least 0.05
@@ -139,7 +141,7 @@ not supported by the data. Detail: `out/concordance.csv`,
 - Label (a) is "an EFFIS perimeter starts in the cell on day J", which mixes
   new ignitions with persistence: 18 % of the positives have a positive in the
   same cell the day before, and 35 % of the positives fall in January to March
-  (review `docs/internal/review-models-2026-11-09.md`, Q1-2). E3 and E7
+  (adversarial review of 2026-11-09, finding Q1-2). E3 and E7
   measure the effect; "ignition" in this document means that label, not a
   physically new fire.
 - The size floor of the EFFIS perimeters is not constant: about 20 ha until

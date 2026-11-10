@@ -7,8 +7,8 @@ re-materialising an asset re-downloads nothing that is already on disk.
 
 Partitioning is honest about what the v1 code can do today: FIRMS and the FWI
 download accept a year, the others rebuild their whole span in one call
-(cheap after the first run, because of the resumable downloads). Phase 1 of
-PLAN.md rewrites them as partition-safe assets; the asset keys stay.
+(cheap after the first run, because of the resumable downloads). A rewrite as
+partition-safe assets would keep the asset keys.
 """
 from datetime import date
 

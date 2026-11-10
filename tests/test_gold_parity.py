@@ -14,7 +14,7 @@ Three levels, each skipping cleanly when its input is absent:
   3. the reference itself satisfies the contracts, so a drift in the
      contracts cannot hide behind a drift in the data.
 
-This test is the gate of the whole Dagster/dbt migration (PLAN.md, phase 0):
+This test is the gate of the whole Dagster/dbt migration:
 blocking in CI as soon as the reference exists.
 """
 from __future__ import annotations
