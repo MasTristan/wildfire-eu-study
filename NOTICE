@@ -1,0 +1,17 @@
+wildfire-eu-study
+Copyright (c) 2026 Tristan Mas
+
+The MIT licence in LICENSE covers the CODE in this repository only.
+
+The datasets it ingests are NOT covered and remain under their own terms:
+Copernicus Emergency Management Service (EFFIS), Copernicus Climate Change
+Service (CDS and EWDS, ERA5, including the ARCO-ERA5 public copy hosted by
+Google Cloud), Copernicus European Drought Observatory, the Global Wildfire
+Information System, NASA FIRMS, the European Commission Joint Research Centre,
+Open-Meteo (historical archive, CC BY 4.0), bdiff.agriculture.gouv.fr,
+geo.api.gouv.fr, Natural Earth and World Bank Open Data. Check each provider's
+licence before redistributing any data derived from them. docs/sources.md lists
+each source with its access terms.
+
+The model outputs kept in data/lake/gold/model_out are statistics derived from
+those datasets (country-level aggregates and fitted parameters).
