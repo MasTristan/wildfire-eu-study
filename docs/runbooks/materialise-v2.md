@@ -1,6 +1,6 @@
 # Procédure : matérialiser la v2 de bout en bout
 
-Exécution : poste local Windows natif, sur la branche `ccr-9f718573-2htm0s` (recréée depuis `main` le 2026-11-07), après la procédure du spike Q1. Même règle :
+Exécution : poste local Windows natif, sur `main` ou une branche de travail qui en part, avec les sources déjà téléchargées dans `data/raw`. Règle :
 commande, attendu, vérification, conduite en cas d'écart ; une relance à
 l'identique, puis arrêt et rapport avec l'erreur exacte. Les chemins de
 données sont ceux de `src/lake.py` : silver = `data/processed`, gold =
@@ -10,7 +10,8 @@ données sont ceux de `src/lake.py` : silver = `data/processed`, gold =
 
 ```powershell
 git fetch origin
-git checkout -B ccr-9f718573-2htm0s origin/ccr-9f718573-2htm0s
+git checkout main
+git merge --ff-only origin/main
 uv sync
 uv run pytest -q
 make dbt-parse
@@ -193,39 +194,58 @@ Attendu : nuls sous 2 % pour les colonnes FWI et météo, positifs
 concentrés sur juin à septembre, `tp_7d` et `spei3` présents. Un taux de
 nuls supérieur à 10 % sur une colonne : rapporter la colonne et s'arrêter.
 
-## 7. Modèles Q2 et Q3 sur tables réelles
+## 7. Modèles Q1, Q2 et Q3 sur tables réelles
 
 ```powershell
-uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country,gold/attribution_countryyear"
-uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','first_year','last_year','years','n_exceedances','shape','rl_2y','rl_10y','rl_50y','max_return_period_years','return_period_10k_ha_years']].sort_values('n_fires', ascending=False).head(12).round(3).to_string())"
-uv run python -c "import pandas as pd; c=pd.read_parquet('data/lake/gold/model_out/attribution_coefficients.parquet'); print(c.round(4).to_string()); a=pd.read_parquet('data/lake/gold/model_out/attribution_countryyear.parquet'); print(a.groupby('year')[['burnt_area_ha','adjusted_area_ha']].sum().round(0))"
+uv run dagster asset materialize -m src.orchestration.definitions --select "gold/tail_risk_country,gold/attribution_robustness,gold/attribution_countryyear,gold/attribution_bayes,gold/q1_spike_results"
+uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[['country_key','n_fires','n_exceedances','years','shape','shape_p2.5','shape_p97.5','shape_below_one','rl_10y','rl_10y_p2.5','rl_10y_p97.5','largest_ha']].round(2).to_string())"
+uv run python -c "import pandas as pd; c=pd.read_parquet('data/lake/gold/model_out/attribution_coefficients.parquet'); print(c[['metric','coef','ci_low','ci_high','area_multiplier','coef_per_unit','unit_label','robust']].round(3).to_string()); print(pd.read_parquet('data/lake/gold/model_out/attribution_summary.parquet').T)"
+uv run python -c "import pandas as pd; r=pd.read_parquet('data/lake/gold/model_out/attribution_robustness.parquet'); print(r[r.model=='bayesian'].groupby('variant')[['rhat_max','divergences','duration_s']].first().round(3))"
 ```
 
-Attendu pour Q2, sur les pays ajustés (au moins 30 dépassements du seuil,
-`min_exceedances`) : `shape` positif, typiquement entre 0,5 et 1,2 ; une
-valeur supérieure ou égale à 1 signale une queue à moyenne infinie, attendue
-pour les pays méditerranéens et à rapporter telle quelle, sans s'arrêter ;
-`rl_10y` supérieur à `rl_2y`. Les pays sous 30 dépassements ont `shape` et
-`rl_*` nuls par construction. Les niveaux au-delà de
-`max_return_period_years` (deux fois la durée observée, environ 20 ans) sont
-nuls par conception : `rl_50y` est vide partout tant que l'historique fait
-une dizaine d'années, de même que `return_period_10k_ha_years` quand il
-dépasse cet horizon. Seules les années complètes entrent : l'extraction
-s'arrêtant fin juillet 2026, `last_year` vaut 2025 pour tous les pays, et
-`years` vaut 10 pour les pays couverts depuis 2016 : la période court du
-premier enregistrement du pays, toutes tailles confondues, à la dernière
-année complète de la source, même sans grand feu les dernières années. Attendu pour Q3 : `days_high_season` à coefficient
-positif, un `run_id` non vide dans les deux tables. Tout `shape` négatif
-sous -0,5, un `rl_50y` non nul ou un coefficient `days_high_season` négatif :
-rapporter.
+Durée : environ 4 minutes pour Q2 (bootstrap), 6 à 8 minutes pour les sept
+variantes bayésiennes de Q3, une minute pour le reste. `attribution_robustness`
+passe avant `attribution_countryyear` : la colonne `robust` des coefficients
+vient de la table de robustesse.
+
+Attendu pour Q2 (carte : [Q2](../models/q2-tail-risk.md)) : seuls les pays du
+périmètre sont écrits (UE, au moins 8 années complètes et 30 épisodes au-dessus
+de 500 ha), 8 pays avec l'extraction de juillet 2026. `n_exceedances` compte
+des épisodes, pas des feux. Une forme ponctuelle supérieure ou égale à 1 donne
+`shape_below_one` faux et des niveaux de retour nuls : c'est un résultat, à
+rapporter tel quel. Les niveaux au-delà de deux fois la durée observée sont
+nuls par conception (`rl_50y` vide partout avec 10 ans de registre). Seules les
+années complètes entrent : `last_year` vaut 2025.
+
+Attendu pour Q3 (carte : [Q3](../models/q3-attribution.md)) : 356 lignes et
+40 pays pour les deux méthodes, coefficient des jours de danger positif et
+celui du SPEI de printemps négatif, tous deux `robust`, R-hat sous 1,01 et zéro
+divergence sur chaque variante bayésienne (l'asset check `sampler_diagnostics`
+échoue sinon). Un signe inversé sur ces deux variables, ou un R-hat au-dessus
+du seuil : arrêt et rapport.
+
+Attendu pour Q1 : `gold/q1_spike_results` ne recalcule rien, il journalise les
+sorties gelées de `notebooks/spike_q1/out` et écrit les tables `q1_*`.
+
+Chaque reconstruction crée de nouveaux runs MLflow. Les cartes de modèle
+citent le `run_id` de leurs tables : les mettre à jour, puis vérifier.
+
+```powershell
+uv run python scripts/model_figures.py
+uv run pytest -q tests/test_published_claims.py tests/test_powerbi_model.py
+```
+
+Attendu : vert. `test_published_claims.py` échoue tant qu'une carte cite un
+run qui n'est plus celui de ses tables.
 
 ```powershell
 uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 ```
 
-Ouvrir `http://localhost:5000` : deux expériences `q2_tail_risk` et
-`q3_attribution`, un run chacune avec paramètres et métriques. Capture
-d'écran `docs/img/mlflow-runs.png`. Ctrl+C.
+Ouvrir `http://localhost:5000` : les expériences `q1_spike`, `q2_tail_risk`,
+`q3_attribution`, `q3_attribution_bayes` et `q3_attribution_robustness`, avec
+paramètres et métriques ; le run Q2 publié porte le tag `published=true`.
+Capture d'écran `docs/img/mlflow-runs.png`. Ctrl+C.
 
 ## 7b. Q1 sur le feature store (après le verdict du spike)
 
@@ -256,14 +276,15 @@ exploitée : le rapporter, c'est un résultat, pas une erreur).
 
 ## 8. Bascule Power BI
 
-> **Action du propriétaire.** Cette étape demande Power BI Desktop, une application graphique qu'une session Claude Code ne pilote pas. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
+> **Action du propriétaire.** Cette étape demande Power BI Desktop, une application graphique qui ne se pilote pas en ligne de commande. L'exécutant ne la tente pas : il exécute les autres étapes, puis rapporte cette étape comme « en attente du propriétaire ».
 
 Dans `powerbi/WildfireEU.SemanticModel/definition/expressions.tmdl`, faire
 pointer `DataFolder` sur le chemin absolu de `data/lake/gold/star`. Ouvrir
 `powerbi/WildfireEU.pbip` dans Power BI Desktop, Accueil > Actualiser.
 
-Attendu : actualisation sans erreur, 12 tables chargées. Parcourir les dix
-pages et comparer à une capture de référence prise avant la bascule : aucun
+Attendu : actualisation sans erreur, les tables du schéma en étoile et celles de
+`model_out` chargées. Parcourir les dix
+pages descriptives et comparer à une capture de référence prise avant la bascule : aucun
 chiffre des cartons de la page Scale ne change (surface brûlée totale,
 nombre de feux, émissions). Un chiffre qui change alors que la parité est
 verte : rapporter immédiatement, revenir au chemin précédent.
@@ -292,8 +313,8 @@ uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage secret_access_key
 uvx --from "dvc[s3]==3.67.1" dvc add data/lake/gold/star data/lake/gold/model_out
 uvx --from "dvc[s3]==3.67.1" dvc push
 git add data/lake/gold/*.dvc .dvc/config
-git commit -m "data: track gold star, features and model outputs with DVC"
-git push origin ccr-9f718573-2htm0s
+git commit -m "data: track gold star and model outputs with DVC"
+git push
 ```
 
 Attendu : `dvc push` termine sans erreur et `dvc status -c` répond
@@ -309,8 +330,8 @@ Cocher chaque ligne dans le rapport final :
 - [ ] `tests/test_gold_parity.py` vert sur `data/lake/gold/star`.
 - [ ] Graphe Dagster complet capturé, checks gold verts.
 - [ ] Spike Q1 : `out/exploratory_*.csv` présents et section 11 de `VERDICT.md` écrite (procédure du spike, étape 9).
-- [ ] `tail_risk_country.parquet` et `attribution_countryyear.parquet` présents avec `run_id`.
-- [ ] MLflow : deux expériences, captures.
+- [ ] Tables `tail_risk_*`, `attribution_*` et `q1_*` présentes avec `run_id`, `tests/test_published_claims.py` vert.
+- [ ] MLflow : cinq expériences, captures.
 - [ ] Power BI actualisé sur `gold/star`, chiffres inchangés.
 - [ ] `dvc status -c` en synchronisation.
 - [ ] Commits poussés ; `data/`, `mlruns/`, `.dagster/`, `docs/internal/` hors git.

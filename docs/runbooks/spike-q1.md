@@ -1,5 +1,7 @@
 # Procédure : terminer le spike Q1
 
+> **Procédure exécutée du 7 au 9 novembre 2026, conservée pour la traçabilité.** Le spike est terminé : son verdict est dans `notebooks/spike_q1/VERDICT.md`, sa carte de modèle dans [Q1](../models/q1-ignition-spike.md). La branche de travail citée ci-dessous a été fusionnée dans `main`.
+
 Exécution : poste local Windows natif, sur la branche `ccr-9f718573-2htm0s` (recréée depuis `main` le 2026-11-07). Chaque étape donne la commande, le
 résultat attendu, la vérification et la conduite à tenir en cas d'écart.
 Règle générale : une étape dont la vérification échoue se relance une fois
