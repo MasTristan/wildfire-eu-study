@@ -1,9 +1,18 @@
 # Carte de modèle : Q2, queue des tailles de feux
 
-Run MLflow : `134ab87a9c8745acb1766a8e34dc94e3` (expérience `q2_tail_risk`, run
-`country_20261109`, tag `published=true`), 2026-11-09. Les tables
-`tail_risk_country`, `tail_risk_levels` et `tail_risk_threshold_stability` portent
-ce `run_id` sur chaque ligne.
+Run MLflow : `b47581300d4b4f2a828fffa5b76530e3` (expérience `q2_tail_risk`, run
+`country_20261110`, tag `published=true`), 2026-11-10. Les tables
+`tail_risk_country`, `tail_risk_levels`, `tail_risk_threshold_stability`,
+`tail_risk_gof` et `tail_risk_episodes` portent ce `run_id` sur chaque ligne.
+
+!!! abstract "En bref"
+    Dans les 8 pays de l'UE étudiés, la taille des grands épisodes de feu a une
+    queue lourde. Un niveau de retour à 10 et 20 ans est publié pour 6 pays, avec
+    un intervalle large (Espagne à 10 ans : 23 000 à 256 000 ha). Pas de chiffre
+    pour le Portugal ni la Grèce : la loi ajustée y est rejetée par le test
+    d'adéquation et sa forme dépasse 1. **Limite principale : dix ans de registre
+    et un seuil de 500 ha où le régime de queue n'est pas atteint partout.** À
+    lire comme un classement des pays par queue, pas comme une prévision.
 
 ## Question
 
@@ -71,6 +80,15 @@ On ne modélise donc que la queue, par la méthode des dépassements de seuil
 7. **Stabilité du seuil.** Table `tail_risk_threshold_stability` : pour chaque pays du
    périmètre, ξ et son intervalle (200 réplicats) aux seuils 200, 300, 500 et
    1 000 ha, avec re-déclustering à chaque seuil.
+8. **Adéquation de la loi.** Table `tail_risk_gof` : distance d'Anderson-Darling entre
+   les excès des épisodes et la loi ajustée (elle pèse les extrémités, là où un modèle
+   de queue doit tenir), avec une p-valeur par bootstrap paramétrique : 500 échantillons
+   tirés de la loi ajustée, chacun réajusté avant de calculer sa distance, ce qui tient
+   compte du fait que les deux paramètres sont estimés. Règle de lecture écrite dans
+   `src/models/extremes.py` et commitée avant l'exécution sur les données réelles :
+   sous 5 %, la loi est rejetée pour ce pays à ce seuil, et la carte le dit à côté de ses
+   estimations ; la règle de publication ne change pas. La table `tail_risk_episodes`
+   donne chaque épisode avec la taille que la loi attend à son rang.
 
 Le niveau empirique est affiché en regard : c'est la taille du k-ième plus gros
 épisode observé, avec k = années / T. À 10 ans, c'est donc le plus gros feu de la
@@ -90,18 +108,49 @@ période.
 
 ![Niveaux de retour ajustés avec intervalle à 95 %, niveaux observés en points, Portugal, Espagne, France, Italie, Grèce](../img/models/q2_return_levels.png)
 
-Aucun test d'adéquation de la GPD (Anderson-Darling ou autre) n'est calculé dans
-le dépôt.
+**Adéquation, sur les données réelles.** La loi n'est pas rejetée pour cinq pays et
+elle l'est pour trois :
+
+| Pays | Épisodes | p-valeur | Loi rejetée à 5 % |
+|---|---|---|---|
+| France | 37 | 0,91 | non |
+| Bulgarie | 37 | 0,86 | non |
+| Roumanie | 70 | 0,85 | non |
+| Italie | 63 | 0,36 | non |
+| Espagne | 113 | 0,25 | non |
+| Croatie | 33 | 0,030 | **oui** |
+| Portugal | 63 | 0,014 | **oui** |
+| Grèce | 57 | 0,006 | **oui** |
+
+![Épisodes observés contre la loi ajustée, par pays, avec la p-valeur du test](../img/models/q2_qq.png)
+
+Lecture de la figure : un point sur la diagonale est un épisode de la taille que la loi
+attend à son rang. Au Portugal, les plus gros épisodes sont très en dessous de la
+diagonale : la loi ajustée attend 442 516 ha pour le plus gros, il fait 67 521 ha. La
+forme de 1,64 vient du corps de la distribution, pas de ses extrêmes. Une p-valeur haute
+n'est pas une preuve : avec 37 épisodes (France, Bulgarie), le test a peu de puissance.
 
 ## Limites
 
 **Le Portugal et la Grèce n'ont pas de niveau de retour publié : leur forme
-ponctuelle est au-dessus de 1 (1,64 et 1,28).** Ce n'est pas un défaut de
-présentation, c'est le résultat : avec 10 ans de registre, le modèle ne décrit
-pas une queue dont la moyenne est finie pour ces deux pays, et un niveau de
-retour y serait une extrapolation sans borne. L'ancienne version (seuil au
-quantile 90, tous les feux, bootstrap des feux) publiait pour le Portugal un
-niveau à 10 ans de 286 596 ha, 4,2 fois le plus gros feu observé.
+ponctuelle est au-dessus de 1 (1,64 et 1,28), et la loi ajustée y est rejetée par
+le test d'adéquation.** Une forme au-dessus de 1 ne dit donc pas que leurs feux
+ont « une moyenne infinie » : elle dit que la loi de Pareto généralisée ne décrit
+pas leurs épisodes au-dessus de 500 ha, et qu'un niveau de retour tiré de cette
+loi serait une extrapolation sans appui. Ce que les données disent de ces deux
+pays se lit dans les niveaux observés, pas dans le modèle.
+
+- **La Croatie est publiée alors que sa loi est rejetée** (p = 0,030, 33 épisodes).
+  Ses niveaux (6 128 ha à 10 ans, intervalle 2 942 à 13 543) restent dans la table
+  parce que la règle de publication a été fixée avant le test ; ils sont à lire avec
+  cette réserve, et la table `tail_risk_gof` porte le drapeau `gpd_rejected`.
+- **Huit tests, sans correction de multiplicité.** Au seuil de 5 %, un rejet sur huit
+  par hasard n'aurait rien d'étonnant ; trois, dont deux sous 1,5 %, ne s'expliquent
+  pas ainsi.
+
+Pour mémoire, l'ancienne version (seuil au quantile 90, tous les feux, bootstrap
+des feux) publiait pour le Portugal un niveau à 10 ans de 286 596 ha, 4,2 fois
+le plus gros feu observé.
 
 - **ξ n'est pas stable selon le seuil.** Au Portugal, ξ vaut 1,80, 1,65, 1,64 puis 0,80
   aux seuils 200, 300, 500 et 1 000 ha. Il est plus bas à 1 000 ha qu'à 200 ha dans les
@@ -177,6 +226,12 @@ Tableau des cinq pays (feux, épisodes, forme, niveau à 10 ans, plus gros feu, 
 uv run python -c "import pandas as pd; t=pd.read_parquet('data/lake/gold/model_out/tail_risk_country.parquet'); print(t[t.country_key.isin(['PT','ES','FR','IT','GR'])][['country_key','n_fires','n_exceedances','shape','shape_p2.5','shape_p97.5','shape_below_one','rl_10y','rl_10y_p2.5','rl_10y_p97.5','rl_20y_p2.5','rl_20y_p97.5','largest_ha','return_period_10k_ha_years','run_id']].round(2).to_string())"
 ```
 
+Adéquation de la loi et épisodes les plus gros avec la taille attendue :
+
+```bash
+uv run python -c "import pandas as pd; g=pd.read_parquet('data/lake/gold/model_out/tail_risk_gof.parquet'); print(g.round(3).to_string()); e=pd.read_parquet('data/lake/gold/model_out/tail_risk_episodes.parquet'); print(e.sort_values('area_ha').groupby('country_key').tail(1)[['country_key','date','area_ha','model_quantile_ha']].round(0).to_string())"
+```
+
 Stabilité du seuil :
 
 ```bash
@@ -192,7 +247,7 @@ uv run python -c "import pandas as pd; from src import lake; from src.models imp
 Paramètres et métriques du run (seuil, fenêtre de déclustering, épisodes par pays) :
 
 ```bash
-uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('134ab87a9c8745acb1766a8e34dc94e3'); print(r.data.tags['published'], r.data.params, r.data.metrics)"
+uv run python -c "import mlflow; mlflow.set_tracking_uri('sqlite:///mlruns/mlflow.db'); r=mlflow.get_run('b47581300d4b4f2a828fffa5b76530e3'); print(r.data.tags['published'], r.data.params, r.data.metrics)"
 ```
 
 Reconstruire les tables (nouveau `run_id`, environ 4 minutes), puis les figures Q2 sans

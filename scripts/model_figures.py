@@ -22,7 +22,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.axes import Axes  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
-from matplotlib.ticker import LogLocator, ScalarFormatter  # noqa: E402
+from matplotlib.ticker import LogLocator, NullFormatter, ScalarFormatter  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -179,6 +179,8 @@ def q2_qq(model_out: Path) -> Path:
         ax.scatter(d["model_quantile_ha"], d["area_ha"], s=11, color=ORANGE if rejected else BLUE, alpha=0.8, lw=0)
         ax.set_xscale("log")
         ax.set_yscale("log")
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.yaxis.set_minor_formatter(NullFormatter())
         p_value = float(gof.loc[key, "p_value"])
         ax.set_title(f"{COUNTRY_NAMES.get(key, key)} : {int(gof.loc[key, 'n_exceedances'])} épisodes, p = {p_value:.2f}"
                      .replace(".", ","), loc="left", fontsize=9, color=INK)

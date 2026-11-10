@@ -27,7 +27,8 @@ CARDS = ROOT / "docs" / "models"
 # card -> tables whose run_id the card must cite
 CARD_TABLES = {
     "q1-ignition-spike.md": ["q1_metrics", "q1_criterion", "q1_importance", "q1_reliability"],
-    "q2-tail-risk.md": ["tail_risk_country", "tail_risk_levels", "tail_risk_threshold_stability"],
+    "q2-tail-risk.md": ["tail_risk_country", "tail_risk_levels", "tail_risk_threshold_stability", "tail_risk_gof",
+                        "tail_risk_episodes"],
     "q3-attribution.md": ["attribution_coefficients", "attribution_countryyear", "attribution_summary",
                           "attribution_exclusions", "attribution_bayes_coefficients",
                           "attribution_bayes_countryyear", "attribution_robustness"],
