@@ -206,3 +206,31 @@ def test_mark_published_leaves_a_single_published_run(tmp_path, monkeypatch):
     client = mlflow.MlflowClient()
     assert client.get_run(ids[0]).data.tags["published"] == "false"
     assert client.get_run(ids[1]).data.tags["published"] == "true"
+
+
+def test_goodness_of_fit_accepts_a_gpd_sample_and_rejects_a_bimodal_one():
+    rng = np.random.default_rng(7)
+    gpd = rng.pareto(1 / 0.4, size=120) * (300.0 / 0.4)                 # GPD(shape 0.4, scale 300)
+    _, p_gpd = extremes.gof_bootstrap(gpd, n_sim=200, seed=1)
+    assert p_gpd > 0.05
+    # two tight clumps far apart: no GPD has that shape
+    bimodal = np.concatenate([rng.normal(100.0, 2.0, 60), rng.normal(5000.0, 50.0, 60)])
+    ad, p_bad = extremes.gof_bootstrap(bimodal, n_sim=200, seed=1)
+    assert p_bad < 0.05 and ad > 0
+
+
+def test_goodness_of_fit_tables_follow_the_published_fit():
+    ev = _simulated("ES", n_years=60, rate=5.0, shape=0.3, scale=400.0, seed=3, start_year=1900)
+    table = extremes.tail_risk_table(ev, n_boot=20, min_years=8)
+    gof, episodes = extremes.goodness_of_fit(ev, table, n_sim=50)
+    assert list(gof.columns) == ["country_key", *extremes.GOF_COLUMNS]
+    assert list(episodes.columns) == ["country_key", *extremes.EPISODE_COLUMNS]
+    assert len(gof) == 1 and gof.loc[0, "n_exceedances"] == table.loc[0, "n_exceedances"] == len(episodes)
+    assert gof.loc[0, "gpd_rejected"] == (gof.loc[0, "p_value"] < extremes.GOF_ALPHA)
+    # model quantiles rise with the rank and stay above the threshold
+    q = episodes.sort_values("plotting_position")["model_quantile_ha"].to_numpy()
+    assert (np.diff(q) > 0).all() and q[0] > extremes.THRESHOLD_HA
+    # a group outside the perimeter gets neither a test nor episodes
+    out = extremes.tail_risk_table(ev, n_boot=5, min_years=8, eu_members=frozenset({"FR"}))
+    gof_out, ep_out = extremes.goodness_of_fit(ev, out, n_sim=10)
+    assert gof_out.empty and ep_out.empty

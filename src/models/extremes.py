@@ -36,7 +36,15 @@ Conventions:
   published is null and a boolean column says why;
 - published perimeter: EU countries (eu_members, taken from dim_country.is_eu; None means no EU filter) with at least MIN_YEARS complete years
   and MIN_EPISODES episodes above the threshold. The other countries stay in the
-  table with in_scope = False and a reason, and with null estimates.
+  table with in_scope = False and a reason, and with null estimates;
+- goodness of fit: an Anderson-Darling statistic of the episode excesses against
+  the fitted GPD, with a parametric-bootstrap p-value (each replicate is drawn
+  from the fitted law and refitted, so estimating the two parameters is accounted
+  for). Reading rule, written before the diagnostic was run on the real data: a
+  p-value under GOF_ALPHA means the GPD is rejected for that country at this
+  threshold, and the model card says so next to its estimates. The diagnostic
+  does not change the publication rule, and a p-value above the level is an
+  absence of evidence against the law, with 30 to 110 episodes, not a proof of it.
 """
 from __future__ import annotations
 
@@ -54,6 +62,10 @@ MIN_YEARS = 8
 MIN_EPISODES = 30
 STABILITY_THRESHOLDS_HA = (200.0, 300.0, 500.0, 1000.0)
 STABILITY_MIN_EPISODES = 20
+GOF_ALPHA = 0.05
+GOF_N_SIM = 500
+
+
 @dataclass(frozen=True)
 class GpdFit:
     threshold: float
@@ -91,6 +103,75 @@ def fit_gpd(excesses: np.ndarray) -> tuple[float, float]:
     x = x[x > 0]
     shape, _, scale = stats.genpareto.fit(x, floc=0.0)
     return float(shape), float(scale)
+
+
+def anderson_darling(excesses: np.ndarray, shape: float, scale: float) -> float:
+    """Anderson-Darling distance between the excesses and a GPD(shape, scale): it weights the
+    tails, which is where a threshold model has to hold."""
+    x = np.sort(np.asarray(excesses, dtype="float64"))
+    n = len(x)
+    z = np.clip(stats.genpareto.cdf(x, shape, loc=0.0, scale=scale), 1e-12, 1.0 - 1e-12)
+    i = np.arange(1, n + 1)
+    return float(-n - np.mean((2 * i - 1) * (np.log(z) + np.log1p(-z[::-1]))))
+
+
+def gof_bootstrap(excesses: np.ndarray, n_sim: int = GOF_N_SIM, seed: int = 42) -> tuple[float, float]:
+    """(Anderson-Darling statistic, p-value) of the GPD fitted to the excesses. The null
+    distribution is simulated: samples of the same size drawn from the fitted law, each
+    refitted before its statistic is taken. p = (1 + count of simulated >= observed) / (n_sim + 1)."""
+    x = np.asarray(excesses, dtype="float64")
+    x = x[x > 0]
+    shape, scale = fit_gpd(x)
+    observed = anderson_darling(x, shape, scale)
+    rng = np.random.default_rng(seed)
+    sims = np.full(n_sim, np.nan)
+    for b in range(n_sim):
+        draw = stats.genpareto.rvs(shape, loc=0.0, scale=scale, size=len(x), random_state=rng)
+        try:
+            s_b, sc_b = fit_gpd(draw)
+        except Exception:  # scipy can fail to converge on a degenerate draw
+            continue
+        sims[b] = anderson_darling(draw, s_b, sc_b)
+    ok = sims[~np.isnan(sims)]
+    return observed, float((1 + np.sum(ok >= observed)) / (len(ok) + 1))
+
+
+def episode_quantiles(episodes: pd.DataFrame, threshold: float, shape: float, scale: float) -> pd.DataFrame:
+    """The episodes of one group with the size the fitted GPD expects at their rank (Weibull
+    plotting position i / (n + 1)): the two columns of a quantile-quantile plot."""
+    out = episodes.sort_values("area_ha").reset_index(drop=True).copy()
+    n = len(out)
+    out["plotting_position"] = np.arange(1, n + 1) / (n + 1)
+    out["model_quantile_ha"] = threshold + stats.genpareto.ppf(out["plotting_position"], shape, loc=0.0, scale=scale)
+    return out
+
+
+GOF_COLUMNS = ["n_exceedances", "ad_statistic", "p_value", "n_sim", "alpha", "gpd_rejected"]
+EPISODE_COLUMNS = ["date", "year", "area_ha", "n_fires", "start_date", "end_date", "plotting_position",
+                   "model_quantile_ha"]
+
+
+def goodness_of_fit(events: pd.DataFrame, table: pd.DataFrame, group: str = "country_key",
+                    threshold_ha: float = THRESHOLD_HA, decluster_days: int = DECLUSTER_DAYS,
+                    data_end: pd.Timestamp | None = None, n_sim: int = GOF_N_SIM,
+                    seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """(one row per in-scope group with the Anderson-Darling test, the episodes of those groups
+    with their model quantiles). `table` is the output of tail_risk_table, so the law tested is
+    the published fit."""
+    ev, _, _ = _prepare(events, group, data_end)
+    episodes = decluster_episodes(ev, group, threshold_ha, decluster_days)
+    gof_rows, ep_frames = [], []
+    for _, r in table[table["in_scope"]].iterrows():
+        ep = episodes[episodes[group] == r[group]]
+        excess = ep["area_ha"].to_numpy(dtype="float64") - threshold_ha
+        ad, p_value = gof_bootstrap(excess, n_sim=n_sim, seed=seed)
+        gof_rows.append({group: r[group], "n_exceedances": int(len(ep)), "ad_statistic": ad, "p_value": p_value,
+                         "n_sim": int(n_sim), "alpha": GOF_ALPHA, "gpd_rejected": bool(p_value < GOF_ALPHA)})
+        ep_frames.append(episode_quantiles(ep, threshold_ha, float(r["shape"]), float(r["scale"])))
+    gof = pd.DataFrame(gof_rows, columns=[group, *GOF_COLUMNS])
+    eps = (pd.concat(ep_frames, ignore_index=True)[[group, *EPISODE_COLUMNS]] if ep_frames
+           else pd.DataFrame(columns=[group, *EPISODE_COLUMNS]))
+    return gof, eps
 
 
 def fit_pot(sizes: np.ndarray, threshold: float, years: float) -> GpdFit:

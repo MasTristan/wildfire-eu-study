@@ -47,7 +47,8 @@ plt.rcParams.update({
 
 # Q2: the five Mediterranean countries of the model card; the others of the published perimeter appear in the shape figure
 Q2_COUNTRIES = ["PT", "ES", "FR", "IT", "GR"]
-COUNTRY_NAMES = {"PT": "Portugal", "ES": "Espagne", "FR": "France", "IT": "Italie", "GR": "Grèce"}
+COUNTRY_NAMES = {"PT": "Portugal", "ES": "Espagne", "FR": "France", "IT": "Italie", "GR": "Grèce",
+                 "BG": "Bulgarie", "HR": "Croatie", "RO": "Roumanie"}
 
 METRIC_LABELS = {
     "days_high_season": "Jours de danger élevé\n(juin à septembre)",
@@ -158,6 +159,40 @@ def q2_threshold_stability(model_out: Path) -> Path:
     ax.set_title("Q2 : stabilité de la forme selon le seuil, intervalle à 95 % (bootstrap par années)", loc="left",
                  fontsize=11, color=INK)
     return _save(fig, "q2_threshold_stability.png")
+
+
+def q2_qq(model_out: Path) -> Path:
+    """Quantile-quantile plot of the episodes against the fitted GPD, one panel per country of the perimeter,
+    with the Anderson-Darling p-value. Points on the diagonal: the law describes the episodes."""
+    ep = pd.read_parquet(model_out / "tail_risk_episodes.parquet")
+    gof = pd.read_parquet(model_out / "tail_risk_gof.parquet").set_index("country_key")
+    keys = [k for k in Q2_COUNTRIES if k in gof.index] + sorted(k for k in gof.index if k not in Q2_COUNTRIES)
+    ncols = 4
+    nrows = int(np.ceil(len(keys) / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(11.0, 2.9 * nrows), squeeze=False)
+    for ax, key in zip(axes.ravel(), keys, strict=False):
+        d = ep[ep["country_key"] == key].sort_values("plotting_position")
+        lo = float(min(d["area_ha"].min(), d["model_quantile_ha"].min()))
+        hi = float(max(d["area_ha"].max(), d["model_quantile_ha"].max()))
+        ax.plot([lo, hi], [lo, hi], color=GREY, lw=0.9)
+        rejected = bool(gof.loc[key, "gpd_rejected"])
+        ax.scatter(d["model_quantile_ha"], d["area_ha"], s=11, color=ORANGE if rejected else BLUE, alpha=0.8, lw=0)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        p_value = float(gof.loc[key, "p_value"])
+        ax.set_title(f"{COUNTRY_NAMES.get(key, key)} : {int(gof.loc[key, 'n_exceedances'])} épisodes, p = {p_value:.2f}"
+                     .replace(".", ","), loc="left", fontsize=9, color=INK)
+    for ax in axes.ravel()[len(keys):]:
+        ax.set_visible(False)
+    for ax in axes[-1, :]:
+        ax.set_xlabel("Taille attendue par la loi ajustée (ha)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Taille observée (ha)")
+    fig.suptitle("Q2 : épisodes observés contre la loi de Pareto généralisée ajustée (échelles log). "
+                 "p : test d'Anderson-Darling, orange si la loi est rejetée à 5 %", x=0.01, ha="left", fontsize=10.5,
+                 color=INK)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    return _save(fig, "q2_qq.png")
 
 
 def _bayes_pop(model_out: Path) -> pd.DataFrame:
@@ -335,7 +370,7 @@ def build_all(model_out: Path | None = None, only: str | None = None) -> list[Pa
     """Every figure, or only those of one question (only = "q1", "q2" or "q3")."""
     src = model_out or lake.GOLD_MODEL_OUT
     builders = {
-        "q2": [q2_return_levels, q2_shape, q2_threshold_stability],
+        "q2": [q2_return_levels, q2_shape, q2_threshold_stability, q2_qq],
         "q3": [q3_coefficients, q3_observed_vs_adjusted, q3_robustness],
         "q1": [q1_reliability, q1_pr_auc],
     }

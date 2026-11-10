@@ -1,6 +1,8 @@
-"""Model-output assets (gold/model_out): tables the report reads, each
-produced by one tracked run. Q1 (ignition) joins once the spike verdict
-fixes its scope; Q2 tail risk and Q3 attribution depend only on the gold.
+"""Model-output assets (gold/model_out): tables the report and the model cards
+read, each produced by one tracked run. Q2 tail risk and Q3 attribution depend
+only on the gold; Q1 is the spike, whose frozen outputs are reshaped without
+any recomputation. The Europe-wide ignition model on the feature store is
+defined here but not materialised (reduced GO, ADR 0009).
 """
 
 from datetime import date
@@ -16,7 +18,7 @@ GROUP = "model_out"
 
 
 @asset(key_prefix="gold", group_name=GROUP, kinds={"python"}, deps=[gold.gold_star],
-       description="Q2: GPD tail of declustered EFFIS fire episodes above 500 ha per EU27 country, return levels with year-block bootstrap intervals, threshold stability")
+       description="Q2: GPD tail of declustered EFFIS fire episodes above 500 ha per EU27 country, return levels with year-block bootstrap intervals, threshold stability, goodness of fit")
 def tail_risk_country() -> MaterializeResult:
     from src.models import extremes, tracking
 
@@ -28,19 +30,24 @@ def tail_risk_country() -> MaterializeResult:
               "min_years": extremes.MIN_YEARS, "min_episodes": extremes.MIN_EPISODES, "n_boot": 500}
     exp = "q2_tail_risk"
     run_params = {**params, "bootstrap": "year_blocks", "perimeter": "EU27",
-                  "stability_thresholds_ha": list(extremes.STABILITY_THRESHOLDS_HA), "stability_n_boot": 200}
+                  "stability_thresholds_ha": list(extremes.STABILITY_THRESHOLDS_HA), "stability_n_boot": 200,
+                  "gof_test": "anderson_darling_parametric_bootstrap", "gof_n_sim": extremes.GOF_N_SIM,
+                  "gof_alpha": extremes.GOF_ALPHA}
     with tracking.run(exp, f"country_{date.today():%Y%m%d}", run_params, tags={"published": "false"}) as active:
         full = extremes.tail_risk_table(events, group="country_key", eu_members=eu_members, **params)  # type: ignore[arg-type]
         table = full[full["in_scope"]].reset_index(drop=True)
         stability = extremes.threshold_stability(events, groups=list(table["country_key"]), group="country_key",
                                                  decluster_days=extremes.DECLUSTER_DAYS)
+        gof, episodes = extremes.goodness_of_fit(events, table, group="country_key")
         run_id = active.info.run_id
         table["run_id"] = run_id
         tracking.log_table(table, "tail_risk_country")
+        tracking.log_table(gof, "goodness_of_fit")
         tracking.log_table(full[["country_key", "years", "n_fires", "n_exceedances", "in_scope", "scope_reason"]], "perimeter")
         tracking.log_table(stability, "threshold_stability")
         tracking.log_metrics({"groups_seen": len(full), "groups_published": len(table),
                               "groups_shape_below_one": int(table["shape_below_one"].fillna(False).astype(bool).sum()),
+                              "groups_gpd_rejected": int(gof["gpd_rejected"].sum()),
                               **{f"episodes_{k}": n for k, n in zip(full["country_key"], full["n_exceedances"], strict=True)}})
     lake.ensure_dirs()
     out = lake.GOLD_MODEL_OUT / "tail_risk_country.parquet"
@@ -48,7 +55,9 @@ def tail_risk_country() -> MaterializeResult:
     extremes.return_levels_long(table).assign(run_id=run_id).to_parquet(
         lake.GOLD_MODEL_OUT / "tail_risk_levels.parquet", index=False)
     stability.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "tail_risk_threshold_stability.parquet", index=False)
-    tracking.mark_published(exp, run_id)  # only once the three tables are written
+    gof.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "tail_risk_gof.parquet", index=False)
+    episodes.assign(run_id=run_id).to_parquet(lake.GOLD_MODEL_OUT / "tail_risk_episodes.parquet", index=False)
+    tracking.mark_published(exp, run_id)  # only once every table is written
     return MaterializeResult(metadata={"rows": int(len(table)), "run_id": run_id, "path": str(out)})
 
 
