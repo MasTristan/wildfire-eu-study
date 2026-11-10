@@ -227,8 +227,10 @@ du seuil : arrêt et rapport.
 Attendu pour Q1 : `gold/q1_spike_results` ne recalcule rien, il journalise les
 sorties gelées de `notebooks/spike_q1/out` et écrit les tables `q1_*`.
 
-Chaque reconstruction crée de nouveaux runs MLflow. Les cartes de modèle
-citent le `run_id` de leurs tables : les mettre à jour, puis vérifier.
+Chaque reconstruction crée de nouveaux runs MLflow et réécrit les Parquet de
+`data/lake/gold/model_out`, qui sont suivis par git. Les cartes de modèle
+citent le `run_id` de leurs tables : les mettre à jour, vérifier, puis
+commiter tables, figures et cartes ensemble.
 
 ```powershell
 uv run python scripts/model_figures.py
@@ -307,10 +309,10 @@ uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage access_key_id <cl
 uvx --from "dvc[s3]==3.67.1" dvc remote modify --local storage secret_access_key <secret>
 ```
 
-3. Suivre et pousser la gold et les sorties de modèles :
+3. Suivre et pousser la gold. Les sorties de modèles (`data/lake/gold/model_out`, moins de 300 Ko) sont versionnées dans git, pas dans DVC :
 
 ```powershell
-uvx --from "dvc[s3]==3.67.1" dvc add data/lake/gold/star data/lake/gold/model_out
+uvx --from "dvc[s3]==3.67.1" dvc add data/lake/gold/star
 uvx --from "dvc[s3]==3.67.1" dvc push
 git add data/lake/gold/*.dvc .dvc/config
 git commit -m "data: track gold star and model outputs with DVC"

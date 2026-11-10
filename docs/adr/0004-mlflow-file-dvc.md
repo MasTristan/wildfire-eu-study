@@ -1,6 +1,6 @@
 # 0004. MLflow en store fichier, DVC pour les données, aucun serveur
 
-Statut : proposé le 2026-10-15. Partie MLflow acceptée le 2026-11-09 (store SQLite local, un run par table publiée). Partie DVC en attente : le remote est déclaré mais aucun stockage n'est encore configuré, les données ne sont donc pas poussées.
+Statut : proposé le 2026-10-15. Partie MLflow acceptée le 2026-11-09 (store SQLite local, un run par table publiée). Partie DVC en attente : le remote est déclaré mais aucun stockage n'est encore configuré, les données ne sont donc pas poussées. Exception décidée le 2026-11-10 : les sorties de modèles (`data/lake/gold/model_out`, moins de 300 Ko) sont versionnées dans git, pour que les cartes de modèle se vérifient sur un clone neuf et en CI.
 
 ## Contexte
 
