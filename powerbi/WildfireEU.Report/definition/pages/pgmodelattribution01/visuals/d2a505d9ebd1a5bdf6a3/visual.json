@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Ordinary least squares on log burnt area (EFFIS), country fixed effects, metrics standardised within each country, standard errors clustered by country, 95 % intervals; a Bayesian fit (95 % HDI) and the variants (year effects, linear trend, EU only, Mediterranean only, fires above 100 ha) back the robust flag. Multiplier: burnt area is multiplied by it for one standard deviation more of the metric. Weather share: within-country variance explained by the weather terms, in sample and out of sample against the country mean. Statistical association, not causation: weather governs how far a fire runs, people start nearly all of them.",
+                    "value": "OLS on log burnt area (EFFIS), country fixed effects, metrics in within-country standard deviations (one value for the whole panel), errors clustered by country, 95 % intervals. Robust: a Bayesian fit (95 % HDI) and the variants agree (year effects, linear trend, EU only, Mediterranean only, fires above 100 ha). Multiplier: factor on burnt area per standard deviation. R\u00b2: weather terms, within country, in sample and out of sample. Statistical association, not causation. Line chart: only countries observed in every year.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",

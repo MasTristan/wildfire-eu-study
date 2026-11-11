@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
   "name": "pgmodelattribution01",
-  "displayName": "11 Attribution",
+  "displayName": "10 Attribution",
   "displayOption": "ActualSize",
   "height": 800,
   "width": 1280,

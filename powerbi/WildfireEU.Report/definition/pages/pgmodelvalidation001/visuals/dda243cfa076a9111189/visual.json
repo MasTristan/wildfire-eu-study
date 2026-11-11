@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Label: EFFIS ignitions, 1 215 cells, 443 475 cell-days per test year. Lift: PR-AUC divided by the share of cell-days with an ignition (0.39 % in 2022). Brier gain is relative, PR-AUC gain absolute. Most of the signal comes from where and when fires already happen, not from more weather. Limits: perimeters are known only with a delay, so no operational use; without January to March the 2023 Brier gain falls from 13.0 % to 2.7 %. Protocol, exploratory analyses and every number: notebooks/spike_q1/VERDICT.md.",
+                    "value": "Label: EFFIS fire starts, 1 215 cells, 443 475 cell-days per test year. Lift: PR-AUC divided by the share of cell-days with a fire start (0.39 % in 2022). Brier gain is relative, PR-AUC gain absolute. Most of the signal comes from where and when fires already happen, not from more weather. Limits: perimeters are known only with a delay, so no operational use; without January to March the 2023 Brier gain falls from 13.0 % to 2.7 %. Protocol, exploratory analyses and every number: notebooks/spike_q1/VERDICT.md.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",

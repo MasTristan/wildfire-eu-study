@@ -5,7 +5,7 @@
     "x": 16.0,
     "y": 328,
     "z": 7,
-    "width": 410.67,
+    "width": 306.0,
     "height": 408
   },
   "visual": {
@@ -152,7 +152,7 @@
             "zoomLevel": {
               "expr": {
                 "Literal": {
-                  "Value": "3.4D"
+                  "Value": "3.0D"
                 }
               }
             },

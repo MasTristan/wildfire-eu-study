@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "f910d9a91e5464eab731",
   "position": {
-    "x": 539.33,
+    "x": 644.0,
     "y": 380,
     "z": 10,
-    "width": 724.67,
+    "width": 620.0,
     "height": 200
   },
   "visual": {
@@ -22,11 +22,11 @@
                       "Entity": "attribution_coefficients"
                     }
                   },
-                  "Property": "metric_name"
+                  "Property": "metric_label"
                 }
               },
-              "queryRef": "attribution_coefficients.metric_name",
-              "nativeQueryRef": "metric_name",
+              "queryRef": "attribution_coefficients.metric_label",
+              "nativeQueryRef": "metric_label",
               "active": true
             }
           ]

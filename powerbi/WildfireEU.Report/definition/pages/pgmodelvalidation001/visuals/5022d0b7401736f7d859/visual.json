@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Predicting ignitions: a real gain, but the pre-registered criterion is not met",
+                    "value": "Fire occurrence model: place and recent activity do almost all the work, weather adds little",
                     "textStyle": {
                       "fontFamily": "Segoe UI Semibold",
                       "fontSize": "23pt",

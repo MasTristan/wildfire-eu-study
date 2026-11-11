@@ -26,7 +26,8 @@
                 }
               },
               "queryRef": "_Measures.Weather share, out of sample",
-              "nativeQueryRef": "Weather share, out of sample"
+              "nativeQueryRef": "Weather share, out of sample",
+              "displayName": "Within-country R\u00b2, out of sample"
             }
           ]
         }

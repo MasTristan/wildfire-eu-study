@@ -5,7 +5,7 @@
     "x": 16.0,
     "y": 380,
     "z": 9,
-    "width": 515.33,
+    "width": 620.0,
     "height": 200
   },
   "visual": {
@@ -41,11 +41,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Burnt area, panel (ha)"
+                  "Property": "Burnt area, balanced panel (ha)"
                 }
               },
-              "queryRef": "_Measures.Burnt area, panel (ha)",
-              "nativeQueryRef": "Burnt area, panel (ha)"
+              "queryRef": "_Measures.Burnt area, balanced panel (ha)",
+              "nativeQueryRef": "Burnt area, balanced panel (ha)",
+              "displayName": "Burnt area"
             },
             {
               "field": {
@@ -55,11 +56,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Weather-adjusted area (ha)"
+                  "Property": "Weather-adjusted area, balanced panel (ha)"
                 }
               },
-              "queryRef": "_Measures.Weather-adjusted area (ha)",
-              "nativeQueryRef": "Weather-adjusted area (ha)"
+              "queryRef": "_Measures.Weather-adjusted area, balanced panel (ha)",
+              "nativeQueryRef": "Weather-adjusted area, balanced panel (ha)",
+              "displayName": "Weather-adjusted area"
             }
           ]
         }
@@ -127,7 +129,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Burnt area against the weather-adjusted area (ha)'"
+                  "Value": "'Burnt area vs weather-adjusted, countries observed every year'"
                 }
               }
             }

@@ -26,7 +26,8 @@
                 }
               },
               "queryRef": "_Measures.Weather share of the swings",
-              "nativeQueryRef": "Weather share of the swings"
+              "nativeQueryRef": "Weather share of the swings",
+              "displayName": "Within-country R\u00b2 of weather (log area)"
             }
           ]
         }

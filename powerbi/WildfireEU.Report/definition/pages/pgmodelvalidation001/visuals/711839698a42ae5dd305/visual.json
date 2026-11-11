@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Does a model that sees more than the fire-weather index predict daily ignitions better? Pre-registered test on Spain, Portugal and Greece, 0.25 degree cells, trained on 2019-2021, tested on 2022 and 2023. Criterion frozen before training: Brier score 10 % better and PR-AUC 0.05 higher than the fire-weather-only model, in both years. Verdict: criterion not met (reduced GO). The 2022 miss survives the draw of negatives (0 seeds out of 10) and recalibration; the 2023 pass holds on 7 seeds out of 10. The model predicts where and when activity persists, not new starts.",
+                    "value": "The pre-registered criterion is not met (reduced GO). Does a model that sees more than the fire-weather index predict daily fire starts (first day of an EFFIS perimeter) better? Pre-registered test on Spain, Portugal and Greece, 0.25 degree cells, trained on 2019-2021, tested on 2022 and 2023. Criterion frozen before training: Brier score 10 % better and PR-AUC 0.05 higher than the fire-weather-only model, in both years. Verdict: criterion not met (reduced GO). The 2022 miss survives the draw of negatives (0 seeds out of 10) and recalibration; the 2023 pass holds on 7 seeds out of 10. The model predicts where and when activity persists, not new starts: on cells with no fire start in the previous 30 days, its average precision is 1.8 % (2022) and 2.8 % (2023), against base rates of 0.16 % and 0.13 %. Weather beyond the index adds little: lift 39 with it, 35 without (2022).",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

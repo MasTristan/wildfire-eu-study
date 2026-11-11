@@ -119,7 +119,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Weather effect by year: how far the season's weather pushed burnt area above or below normal'"
+                  "Value": "'Weather component by year: burnt area expected from the season's weather, against a normal season'"
                 }
               }
             }

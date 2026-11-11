@@ -22,11 +22,11 @@
                       "Entity": "q1_metrics"
                     }
                   },
-                  "Property": "model_name"
+                  "Property": "model_label"
                 }
               },
-              "queryRef": "q1_metrics.model_name",
-              "nativeQueryRef": "model_name",
+              "queryRef": "q1_metrics.model_label",
+              "nativeQueryRef": "model_label",
               "active": true
             }
           ]
