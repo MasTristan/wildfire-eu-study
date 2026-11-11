@@ -106,8 +106,8 @@ plusieurs à filtre simple uniquement.
 | Modèles Q1 (spike), Q2, Q3 | matérialisés, tracés dans MLflow, une carte chacun |
 | Feature store maille x jour à l'échelle de l'Europe | code et tests présents, **non matérialisé** : abandonné avec l'extension de Q1 ([ADR 0009](docs/adr/0009-q1-scope-after-reduced-go.md)) |
 | Prévision quotidienne | **abandonnée** : elle était conditionnée à un critère Q1 atteint |
-| Distribution des données | sorties de modèles dans le dépôt ; schéma en étoile et données brutes **non distribués** (remote DVC déclaré, aucun stockage configuré) : les reconstruire demande les comptes ci-dessous |
-| Site de documentation | construit par la CI à chaque changement, pas encore publié |
+| Distribution des données | sorties de modèles dans le dépôt, schéma en étoile en asset de la release `v2.0` ; données brutes **non distribuées** (remote DVC déclaré, aucun stockage configuré) : les reconstruire demande les comptes ci-dessous |
+| Site de documentation | publié sur [mastristan.github.io/wildfire-eu-study](https://mastristan.github.io/wildfire-eu-study/), reconstruit à chaque changement de `docs/` sur `main` |
 
 ## Démarrage
 
@@ -126,7 +126,18 @@ chaque chiffre d'une carte de modèle se retrouve sur un clone neuf avec la
 commande de sa section « Reproduire », et la CI vérifie que cartes, tables et
 rapport disent la même chose.
 
-Reconstruire les données demande deux comptes gratuits et du temps de
+Pour ouvrir le rapport ou faire tourner les tests de données sans rien
+reconstruire, le schéma en étoile est publié avec la release `v2.0` (5 Mo) :
+
+```bash
+make fetch-data      # ou : uv run python scripts/fetch_release_data.py
+uv run pytest -q tests/test_gold_parity.py tests/test_powerbi_model.py
+```
+
+Le script télécharge aussi la référence de parité de la v1 et refuse un
+fichier dont l'empreinte ne correspond pas au manifeste commité.
+
+Reconstruire depuis les sources demande deux comptes gratuits et du temps de
 téléchargement. La procédure complète, avec le résultat attendu à chaque
 étape, est dans [docs/runbooks/materialise-v2.md](docs/runbooks/materialise-v2.md).
 En bref :
