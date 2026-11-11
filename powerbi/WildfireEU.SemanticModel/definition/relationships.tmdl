@@ -97,3 +97,8 @@ relationship 10cde1f4-0432-54b6-a44b-bab47111b777
 relationship e82a86af-c9b9-52fd-952c-554ba3b25411
 	fromColumn: tail_risk_threshold_stability.country_key
 	toColumn: dim_country.country_key
+
+relationship b37cc5f3-0cfd-533d-acc2-d884c8d981c5
+	fromColumn: tail_risk_gof.country_key
+	toColumn: dim_country.country_key
+

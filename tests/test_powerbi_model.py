@@ -111,7 +111,7 @@ def test_partition_reads_the_parquet_named_after_its_table(path: Path):
 def test_every_model_out_table_the_report_needs_is_in_the_model():
     names = {p.stem for p in TABLES}
     for needed in (
-        "tail_risk_country", "tail_risk_levels", "tail_risk_threshold_stability",
+        "tail_risk_country", "tail_risk_levels", "tail_risk_threshold_stability", "tail_risk_gof",
         "attribution_coefficients", "attribution_summary", "attribution_robustness",
         "attribution_exclusions", "q1_criterion", "q1_importance", "q1_metrics",
     ):

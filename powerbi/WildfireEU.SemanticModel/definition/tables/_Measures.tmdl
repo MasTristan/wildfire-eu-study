@@ -610,8 +610,7 @@ table _Measures
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: b10dcd78-a7e7-50fe-bcd0-7ec81655b3eb
 
-	measure 'Countries fitted' =
-			CALCULATE ( COUNTROWS ( FILTER ( tail_risk_country, tail_risk_country[in_scope] = TRUE () && NOT ISBLANK ( tail_risk_country[shape] ) ) ), REMOVEFILTERS ( dim_country ) )
+	measure 'Countries fitted' = CALCULATE ( COUNTROWS ( FILTER ( tail_risk_country, tail_risk_country[in_scope] = TRUE () && NOT ISBLANK ( tail_risk_country[shape] ) ) ), REMOVEFILTERS ( dim_country ) )
 		formatString: 0
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 29c0402d-5e6b-5cae-a0d7-a32b23d8b11a
@@ -623,7 +622,7 @@ table _Measures
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 5d09ea87-df34-5d5f-ae09-3a6e0eda369a
 
-	measure 'Tail shape, Greece' =  CALCULATE ( [Tail shape], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "GR" )
+	measure 'Tail shape, Greece' = CALCULATE ( [Tail shape], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "GR" )
 		formatString: 0.00
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 6aea36de-3d83-5914-8da4-c3b0e4efb1d3
@@ -664,10 +663,34 @@ table _Measures
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: cffc6dea-ebed-5c67-a4c6-3cad2cd120f5
 
-	measure 'Episodes per year' =  AVERAGE ( tail_risk_country[rate_per_year] )
+	measure 'Episodes per year' = AVERAGE ( tail_risk_country[rate_per_year] )
 		formatString: 0.0
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: b2f1018c-e7cb-57b7-99f8-fe5f3dac8a19
+
+	measure 'Episodes above threshold' = SUM ( tail_risk_country[n_exceedances] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: a9d2408c-5090-50bf-a49b-c424cb6a09f5
+
+	measure '10-year fire, 95% low (ha)' = AVERAGE ( tail_risk_country[rl_10y_low] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: c1ed6967-319d-569f-9f03-b3d20c6d5383
+
+	measure '10-year fire, 95% high (ha)' = AVERAGE ( tail_risk_country[rl_10y_high] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 6112d5e4-3304-5367-aff5-cf6f1a2db67e
+
+	measure 'Fit p-value' = AVERAGE ( tail_risk_gof[p_value] )
+		formatString: 0.000
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 2a4dc3d8-45ce-5fc1-9fc9-b3792a057bd3
+
+	measure 'Fit rejected (5%)' = IF ( ISEMPTY ( tail_risk_gof ), BLANK (), IF ( COUNTROWS ( FILTER ( tail_risk_gof, tail_risk_gof[gpd_rejected] = TRUE () ) ) > 0, "Rejected", "Not rejected" ) )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 5dab6a7e-0b49-5143-a7f4-e459a8173bdc
 
 	measure 'Curve country' =
 			VAR sel = SELECTEDVALUE ( dim_country[country_key] )
@@ -740,6 +763,16 @@ table _Measures
 		displayFolder: Models\Q3 Attribution
 		lineageTag: f9f5c5e3-e00e-5f0e-bd65-5ce06bc16dc3
 
+	measure 'Burnt area, balanced panel (ha)' = CALCULATE ( SUM ( attribution_countryyear[burnt_area_ha] ), attribution_countryyear[observed_every_year] = TRUE () )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: f2363fc6-39d0-5869-8e5c-1ee22d9324df
+
+	measure 'Weather-adjusted area, balanced panel (ha)' = CALCULATE ( SUM ( attribution_countryyear[adjusted_area_ha] ), attribution_countryyear[observed_every_year] = TRUE () )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 0732f249-69f9-5a38-9ddb-0d2c1ea8a48c
+
 	measure 'Weather effect' =
 			VAR observed = [Burnt area, panel (ha)]
 			VAR adjusted = [Weather-adjusted area (ha)]
@@ -778,7 +811,7 @@ table _Measures
 		displayFolder: Models\Q3 Attribution
 		lineageTag: b15794b4-d350-5464-8a07-5c2f5ca418c5
 
-	measure 'Coefficient' = AVERAGE ( attribution_coefficients[coef] )
+	measure Coefficient = AVERAGE ( attribution_coefficients[coef] )
 		formatString: +0.00;-0.00;0.00
 		displayFolder: Models\Q3 Attribution
 		lineageTag: 7bfe5af2-46fd-50bf-897b-c6e077a97961
@@ -793,7 +826,7 @@ table _Measures
 		displayFolder: Models\Q3 Attribution
 		lineageTag: c1fb2c59-5315-596e-ab3c-603697bdb3cf
 
-	measure 'Verdict' = IF ( COUNTROWS ( FILTER ( q1_criterion, q1_criterion[all_pass] = TRUE () ) ) > 0, "GO", "Reduced GO" )
+	measure Verdict = IF ( COUNTROWS ( FILTER ( q1_criterion, q1_criterion[all_pass] = TRUE () ) ) > 0, "GO", "Reduced GO" )
 		displayFolder: Models\Q1 Validation
 		lineageTag: 1deddbe8-b9be-5121-8f04-533a82670de2
 
@@ -812,7 +845,7 @@ table _Measures
 		displayFolder: Models\Q1 Validation
 		lineageTag: 0f84c6b4-5d30-545c-960f-4ee4f5776e27
 
-	measure 'PR-AUC' = AVERAGE ( q1_metrics[pr_auc] )
+	measure PR-AUC = AVERAGE ( q1_metrics[pr_auc] )
 		formatString: 0.000
 		displayFolder: Models\Q1 Validation
 		lineageTag: 6ad50365-585e-5fbf-b27d-15b142317ada

@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["dim_date","dim_country","dim_commune","dim_landcover","dim_firecause","dim_source","fact_fireevent","fact_burntarea_countrymonth","fact_burntarea_countryyear","fact_burntarea_landcover","fact_fireweather_countrymonth","fact_hotspot_countrymonth","tail_risk_country","tail_risk_levels","tail_risk_threshold_stability","attribution_countryyear","attribution_coefficients","attribution_summary","attribution_robustness","attribution_exclusions","q1_metrics","q1_criterion","q1_importance","_Measures"]
+annotation PBI_QueryOrder = ["dim_date","dim_country","dim_commune","dim_landcover","dim_firecause","dim_source","fact_fireevent","fact_burntarea_countrymonth","fact_burntarea_countryyear","fact_burntarea_landcover","fact_fireweather_countrymonth","fact_hotspot_countrymonth","tail_risk_country","tail_risk_levels","tail_risk_threshold_stability","tail_risk_gof","attribution_countryyear","attribution_coefficients","attribution_summary","attribution_robustness","attribution_exclusions","q1_metrics","q1_criterion","q1_importance","_Measures"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -30,6 +30,7 @@ ref table fact_hotspot_countrymonth
 ref table tail_risk_country
 ref table tail_risk_levels
 ref table tail_risk_threshold_stability
+ref table tail_risk_gof
 ref table attribution_countryyear
 ref table attribution_coefficients
 ref table attribution_summary

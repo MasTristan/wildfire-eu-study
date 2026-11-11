@@ -101,6 +101,14 @@ table q1_metrics
 
 		annotation SummarizationSetBy = Automatic
 
+	column model_label = SWITCH ( q1_metrics[model], "danger_class", "Danger class", "logit_fwi", "Logit, FWI", "lgbm_fwi", "GBM, FWI", "lgbm_fwi_space", "GBM, FWI + place", "lgbm_full", "GBM, full", q1_metrics[model_name] )
+		dataType: string
+		lineageTag: 1b1e5744-38ad-5480-b025-00cd340f9ea2
+		summarizeBy: none
+		sortByColumn: model_order
+
+		annotation SummarizationSetBy = Automatic
+
 	partition q1_metrics = m
 		mode: import
 		source =
@@ -110,3 +118,4 @@ table q1_metrics
 				    Source
 
 	annotation PBI_ResultType = Table
+

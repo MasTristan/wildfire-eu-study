@@ -93,6 +93,16 @@ table attribution_countryyear
 
 		annotation SummarizationSetBy = Automatic
 
+	column observed_every_year =
+			VAR n = CALCULATE ( COUNTROWS ( attribution_countryyear ), ALLEXCEPT ( attribution_countryyear, attribution_countryyear[country_key] ) )
+			VAR span = CALCULATE ( MAX ( attribution_countryyear[year] ) - MIN ( attribution_countryyear[year] ) + 1, ALL ( attribution_countryyear ) )
+			RETURN n = span
+		dataType: boolean
+		lineageTag: 63c0d249-e8c9-5463-93b3-a36e52eec245
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
 	partition attribution_countryyear = m
 		mode: import
 		source =
@@ -103,3 +113,4 @@ table attribution_countryyear
 				    WithKey
 
 	annotation PBI_ResultType = Table
+
