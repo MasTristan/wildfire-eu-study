@@ -52,7 +52,7 @@ def _current(name: str) -> pd.DataFrame:
 def _reference(name: str) -> pd.DataFrame:
     path = REFERENCE / f"{name}.parquet"
     if not path.exists():
-        pytest.skip(f"{path} not downloaded (release asset gold-v1.zip on tag v1.0)")
+        pytest.skip(f"{path} not downloaded (make fetch-data, or scripts/fetch_release_data.py)")
     return pd.read_parquet(path)
 
 

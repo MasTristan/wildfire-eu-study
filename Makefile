@@ -1,7 +1,7 @@
 # Developer entry points. Everything runs through uv so the lockfile is the
 # single source of truth for versions (see pyproject.toml).
 
-.PHONY: sync lint type test docs check validate freeze-v1 export-requirements dbt-parse dbt-build dagster-dev dvc-status
+.PHONY: sync lint type test docs check validate fetch-data freeze-v1 export-requirements dbt-parse dbt-build dagster-dev dvc-status
 
 sync:            ## create or update the virtualenv from uv.lock
 	uv sync
@@ -19,6 +19,9 @@ docs:            ## build the site, failing on any broken link or missing page
 	uv run mkdocs build --strict
 
 check: lint type test docs  ## what CI runs
+
+fetch-data:      ## download the published star schema and parity reference of the release
+	uv run python scripts/fetch_release_data.py
 
 validate:        ## pandera contracts over data/processed
 	uv run python -m src.contracts
