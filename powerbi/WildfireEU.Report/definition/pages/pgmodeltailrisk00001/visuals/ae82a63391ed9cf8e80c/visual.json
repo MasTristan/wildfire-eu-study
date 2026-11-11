@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "ae82a63391ed9cf8e80c",
   "position": {
-    "x": 579.57,
+    "x": 660.08,
     "y": 16,
     "z": 19,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'France'"
+                  "Value": "'Live'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgfrancelocaldive001'"
+                  "Value": "'pglivecurrentseason1'"
                 }
               }
             }

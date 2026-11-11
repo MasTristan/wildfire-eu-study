@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "13538444393dd16b0f23",
   "position": {
-    "x": 96.51,
+    "x": 177.02,
     "y": 16,
     "z": 13,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Scale'"
+                  "Value": "'Where'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgeuropeoverview0001'"
+                  "Value": "'pgwheregeography0001'"
                 }
               }
             }

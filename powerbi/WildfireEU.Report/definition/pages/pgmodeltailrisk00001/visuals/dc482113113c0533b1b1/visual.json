@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "dc482113113c0533b1b1",
   "position": {
-    "x": 177.02,
+    "x": 257.53,
     "y": 16,
     "z": 14,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Where'"
+                  "Value": "'When'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgwheregeography0001'"
+                  "Value": "'pgwhenseasonality001'"
                 }
               }
             }

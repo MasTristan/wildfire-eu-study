@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "5fb4915ef5caf1d22bc6",
   "position": {
-    "x": 418.55,
+    "x": 499.06,
     "y": 16,
     "z": 17,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Why'"
+                  "Value": "'Country'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgwhyclimatefwi00001'"
+                  "Value": "'pgcountrydeepdive001'"
                 }
               }
             }

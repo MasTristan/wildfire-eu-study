@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "046676cab3f06823b83d",
   "position": {
-    "x": 499.06,
+    "x": 579.57,
     "y": 16,
     "z": 18,
     "width": 72.51,
@@ -42,7 +42,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Country'"
+                  "Value": "'France'"
                 }
               }
             },
@@ -132,7 +132,7 @@
             "navigationSection": {
               "expr": {
                 "Literal": {
-                  "Value": "'pgcountrydeepdive001'"
+                  "Value": "'pgfrancelocaldive001'"
                 }
               }
             }

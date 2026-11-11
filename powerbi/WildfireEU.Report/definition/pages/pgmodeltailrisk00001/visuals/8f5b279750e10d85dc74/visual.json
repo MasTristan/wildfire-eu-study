@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "e31d55223620addb5490",
+  "name": "8f5b279750e10d85dc74",
   "position": {
     "x": 16.0,
-    "y": 328,
-    "z": 7,
+    "y": 276,
+    "z": 6,
     "width": 306.0,
-    "height": 408
+    "height": 460
   },
   "visual": {
     "visualType": "filledMap",
@@ -181,7 +181,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Tail shape: the darker, the thinner the tail'"
+                  "Value": "'Tail shape by country'"
                 }
               }
             }

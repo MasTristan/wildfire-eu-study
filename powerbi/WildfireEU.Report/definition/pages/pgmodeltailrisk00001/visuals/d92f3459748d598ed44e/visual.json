@@ -1,10 +1,10 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "dc67360cd96b21d84f59",
+  "name": "d92f3459748d598ed44e",
   "position": {
     "x": 330.0,
-    "y": 328,
-    "z": 8,
+    "y": 276,
+    "z": 7,
     "width": 934.0,
     "height": 252
   },
@@ -175,14 +175,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Ten-year fire size with its 95 % interval, against the largest observed, with goodness of fit'"
+                  "Value": "false"
                 }
               }
             }

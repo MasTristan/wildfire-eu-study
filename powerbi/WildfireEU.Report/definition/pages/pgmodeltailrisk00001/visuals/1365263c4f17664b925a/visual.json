@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
-  "name": "c12e813c9833db3d5752",
+  "name": "1365263c4f17664b925a",
   "position": {
-    "x": 748.67,
-    "y": 588,
-    "z": 10,
-    "width": 515.33,
-    "height": 148
+    "x": 330.0,
+    "y": 536,
+    "z": 8,
+    "width": 410.67,
+    "height": 200
   },
   "visual": {
     "visualType": "lineChart",
@@ -19,14 +19,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "tail_risk_levels"
+                      "Entity": "tail_risk_threshold_stability"
                     }
                   },
-                  "Property": "period_years"
+                  "Property": "threshold_ha"
                 }
               },
-              "queryRef": "tail_risk_levels.period_years",
-              "nativeQueryRef": "period_years",
+              "queryRef": "tail_risk_threshold_stability.threshold_ha",
+              "nativeQueryRef": "threshold_ha",
               "active": true
             }
           ]
@@ -41,12 +41,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Return level (ha)"
+                  "Property": "Shape by threshold"
                 }
               },
-              "queryRef": "_Measures.Return level (ha)",
-              "nativeQueryRef": "Return level (ha)",
-              "displayName": "Fitted"
+              "queryRef": "_Measures.Shape by threshold",
+              "nativeQueryRef": "Shape by threshold",
+              "displayName": "Shape"
             },
             {
               "field": {
@@ -56,11 +56,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Return level, 95% low (ha)"
+                  "Property": "Shape by threshold, 95% low"
                 }
               },
-              "queryRef": "_Measures.Return level, 95% low (ha)",
-              "nativeQueryRef": "Return level, 95% low (ha)",
+              "queryRef": "_Measures.Shape by threshold, 95% low",
+              "nativeQueryRef": "Shape by threshold, 95% low",
               "displayName": "95 % low"
             },
             {
@@ -71,27 +71,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Return level, 95% high (ha)"
+                  "Property": "Shape by threshold, 95% high"
                 }
               },
-              "queryRef": "_Measures.Return level, 95% high (ha)",
-              "nativeQueryRef": "Return level, 95% high (ha)",
+              "queryRef": "_Measures.Shape by threshold, 95% high",
+              "nativeQueryRef": "Shape by threshold, 95% high",
               "displayName": "95 % high"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Observed level (ha)"
-                }
-              },
-              "queryRef": "_Measures.Observed level (ha)",
-              "nativeQueryRef": "Observed level (ha)",
-              "displayName": "Observed"
             }
           ]
         }
@@ -172,7 +157,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Return levels for Italy until you pick a country'"
+                  "Value": "'Tail shape by threshold (ha)'"
                 }
               }
             }

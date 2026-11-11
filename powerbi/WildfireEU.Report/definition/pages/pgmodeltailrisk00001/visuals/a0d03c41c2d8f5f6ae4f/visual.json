@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "a0d03c41c2d8f5f6ae4f",
   "position": {
-    "x": 644.0,
-    "y": 224,
+    "x": 853.33,
+    "y": 172,
     "z": 5,
-    "width": 306.0,
+    "width": 410.67,
     "height": 96
   },
   "visual": {
@@ -22,11 +22,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Countries fitted"
+                  "Property": "Fits rejected (5%)"
                 }
               },
-              "queryRef": "_Measures.Countries fitted",
-              "nativeQueryRef": "Countries fitted"
+              "queryRef": "_Measures.Fits rejected (5%)",
+              "nativeQueryRef": "Fits rejected (5%)",
+              "displayName": "Fits rejected (5 %)"
             }
           ]
         }

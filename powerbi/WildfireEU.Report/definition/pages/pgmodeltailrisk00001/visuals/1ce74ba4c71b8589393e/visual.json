@@ -3,9 +3,9 @@
   "name": "1ce74ba4c71b8589393e",
   "position": {
     "x": 16.0,
-    "y": 224,
+    "y": 172,
     "z": 3,
-    "width": 306.0,
+    "width": 410.67,
     "height": 96
   },
   "visual": {
@@ -22,11 +22,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Tail shape, Portugal"
+                  "Property": "Countries fitted"
                 }
               },
-              "queryRef": "_Measures.Tail shape, Portugal",
-              "nativeQueryRef": "Tail shape, Portugal"
+              "queryRef": "_Measures.Countries fitted",
+              "nativeQueryRef": "Countries fitted"
             }
           ]
         }
