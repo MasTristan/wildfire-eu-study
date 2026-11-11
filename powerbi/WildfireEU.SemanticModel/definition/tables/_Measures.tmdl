@@ -692,6 +692,13 @@ table _Measures
 		displayFolder: Models\Q2 Tail risk
 		lineageTag: 5dab6a7e-0b49-5143-a7f4-e459a8173bdc
 
+	measure 'Fits rejected (5%)' =
+			VAR rejected = CALCULATE ( COUNTROWS ( FILTER ( tail_risk_gof, tail_risk_gof[gpd_rejected] = TRUE () ) ), REMOVEFILTERS ( dim_country ) )
+			VAR tested = CALCULATE ( COUNTROWS ( tail_risk_gof ), REMOVEFILTERS ( dim_country ) )
+			RETURN FORMAT ( rejected, "0" ) & " of " & FORMAT ( tested, "0" )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 192a8490-0e59-56cd-9159-0c2c2fde47a6
+
 	measure 'Curve country' =
 			VAR sel = SELECTEDVALUE ( dim_country[country_key] )
 			RETURN IF ( ISBLANK ( sel ), "IT", sel )

@@ -159,7 +159,7 @@ table attribution_coefficients
 
 		annotation SummarizationSetBy = Automatic
 
-	column metric_label = SWITCH ( attribution_coefficients[metric], "days_high_season", "High-danger days", "spei_spring", "Spring water balance (SPEI)", "precip_anom_season", "Summer rainfall anomaly", "temp_season", "Summer temperature", attribution_coefficients[metric] )
+	column metric_label = SWITCH ( attribution_coefficients[metric], "days_high_season", "High-danger days", "spei_spring", "Spring SPEI", "precip_anom_season", "Summer rainfall anomaly", "temp_season", "Summer temperature", attribution_coefficients[metric] )
 		dataType: string
 		lineageTag: 76f3859a-da6d-516a-ae62-3a706920cafb
 		summarizeBy: none
