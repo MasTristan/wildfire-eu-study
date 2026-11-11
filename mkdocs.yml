@@ -24,6 +24,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - Accueil: index.md
+  - Le rapport en images: report.md
   - Plateforme: platform.md
   - Modèle de données: data-model.md
   - Sources: sources.md

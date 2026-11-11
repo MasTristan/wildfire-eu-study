@@ -18,6 +18,8 @@ en France (BDIFF) depuis 2006.
 
 ## Par où commencer
 
+- [Le rapport en images](report.md) : les treize pages, pour qui n'a pas
+  Power BI Desktop.
 - [Cartes de modèle](models/index.md) : ce que chaque modèle permet de dire,
   avec les limites avant les résultats.
 - [Plateforme](platform.md) : couches, assets Dagster, dbt, modèles, et ce
