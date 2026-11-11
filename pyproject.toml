@@ -1,6 +1,6 @@
 [project]
 name = "wildfire-eu-study"
-version = "2.0.0a0"
+version = "2.0.0"
 description = "European wildfires 2016-2026: data platform, statistical models and Power BI report"
 readme = "README.md"
 license = { file = "LICENSE" }
