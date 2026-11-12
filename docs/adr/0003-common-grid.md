@@ -1,6 +1,6 @@
 # 0003. Grille commune 0,25°, celle du FWI
 
-Statut : proposé le 2026-10-15.
+Statut : proposé le 2026-10-15, accepté le 2026-11-08 : grille utilisée par le spike Q1. Le feature store Europe qui devait l'exploiter n'est pas matérialisé (ADR 0009).
 
 ## Contexte
 

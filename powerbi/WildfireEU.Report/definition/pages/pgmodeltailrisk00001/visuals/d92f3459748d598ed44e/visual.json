@@ -1,0 +1,188 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d92f3459748d598ed44e",
+  "position": {
+    "x": 330.0,
+    "y": 276,
+    "z": 7,
+    "width": 934.0,
+    "height": 252
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_country"
+                    }
+                  },
+                  "Property": "name_en"
+                }
+              },
+              "queryRef": "dim_country.name_en",
+              "nativeQueryRef": "name_en",
+              "displayName": "Country"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Episodes above threshold"
+                }
+              },
+              "queryRef": "_Measures.Episodes above threshold",
+              "nativeQueryRef": "Episodes above threshold",
+              "displayName": "Episodes"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Tail shape"
+                }
+              },
+              "queryRef": "_Measures.Tail shape",
+              "nativeQueryRef": "Tail shape",
+              "displayName": "Shape"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "10-year fire (ha)"
+                }
+              },
+              "queryRef": "_Measures.10-year fire (ha)",
+              "nativeQueryRef": "10-year fire (ha)",
+              "displayName": "10-year level (ha)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "10-year fire, 95% low (ha)"
+                }
+              },
+              "queryRef": "_Measures.10-year fire, 95% low (ha)",
+              "nativeQueryRef": "10-year fire, 95% low (ha)",
+              "displayName": "95 % low"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "10-year fire, 95% high (ha)"
+                }
+              },
+              "queryRef": "_Measures.10-year fire, 95% high (ha)",
+              "nativeQueryRef": "10-year fire, 95% high (ha)",
+              "displayName": "95 % high"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Largest fitted fire (ha)"
+                }
+              },
+              "queryRef": "_Measures.Largest fitted fire (ha)",
+              "nativeQueryRef": "Largest fitted fire (ha)",
+              "displayName": "Largest observed (ha)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Fit p-value"
+                }
+              },
+              "queryRef": "_Measures.Fit p-value",
+              "nativeQueryRef": "Fit p-value",
+              "displayName": "Fit p-value"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Fit rejected (5%)"
+                }
+              },
+              "queryRef": "_Measures.Fit rejected (5%)",
+              "nativeQueryRef": "Fit rejected (5%)",
+              "displayName": "Fit rejected (5 %)"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

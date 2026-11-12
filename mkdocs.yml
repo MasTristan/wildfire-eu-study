@@ -1,7 +1,10 @@
 site_name: Wildfire EU Study
-site_description: Feux de végétation en Europe, 2006 à 2026. Plateforme de données, modèles et rapport.
-repo_url: https://github.com/mastristan/wildfire-eu-study
+site_description: Feux de végétation en Europe, 2016 à 2026. Plateforme de données, modèles et rapport.
+site_url: https://mastristan.github.io/wildfire-eu-study/
+repo_url: https://github.com/MasTristan/wildfire-eu-study
 docs_dir: docs
+exclude_docs: |
+  internal/
 site_dir: site
 theme:
   name: material
@@ -22,10 +25,16 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - Accueil: index.md
+  - Le rapport en images: report.md
   - Plateforme: platform.md
   - Modèle de données: data-model.md
   - Sources: sources.md
-  - Spécification du rapport: dashboard-spec.md
+  - Conception du rapport: dashboard-spec.md
+  - Modèles:
+      - Cartes de modèle: models/index.md
+      - Q1 occurrence (spike): models/q1-ignition-spike.md
+      - Q2 queue des tailles: models/q2-tail-risk.md
+      - Q3 attribution: models/q3-attribution.md
   - Décisions d'architecture:
       - Index: adr/README.md
       - 0001 Dagster: adr/0001-dagster-orchestration.md
@@ -37,6 +46,7 @@ nav:
       - 0007 ERA5 horaire CDS: adr/0007-era5-hourly-cds-monthly.md
       - 0008 Repli ARCO-ERA5: adr/0008-arco-era5-fallback.md
       - 0009 Périmètre après le spike: adr/0009-q1-scope-after-reduced-go.md
+      - 0010 PyMC en Windows natif: adr/0010-pymc-windows-native.md
   - Procédures:
       - Matérialisation v2: runbooks/materialise-v2.md
       - Spike Q1: runbooks/spike-q1.md

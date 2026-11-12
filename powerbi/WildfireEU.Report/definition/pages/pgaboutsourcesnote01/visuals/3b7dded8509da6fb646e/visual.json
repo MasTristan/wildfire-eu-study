@@ -6,7 +6,7 @@
     "y": 172,
     "z": 2,
     "width": 1248.0,
-    "height": 44
+    "height": 96
   },
   "visual": {
     "visualType": "textbox",
@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Nothing in this report is modelled or estimated. Every figure is an aggregation of one of the sources below, and where two sources disagree the report shows both rather than reconciling them silently.",
+                    "value": "The descriptive pages only aggregate the public sources below: nothing on them is modelled, and where two sources disagree the report shows both rather than reconciling them silently. The three Models pages (Tail risk, Attribution, Validation) are statistical models, kept separate and named as such; each states its limits and has a model card in docs/models/.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

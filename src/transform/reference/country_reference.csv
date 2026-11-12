@@ -4,7 +4,7 @@ IT,IT,ITA,Italy,Italie,EU,true,true
 ES,ES,ESP,Spain,Espagne,EU,true,true
 PT,PT,PRT,Portugal,Portugal,EU,true,true
 GR,EL,GRC,Greece,Grèce,EU,true,true
-DE,DE,DEU,Germany,Allemagne,EU,false,false
+DE,DE,DEU,Germany,Allemagne,EU,true,false
 RO,RO,ROU,Romania,Roumanie,EU,true,false
 BG,BG,BGR,Bulgaria,Bulgarie,EU,true,false
 HR,HR,HRV,Croatia,Croatie,EU,true,true

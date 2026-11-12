@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Scope: EFFIS burnt-area perimeters (Copernicus EMS / JRC), European countries only (EU and non-EU Europe), 2016 to 2026. 2026 is a season in progress. Figures exclude the North African and Middle Eastern countries also present in the source.",
+                    "value": "Scope: EFFIS burnt-area perimeters (Copernicus EMS / JRC), 2016 to 2026. 2026 is a season in progress. This page and the pages Scale, Where, When, Severity and Why cover European countries only (EU and non-EU Europe). Country and Live season read the whole EFFIS scope, which also holds North African and Middle Eastern countries; France uses the French BDIFF database.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "8pt",

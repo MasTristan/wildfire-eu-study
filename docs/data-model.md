@@ -1,6 +1,9 @@
-# Modèle de données cible
+# Modèle de données
 
-Statut : proposition, à valider avant de construire les transformations.
+Statut : construit. Ce document décrit le schéma en étoile de la couche
+descriptive, écrit dans `data/lake/gold/star` et lu par Power BI. Les sorties
+de modèles (`data/lake/gold/model_out`) sont décrites dans
+[Plateforme](platform.md) et dans les [cartes de modèle](models/index.md).
 
 ## Principe
 
@@ -25,21 +28,25 @@ Trois garde-fous structurants :
 
 ## Grains
 
-| Table de faits | Grain | Source(s) | Phase |
-|---|---|---|---|
-| `Fact_FireEvent` | feu individuel | EFFIS périmètres, BDIFF | MVP |
-| `Fact_BurntArea_CountryMonth` | pays x mois x source | rollup de `Fact_FireEvent` | MVP |
-| `Fact_BurntArea_CountryYear` | pays x année x source | rollup + cross-check EFFIS stats / GWIS | MVP |
-| `Fact_BurntArea_LandCover` | pays x année x land cover x source | EFFIS périmètres agrégés | MVP |
-| `Fact_FireWeather_CountryMonth` | pays x mois | CDS FWI / ERA5 agrégé | 2 (post-compte CDS) |
-| `Fact_Hotspot_CountryMonth` | pays x mois x capteur | FIRMS agrégé | 2 (post-compte FIRMS) |
+| Table de faits | Grain | Source(s) |
+|---|---|---|
+| `Fact_FireEvent` | feu individuel | EFFIS périmètres, BDIFF |
+| `Fact_BurntArea_CountryMonth` | pays x mois x source | rollup de `Fact_FireEvent` |
+| `Fact_BurntArea_CountryYear` | pays x année x source | rollup + cross-check EFFIS stats / GWIS |
+| `Fact_BurntArea_LandCover` | pays x année x land cover x source | EFFIS périmètres agrégés |
+| `Fact_FireWeather_CountryMonth` | pays x mois | CDS FWI, ERA5 et SPEI agrégés |
+| `Fact_Hotspot_CountryMonth` | pays x mois x capteur | FIRMS agrégé |
+
+Une septième table, `fact_season_countryyear` (début, fin et durée de la saison
+des feux par pays, année et source), est écrite et testée par dbt. Ni le
+rapport ni les modèles ne la lisent à ce jour.
 
 `Fact_FireEvent` est la source primaire granulaire (périmètres EFFIS, date de
 feu, surface, land cover). Les agrégats mois et année en dérivent par rollup ;
 les totaux EFFIS stats servent de contrôle de cohérence, pas de source
 concurrente. Les colonnes climat (FWI, température, précipitations, humidité,
-SPEI) sont remplies depuis la phase 3, voir
-`docs/specs/phase3-climate-explanatory.md`.
+SPEI) viennent de trois ingestions distinctes, assemblées par
+`src/transform/fireweather.py`.
 
 **Les émissions ne sont pas un attribut de la surface brûlée.** GWIS/GFAS
 mesure le feu indépendamment d'EFFIS, donc `co2_emissions_t` vit sur ses
@@ -60,6 +67,13 @@ surface brûlée renvoie du vide.
 `country_key, iso2, iso3, name_en, name_fr, macro_region (EU / EU_non / ME_AF), is_eu, is_mediterranean, land_area_km2, forest_area_ha`
 La `forest_area_ha` sert à normaliser (surface brûlée en % de forêt), sinon on
 compare l'Espagne au Luxembourg en valeur absolue, ce qui n'a pas de sens.
+
+`is_eu` vaut `true` pour les 26 pays de l'UE27 présents dans la référence (le Luxembourg
+n'a aucune donnée EFFIS et n'a pas de ligne). Corrigé en 2026-11 pour l'Allemagne, qui
+valait `false` en v1 alors que `macro_region` valait `EU`. C'est un écart volontaire à
+la v1 : la référence de parité gelée (`data/reference/v1/manifest.json`, note de
+`dim_country`) a été regelée sur cette table seule. Aucun visuel ni aucune mesure
+Power BI ne filtre sur `is_eu` (les filtres utilisent `macro_region`).
 
 **`Dim_Commune`** (grain commune française, deep-dive uniquement)
 `commune_key, insee_code, name, department_code, department_name, region_code, region_name, country_key (=FR)`

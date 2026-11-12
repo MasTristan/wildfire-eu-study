@@ -60,8 +60,15 @@ data/reference/*
 data/reference/v1/*
 !data/reference/v1/manifest.json
 
-# v2 lake and orchestration state
-data/lake/
+# v2 lake and orchestration state. The model outputs are the exception: a few
+# hundred kB of Parquet that the model cards and three report pages quote, kept
+# in git so that a fresh clone and the CI can check every quoted number.
+data/lake/*
+!data/lake/gold/
+data/lake/gold/*
+!data/lake/gold/model_out/
+data/lake/gold/model_out/*
+!data/lake/gold/model_out/*.parquet
 .dagster/
 
 # MLflow file store (ADR 0004)

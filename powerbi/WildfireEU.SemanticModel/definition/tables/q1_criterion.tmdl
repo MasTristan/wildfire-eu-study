@@ -1,0 +1,100 @@
+table q1_criterion
+	lineageTag: 57c4b139-0467-5507-9f0b-91da986e0f03
+
+	column 'Test year'
+		dataType: int64
+		formatString: 0
+		lineageTag: 4e218487-aa2e-53a7-98a9-deb20b0584e8
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column quantity_key
+		dataType: string
+		isHidden
+		lineageTag: c0365fde-512e-53fc-a578-851b751c9b6f
+		summarizeBy: none
+		sourceColumn: quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quantity
+		dataType: string
+		lineageTag: 9006b618-226f-57d8-a263-90bf45e1c434
+		summarizeBy: none
+		sourceColumn: quantity_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Observed
+		dataType: double
+		formatString: 0.000
+		lineageTag: 2d1951fd-ee25-5028-a71a-4fed14b65b94
+		summarizeBy: none
+		sourceColumn: value
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Interval low'
+		dataType: double
+		formatString: 0.000
+		lineageTag: aec90412-691b-52a4-b8e9-bdde56239647
+		summarizeBy: none
+		sourceColumn: p2_5
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Interval high'
+		dataType: double
+		formatString: 0.000
+		lineageTag: f9dc08b3-a816-582a-b7c8-5a9c3110b459
+		summarizeBy: none
+		sourceColumn: p97_5
+
+		annotation SummarizationSetBy = Automatic
+
+	column Threshold
+		dataType: double
+		formatString: 0.000
+		lineageTag: 62bc8f75-7f5a-58f0-b918-54892852d050
+		summarizeBy: none
+		sourceColumn: threshold
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Meets threshold'
+		dataType: boolean
+		lineageTag: e0936733-5d83-59db-8be1-ee939d659759
+		summarizeBy: none
+		sourceColumn: meets_threshold
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_passes
+		dataType: boolean
+		isHidden
+		lineageTag: 8a335f2f-7805-5f57-ac34-a367ff42152d
+		summarizeBy: none
+		sourceColumn: year_passes
+
+		annotation SummarizationSetBy = Automatic
+
+	column all_pass
+		dataType: boolean
+		isHidden
+		lineageTag: 15f6ef9c-747d-571e-9a5d-b44e4df832d7
+		summarizeBy: none
+		sourceColumn: all_pass
+
+		annotation SummarizationSetBy = Automatic
+
+	partition q1_criterion = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\q1_criterion.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

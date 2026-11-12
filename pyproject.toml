@@ -1,7 +1,7 @@
 [project]
 name = "wildfire-eu-study"
-version = "2.0.0a0"
-description = "European wildfires 2006-2026: data platform, statistical models and Power BI report"
+version = "2.0.0"
+description = "European wildfires 2016-2026: data platform, statistical models and Power BI report"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Tristan Mas" }]
@@ -29,6 +29,8 @@ dependencies = [
     "mlflow==3.17.1",
     "statsmodels==0.15.0",
     "numcodecs==0.15.1",
+    "pymc==5.28.5",
+    "arviz==0.23.4",
 ]
 
 [dependency-groups]
@@ -39,9 +41,9 @@ dev = [
     "types-requests==2.32.0.20241016",
     "types-tqdm==4.67.0.20241221",
     "lightgbm==4.6.0",  # 4.7.0 segfaults on Windows when setting the label (access violation)
-    "duckdb>=1.5.6",
-    "scikit-learn>=1.9.1",
-    "matplotlib>=3.11.2",
+    "duckdb==1.5.6",
+    "scikit-learn==1.9.1",
+    "matplotlib==3.11.2",
     "mkdocs-material==9.7.7",
 ]
 

@@ -1,0 +1,99 @@
+table tail_risk_levels
+	lineageTag: 53ae6ded-1489-5324-bce6-4a7c5c738055
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 879b373f-e3bb-5900-b265-0b19da476a5f
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column period_years
+		dataType: int64
+		formatString: 0
+		lineageTag: 4176fa94-2a49-51bf-9310-64340b13a993
+		summarizeBy: none
+		sourceColumn: period_years
+
+		annotation SummarizationSetBy = Automatic
+
+	column return_level_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: f343cfa3-4c57-56ce-ba4c-c40de7642c09
+		summarizeBy: none
+		sourceColumn: return_level_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column return_level_p2_5
+		dataType: double
+		formatString: #,##0
+		lineageTag: 56225dc1-5919-5c53-8bcc-127426f68bb8
+		summarizeBy: none
+		sourceColumn: return_level_p2_5
+
+		annotation SummarizationSetBy = Automatic
+
+	column return_level_p97_5
+		dataType: double
+		formatString: #,##0
+		lineageTag: 114abf22-9b1e-5aa1-a71b-bb2e27249460
+		summarizeBy: none
+		sourceColumn: return_level_p97_5
+
+		annotation SummarizationSetBy = Automatic
+
+	column empirical_level_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: 4d7c111e-529f-5ba3-ac23-5c116a6a5cb1
+		summarizeBy: none
+		sourceColumn: empirical_level_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column within_horizon
+		dataType: boolean
+		lineageTag: bc223bbe-9ae3-596e-88d7-2a8173f893ed
+		summarizeBy: none
+		sourceColumn: within_horizon
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: e66c96f6-c271-5be2-93ec-8e8f28b2eac8
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_below_one
+		dataType: boolean
+		lineageTag: ac0b5208-b3e7-562f-90ad-5d5462cb58d7
+		summarizeBy: none
+		sourceColumn: shape_below_one
+
+		annotation SummarizationSetBy = Automatic
+
+	column published
+		dataType: boolean
+		lineageTag: 9f816dc0-ee7c-56f4-b7a8-e4edac5f7cfb
+		summarizeBy: none
+		sourceColumn: published
+
+		annotation SummarizationSetBy = Automatic
+
+	partition tail_risk_levels = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\tail_risk_levels.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

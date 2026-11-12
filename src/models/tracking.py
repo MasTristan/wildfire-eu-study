@@ -51,6 +51,25 @@ def run(experiment: str, run_name: str, params: dict[str, Any] | None = None, ta
         yield active
 
 
+def mark_published(experiment: str, run_id: str) -> int:
+    """Tag run_id published=true and every other run of the experiment published=false, so that
+    exactly one run (the one that wrote the tables now in model_out) is published. Call it once
+    the tables are written, so a failed run never takes the tag. Returns the runs demoted."""
+    import mlflow
+
+    mlflow.set_tracking_uri(tracking_uri())
+    exp = mlflow.get_experiment_by_name(experiment)
+    if exp is None:
+        raise ValueError(f"unknown experiment {experiment!r}")
+    client = mlflow.MlflowClient()
+    others = [r.info.run_id for r in client.search_runs([exp.experiment_id], filter_string="tags.published = 'true'")
+              if r.info.run_id != run_id]
+    for rid in others:
+        client.set_tag(rid, "published", "false")
+    client.set_tag(run_id, "published", "true")
+    return len(others)
+
+
 def log_metrics(metrics: dict[str, float], step: int | None = None) -> None:
     import mlflow
 
@@ -64,10 +83,10 @@ def log_table(df, name: str) -> None:
     mlflow.log_table(df, artifact_file=f"{name}.json")
 
 
-def log_artifact(path: Path) -> None:
+def log_artifact(path: Path, artifact_path: str | None = None) -> None:
     import mlflow
 
-    mlflow.log_artifact(str(path))
+    mlflow.log_artifact(str(path), artifact_path=artifact_path)
 
 
 MODEL_CARD_TEMPLATE = """# Model card: {name}
@@ -86,11 +105,11 @@ Run: `{run_id}` (experiment `{experiment}`), {date}.
 ## Validation
 {validation}
 
-## Results
-{results}
-
 ## Limits
 {limits}
+
+## Results
+{results}
 
 ## Reproduce
 {reproduce}

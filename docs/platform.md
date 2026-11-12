@@ -1,7 +1,12 @@
-# Plateforme v2 : lake, orchestration, gold en SQL
+# Plateforme : lake, orchestration, gold en SQL
 
-État au 2026-10-15 : ossature en place et testée sans données. Ce document
-décrit ce qui existe ; PLAN.md (local) décrit ce qui vient.
+État au 2026-11-10 : la chaîne est matérialisée de bout en bout sur les données
+réelles. La gold reproduit la v1 valeur pour valeur (test de parité), le rapport
+Power BI la lit, et trois modèles écrivent leurs sorties à côté. Ce qui n'est
+pas matérialisé est dit comme tel : le feature store Europe et le modèle
+d'occurrence à l'échelle de l'Europe, abandonnés après le verdict du spike
+([ADR 0009](adr/0009-q1-scope-after-reduced-go.md)). Leur code reste dans le
+dépôt, testé sur données synthétiques.
 
 ## Couches
 
@@ -9,8 +14,8 @@ décrit ce qui existe ; PLAN.md (local) décrit ce qui vient.
 bronze   data/raw et data/interim      brut tel que reçu, une table interim par source (modules v1 inchangés)
 silver   data/processed                 une table propre par source, validée par contrat pandera à l'écriture
 gold     data/lake/gold/star            le schéma en étoile que Power BI lit, écrit par dbt en Parquet
-         data/lake/gold/features        feature store maille x jour (phase 1)
-         data/lake/gold/model_out       sorties de modèles (phase 2)
+         data/lake/gold/features        feature store maille x jour (code testé, non matérialisé)
+         data/lake/gold/model_out       sorties de modèles, un run MLflow par table
 ```
 
 Les chemins sont centralisés dans `src/lake.py` et surchargeables par
@@ -23,10 +28,11 @@ dossier temporaire.
 Les fonctions de transformation v1 écrivent dans `data/processed`. Tant
 qu'elles ne sont pas réécrites, **ce dossier est la silver** : les assets
 silver appellent les fonctions v1 telles quelles, dbt lit la silver et produit
-la gold. Power BI continue de lire `data/processed` jusqu'à ce que le test de
+la gold. Power BI a lu `data/processed` jusqu'à ce que le test de
 parité (`tests/test_gold_parity.py`) prouve que `gold/star` lui est égale
-valeur pour valeur ; son paramètre `DataFolder` bascule alors sur `gold/star`.
-Aucun fichier n'est déplacé à la main à aucun moment.
+valeur pour valeur ; son paramètre `DataFolder` a basculé sur `gold/star` le
+2026-11-09, sans qu'aucun chiffre du rapport ne change. Aucun fichier n'est
+déplacé à la main à aucun moment.
 
 ## Dagster (`src/orchestration/`)
 
@@ -37,18 +43,19 @@ couche : `bronze/effis_perimeters`, `silver/fact_fireevent`,
 
 | Couche | Assets | Ce qu'ils font aujourd'hui |
 |---|---|---|
-| bronze | 9, dont `cds_fwi_raw` et `firms_hotspots_raw` partitionnés par année | enveloppent `src/ingest/<source>.build`, reprenables fichier par fichier |
-| silver | 9 (6 dimensions, 3 faits) | appellent les fonctions v1, valident le contrat pandera, écrivent la silver |
-| gold | 12, un par modèle dbt | `dbt build`, lignage lu dans le manifeste, sources dbt résolues sur les assets silver du même nom |
+| bronze | 16, dont les téléchargements FWI, ERA5, SPEI, BDIFF et FIRMS partitionnés | enveloppent `src/ingest/<source>.build`, reprenables fichier par fichier |
+| silver | 10 (6 dimensions, 3 faits, la grille commune) | appellent les fonctions v1, valident le contrat pandera, écrivent la silver |
+| gold, schéma en étoile | 13, un par modèle dbt | `dbt build`, lignage lu dans le manifeste, sources dbt résolues sur les assets silver du même nom |
+| gold, modèles | 5 matérialisés (`tail_risk_country`, `attribution_countryyear`, `attribution_bayes`, `attribution_robustness`, `q1_spike_results`) et 2 non matérialisés (`features_daily`, `ignition_eval`) | ajustent, journalisent dans MLflow, écrivent `gold/model_out` |
 
 Chaque table gold porte deux familles de checks visibles dans l'interface :
 le contrat pandera (`contract`, le même objet que les assets silver et les
 tests utilisent) et les tests dbt du modèle, remontés automatiquement.
 
-Limite assumée de l'ossature : seuls FWI et FIRMS sont réellement
-partitionnés ; les autres sources reconstruisent leur étendue complète en un
-appel, ce qui est bon marché grâce aux téléchargements reprenables. La phase 1
-les réécrit en assets partitionnés sans changer leurs clés.
+Limite assumée : les sources qui ne se découpent pas (EFFIS, GWIS)
+reconstruisent leur étendue complète en un appel, ce qui est bon marché grâce
+aux téléchargements reprenables. Le tableau « Ingestion partition-safe » plus
+bas dit quelle source est partitionnée et comment.
 
 ## dbt (`dbt/`)
 
@@ -61,6 +68,9 @@ profil), un fichier par table.
 - 3 rollups en SQL qui remplacent `src/transform/rollups.py` :
   `fact_burntarea_countrymonth`, `fact_burntarea_countryyear` (avec les lignes
   d'émissions GWIS sur leur propre source), `fact_burntarea_landcover`.
+- 1 table propre à la v2, `fact_season_countryyear` (début, fin et durée de la
+  saison des feux), absente de la référence de parité puisque la v1 ne l'avait
+  pas. Rien ne la lit encore en aval.
 - Tests dbt : grain (`unique_combination_of_columns`), valeurs admises,
   `non_negative`, `no_source_mixing` (une ligne GWIS ne porte jamais de
   surface, une ligne EFFIS ou BDIFF jamais d'émissions).
@@ -81,6 +91,12 @@ make check         # ruff, mypy, pytest (dont dbt build sur données synthétiqu
 ```
 
 ## Feature store (`gold/features`)
+
+> **Non matérialisé.** Le spike Q1 a rendu un GO réduit : le modèle
+> d'occurrence reste à l'échelle du spike (Ibérie et Grèce), et le feature
+> store Europe, qui ne servait que son extension, n'est pas construit
+> ([ADR 0009](adr/0009-q1-scope-after-reduced-go.md)). Cette section décrit du
+> code testé sur des NetCDF synthétiques, pas une table qui existe.
 
 Code dans `src/features/`, assets dans `src/orchestration/assets/features.py`.
 Une année par partition, un Parquet par année (`daily_<année>.parquet`),
@@ -122,11 +138,39 @@ appels uniques : leurs sources ne se découpent pas.
 
 | Module | Question | Ce qu'il produit | Vérifié par |
 |---|---|---|---|
-| `extremes.py` | Q2, queue des tailles de feux | ajustement Pareto généralisé au-dessus d'un seuil par pays, niveaux de retour à 2, 5, 10, 20, 50 ans avec intervalles bootstrap, publiés seulement jusqu'à deux fois la durée observée (`max_return_period_years`), au moins 30 dépassements requis, années complètes seulement (une dernière année partielle est exclue), niveaux empiriques en regard, table de stabilité du seuil, période de retour d'un feu de 10 000 ha | récupération de paramètres connus sur un échantillon synthétique, inversion niveau / période |
-| `attribution.py` | Q3, part de la météo dans la variabilité annuelle | panel pays x année, effets fixes pays, erreurs groupées par pays, composante météo et surface ajustée du climat par pays et année, R² intra-pays, contrôle leave-one-year-out | signal synthétique retrouvé (signe, ordre de grandeur), années à saison incomplète exclues et non imputées |
+| `extremes.py` | Q2, queue des tailles de feux | épisodes de feux de plus de 500 ha (feux à 3 jours ou moins fusionnés), ajustement Pareto généralisé par pays, niveaux de retour à 2, 5, 10, 20 ans avec intervalles par bootstrap d'années entières, publiés seulement si la forme est sous 1 et jusqu'à deux fois la durée observée, périmètre UE avec au moins 8 années complètes et 30 épisodes, niveaux empiriques en regard, table de stabilité du seuil, test d'adéquation d'Anderson-Darling par bootstrap paramétrique | épisodes formés comme attendu, paramètres connus retrouvés sur un échantillon simulé, règles de périmètre et de publication, test d'adéquation qui accepte un échantillon de la loi et rejette un échantillon bimodal |
+| `attribution.py` | Q3, part de la météo dans la variabilité annuelle | panel pays x année, variables en écart-type intra-pays et par unité physique, effets fixes pays, erreurs groupées par pays, composante météo et surface ajustée par pays et année, R² intra-pays, gain hors échantillon (leave-one-year-out), table de robustesse et colonne `robust` | écart-type intra-pays et pente par unité retrouvés sur un panel simulé, règle `robust`, années à saison incomplète exclues et non imputées |
+| `attribution_bayes.py` | Q3, version bayésienne hiérarchique (PyMC) | même panel, intercepts et pentes partiellement mis en commun entre pays (pentes non centrées), a priori faiblement informatifs, coefficients a posteriori (moyenne, intervalle HDI à 95 %) en regard des coefficients fréquentistes, R² bayésien de la météo par pays, diagnostics (R-hat, ESS, divergences) | pente connue retrouvée sur un jeu simulé, schéma des tables, règle d'acceptation du sampler |
+| `spike_results.py` | Q1, restitution du spike | remet en forme les sorties gelées de `notebooks/spike_q1/out` en tables `q1_*`, journalisées dans un run MLflow, sans rien recalculer | tables égales aux fichiers gelés |
+| `ignition.py` | Q1 à l'échelle de l'Europe | cinq modèles en escalier sur le feature store, non exécuté (GO réduit) | fixtures synthétiques |
 | `validation.py` | protocole commun | découpes par année tenue et par blocs spatiaux de 2°, métriques du critère pré-enregistré, fiabilité par décile, bootstrap par blocs sur les différences | partition exacte des lignes, blocs jamais scindés, intervalles qui séparent deux modèles de qualité connue |
 | `tracking.py` | traçabilité | MLflow en SQLite local sans serveur, un identifiant de run sur chaque table publiée, gabarit de carte de modèle | run relu depuis le store |
 
-La version bayésienne de Q3 (PyMC, WSL2) consomme le même panel et doit
-retrouver le signe et l'ordre de grandeur de chaque coefficient. Q1 rejoint
-ce dossier une fois le périmètre fixé par le verdict du spike.
+### Tables lues par le rapport
+
+Trois pages Power BI lisent `gold/model_out`, dans le dossier voisin de celui
+que désigne `DataFolder` (le chemin est dérivé dans chaque requête, il reste
+un seul paramètre à régler).
+
+| Page | Tables | Asset |
+|---|---|---|
+| Tail risk | `tail_risk_country`, `tail_risk_levels` (niveaux de retour en format long, une ligne par pays et période), `tail_risk_threshold_stability` (forme selon le seuil, par pays), `tail_risk_gof` (test d'adéquation par pays) ; `tail_risk_episodes` (épisodes et taille attendue par la loi) sert la carte de modèle | `gold/tail_risk_country` |
+| Attribution | `attribution_countryyear`, `attribution_coefficients` (nom lisible, intervalle à 95 %, multiplicateur par écart-type intra-pays, effet par unité physique, `robust`), `attribution_summary` (R² intra-pays, gain hors échantillon), `attribution_exclusions`, `attribution_robustness` | `gold/attribution_countryyear` |
+| (pas de page) | `attribution_bayes_coefficients` (niveaux population, écart-type entre pays et pays : moyenne, écart-type, intervalle à 95 %, effet par unité physique, `robust`, coefficient fréquentiste en regard, R-hat, ESS), `attribution_bayes_countryyear` (composante météo avec intervalle, surface ajustée, R² bayésien par pays) ; `run_id` sur chaque ligne | `gold/attribution_bayes` |
+| Validation | `q1_metrics`, `q1_criterion`, `q1_importance` ; `q1_reliability` est écrite pour le site | `gold/q1_spike_results` |
+
+`gold/q1_spike_results` ne recalcule rien : il remet en forme les sorties
+gelées et commitées du spike (`notebooks/spike_q1/out`), si bien que la page et
+`VERDICT.md` ne peuvent pas diverger. Il se matérialise sans aucune donnée
+locale.
+
+La version bayésienne de Q3 (`gold/attribution_bayes`, expérience MLflow
+`q3_attribution_bayes`) consomme le même panel et retrouve le signe et
+l'ordre de grandeur des coefficients fréquentistes ([ADR 0010](adr/0010-pymc-windows-native.md)).
+Elle tourne en Windows natif : sans compilateur C++, PyTensor compile vers
+Numba (`configure_backend` le règle avant l'import de PyMC). L'asset check
+`sampler_diagnostics` échoue si R-hat atteint 1,01 ou si les divergences
+dépassent 1 % des tirages.
+
+Les cartes de modèle ([Modèles](models/index.md)) disent ce que chaque sortie
+permet d'affirmer et ce qu'elle ne permet pas.

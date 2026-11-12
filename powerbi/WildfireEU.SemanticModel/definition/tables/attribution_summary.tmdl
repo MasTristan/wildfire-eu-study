@@ -1,0 +1,75 @@
+table attribution_summary
+	lineageTag: cba7d002-ec7a-5593-b823-0431652f6a34
+
+	column r2_within_weather
+		dataType: double
+		formatString: 0%
+		lineageTag: 63c22ca1-b05c-5356-8a2a-4a2dd171382b
+		summarizeBy: none
+		sourceColumn: r2_within_weather
+
+		annotation SummarizationSetBy = Automatic
+
+	column r2_oos_vs_country_mean
+		dataType: double
+		formatString: 0%
+		lineageTag: 2bb775c4-4d21-5af8-a5e4-8aca70b81ed7
+		summarizeBy: none
+		sourceColumn: r2_oos_vs_country_mean
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_obs
+		dataType: int64
+		formatString: 0
+		lineageTag: 597c210e-5da1-5ed7-a606-53104018e192
+		summarizeBy: none
+		sourceColumn: n_obs
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_countries
+		dataType: int64
+		formatString: 0
+		lineageTag: 74a75675-8c59-5471-b783-26c70da7122c
+		summarizeBy: none
+		sourceColumn: n_countries
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_year
+		dataType: int64
+		formatString: 0
+		lineageTag: bada4ed9-43cc-54ea-9dcb-51df015306bb
+		summarizeBy: none
+		sourceColumn: first_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_year
+		dataType: int64
+		formatString: 0
+		lineageTag: 48e12cf3-8fe0-5593-9e00-06be8e6447d4
+		summarizeBy: none
+		sourceColumn: last_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: 22904b47-8a74-5745-be0d-c785e2dee97f
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_summary = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_summary.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,94 @@
+table tail_risk_threshold_stability
+	lineageTag: 5d49900d-1d46-5a4e-89de-450cb75b5026
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: b517de2b-6619-5d8b-b5b3-c7d486ab27fc
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column threshold_ha
+		dataType: double
+		formatString: #,##0
+		lineageTag: de2b24f7-cb0a-5528-b140-86657766a356
+		summarizeBy: none
+		sourceColumn: threshold_ha
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_fires
+		dataType: int64
+		formatString: #,##0
+		lineageTag: 60c69c8c-57c5-5878-bc87-f7b5cce346a7
+		summarizeBy: none
+		sourceColumn: n_fires
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_exceedances
+		dataType: int64
+		formatString: #,##0
+		lineageTag: 0caecf3b-68b3-55c0-a813-6c1596ab0d16
+		summarizeBy: none
+		sourceColumn: n_exceedances
+
+		annotation SummarizationSetBy = Automatic
+
+	column rate_per_year
+		dataType: double
+		formatString: 0.0
+		lineageTag: 549809ca-1913-5d1c-84df-d64e85051d13
+		summarizeBy: none
+		sourceColumn: rate_per_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape
+		dataType: double
+		formatString: 0.00
+		lineageTag: 4f2b6602-ab07-5981-b340-220e9b1bc32c
+		summarizeBy: none
+		sourceColumn: shape
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_low
+		dataType: double
+		formatString: 0.00
+		lineageTag: d42f11c2-a24d-5c18-8c82-486a3614afc2
+		summarizeBy: none
+		sourceColumn: shape_p2.5
+
+		annotation SummarizationSetBy = Automatic
+
+	column shape_high
+		dataType: double
+		formatString: 0.00
+		lineageTag: 79d9209d-2401-53ea-b6c6-0aff229410bd
+		summarizeBy: none
+		sourceColumn: shape_p97.5
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: eef9a028-8299-5a71-b86e-70ef7e0f1db1
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition tail_risk_threshold_stability = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\tail_risk_threshold_stability.parquet")),
+				    Selected = Table.SelectColumns(Source, {"country_key", "threshold_ha", "n_fires", "n_exceedances", "rate_per_year", "shape", "shape_p2.5", "shape_p97.5", "run_id"})
+				in
+				    Selected
+
+	annotation PBI_ResultType = Table

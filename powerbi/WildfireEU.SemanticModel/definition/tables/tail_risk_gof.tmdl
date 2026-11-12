@@ -1,0 +1,76 @@
+table tail_risk_gof
+	lineageTag: a8dd7be2-9174-594b-9a86-2cb2cddaced8
+
+	column country_key
+		dataType: string
+		isHidden
+		lineageTag: 9d55c2c1-4433-5650-b938-daf5a30ca2d0
+		summarizeBy: none
+		sourceColumn: country_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column ad_statistic
+		dataType: double
+		formatString: 0.00
+		lineageTag: d2762b53-90d0-5633-9f09-b4593c69310c
+		summarizeBy: none
+		sourceColumn: ad_statistic
+
+		annotation SummarizationSetBy = Automatic
+
+	column p_value
+		dataType: double
+		formatString: 0.000
+		lineageTag: a54b2979-583a-5e99-a4ad-8c9b8a18e6e4
+		summarizeBy: none
+		sourceColumn: p_value
+
+		annotation SummarizationSetBy = Automatic
+
+	column n_sim
+		dataType: int64
+		formatString: 0
+		lineageTag: 6f14ead1-ae4a-5e8a-aa9f-510e2ae89d65
+		summarizeBy: none
+		sourceColumn: n_sim
+
+		annotation SummarizationSetBy = Automatic
+
+	column alpha
+		dataType: double
+		formatString: 0.00
+		lineageTag: 8d72817c-6f31-58dc-b543-031f8db75a30
+		summarizeBy: none
+		sourceColumn: alpha
+
+		annotation SummarizationSetBy = Automatic
+
+	column gpd_rejected
+		dataType: boolean
+		lineageTag: e191d5b5-fb0b-5c65-b20c-85dacd7be2a8
+		summarizeBy: none
+		sourceColumn: gpd_rejected
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: dba73f17-619e-543a-9d1b-5587251f918f
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition tail_risk_gof = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\tail_risk_gof.parquet")),
+				    Selected = Table.SelectColumns(Source, {"country_key", "ad_statistic", "p_value", "n_sim", "alpha", "gpd_rejected", "run_id"})
+				in
+				    Selected
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "e2f2cc82cbd72035aa19",
+  "position": {
+    "x": 644.0,
+    "y": 536,
+    "z": 8,
+    "width": 620.0,
+    "height": 200
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Test year"
+                }
+              },
+              "queryRef": "q1_criterion.Test year",
+              "nativeQueryRef": "Test year"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Quantity"
+                }
+              },
+              "queryRef": "q1_criterion.Quantity",
+              "nativeQueryRef": "Quantity"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Observed"
+                }
+              },
+              "queryRef": "q1_criterion.Observed",
+              "nativeQueryRef": "Observed"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Interval low"
+                }
+              },
+              "queryRef": "q1_criterion.Interval low",
+              "nativeQueryRef": "Interval low"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Interval high"
+                }
+              },
+              "queryRef": "q1_criterion.Interval high",
+              "nativeQueryRef": "Interval high"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Threshold"
+                }
+              },
+              "queryRef": "q1_criterion.Threshold",
+              "nativeQueryRef": "Threshold"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "q1_criterion"
+                    }
+                  },
+                  "Property": "Meets threshold"
+                }
+              },
+              "queryRef": "q1_criterion.Meets threshold",
+              "nativeQueryRef": "Meets threshold"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {},
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Criterion: full model against fire-weather-only (95 % interval)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -575,6 +575,298 @@ table _Measures
 		displayFolder: Climat
 		lineageTag: 9a3e5b10-000a-4a00-9a01-000000000009
 
+	measure 'Tail shape' = AVERAGE ( tail_risk_country[shape] )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: b0a73f40-ba39-5af9-bc55-8c63e1967d48
+
+	measure 'Tail shape, Portugal' = CALCULATE ( [Tail shape], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "PT" )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 9d863d6b-dbae-598f-8b99-2c97ab6b662a
+
+	measure '10-year fire (ha)' = AVERAGE ( tail_risk_country[rl_10y] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 7e17d611-cdcf-5b54-abc0-49b6ca132877
+
+	measure '20-year fire (ha)' = AVERAGE ( tail_risk_country[rl_20y] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 63184ece-2c0d-5729-8e5e-2de7dae68ce9
+
+	measure '10-year fire, Spain (ha)' = CALCULATE ( [10-year fire (ha)], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "ES" )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: dac138f2-bd3c-5405-93ae-19f45367b3ed
+
+	measure 'Years between 10 000 ha fires' = AVERAGE ( tail_risk_country[return_period_10k_ha_years] )
+		formatString: 0.0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 7a53d113-4ad0-510d-8865-2c1ea76b5366
+
+	measure 'Largest fitted fire (ha)' = MAX ( tail_risk_country[largest_ha] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: b10dcd78-a7e7-50fe-bcd0-7ec81655b3eb
+
+	measure 'Countries fitted' = CALCULATE ( COUNTROWS ( FILTER ( tail_risk_country, tail_risk_country[in_scope] = TRUE () && NOT ISBLANK ( tail_risk_country[shape] ) ) ), REMOVEFILTERS ( dim_country ) )
+		formatString: 0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 29c0402d-5e6b-5cae-a0d7-a32b23d8b11a
+
+	measure 'Return levels published' =
+			VAR published = CALCULATE ( DISTINCTCOUNT ( tail_risk_levels[country_key] ), tail_risk_levels[published] = TRUE (), REMOVEFILTERS ( dim_country ) )
+			VAR fitted = CALCULATE ( DISTINCTCOUNT ( tail_risk_levels[country_key] ), REMOVEFILTERS ( dim_country ) )
+			RETURN FORMAT ( published, "0" ) & " of " & FORMAT ( fitted, "0" )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 5d09ea87-df34-5d5f-ae09-3a6e0eda369a
+
+	measure 'Tail shape, Greece' = CALCULATE ( [Tail shape], REMOVEFILTERS ( dim_country ), dim_country[country_key] = "GR" )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 6aea36de-3d83-5914-8da4-c3b0e4efb1d3
+
+	measure 'Shape by threshold' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 713055bf-e3f2-5e08-9d20-bd8519116962
+
+	measure 'Shape by threshold, 95% low' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape_low] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: d6f2d4d3-621f-5962-a842-51d97a24105c
+
+	measure 'Shape by threshold, 95% high' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_threshold_stability[shape_high] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: 0.00
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: cffc6dea-ebed-5c67-a4c6-3cad2cd120f5
+
+	measure 'Episodes per year' = AVERAGE ( tail_risk_country[rate_per_year] )
+		formatString: 0.0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: b2f1018c-e7cb-57b7-99f8-fe5f3dac8a19
+
+	measure 'Episodes above threshold' = SUM ( tail_risk_country[n_exceedances] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: a9d2408c-5090-50bf-a49b-c424cb6a09f5
+
+	measure '10-year fire, 95% low (ha)' = AVERAGE ( tail_risk_country[rl_10y_low] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: c1ed6967-319d-569f-9f03-b3d20c6d5383
+
+	measure '10-year fire, 95% high (ha)' = AVERAGE ( tail_risk_country[rl_10y_high] )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 6112d5e4-3304-5367-aff5-cf6f1a2db67e
+
+	measure 'Fit p-value' = AVERAGE ( tail_risk_gof[p_value] )
+		formatString: 0.000
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 2a4dc3d8-45ce-5fc1-9fc9-b3792a057bd3
+
+	measure 'Fit rejected (5%)' = IF ( ISEMPTY ( tail_risk_gof ), BLANK (), IF ( COUNTROWS ( FILTER ( tail_risk_gof, tail_risk_gof[gpd_rejected] = TRUE () ) ) > 0, "Rejected", "Not rejected" ) )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 5dab6a7e-0b49-5143-a7f4-e459a8173bdc
+
+	measure 'Fits rejected (5%)' =
+			VAR rejected = CALCULATE ( COUNTROWS ( FILTER ( tail_risk_gof, tail_risk_gof[gpd_rejected] = TRUE () ) ), REMOVEFILTERS ( dim_country ) )
+			VAR tested = CALCULATE ( COUNTROWS ( tail_risk_gof ), REMOVEFILTERS ( dim_country ) )
+			RETURN FORMAT ( rejected, "0" ) & " of " & FORMAT ( tested, "0" )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 192a8490-0e59-56cd-9159-0c2c2fde47a6
+
+	measure 'Curve country' =
+			VAR sel = SELECTEDVALUE ( dim_country[country_key] )
+			RETURN IF ( ISBLANK ( sel ), "IT", sel )
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 25043fe1-454a-5a2e-b197-8ab2faa7fd78
+
+	measure 'Return level (ha)' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_levels[return_level_ha] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: f5b7d95d-ba7a-5c66-9666-c117e47d81e7
+
+	measure 'Return level, 95% low (ha)' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_levels[return_level_p2_5] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 7523de89-053d-5028-ad02-fa6d3e96cac0
+
+	measure 'Return level, 95% high (ha)' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_levels[return_level_p97_5] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: 894d6187-904e-5a3f-aed9-83ea289dac3f
+
+	measure 'Observed level (ha)' =
+			VAR c = [Curve country]
+			RETURN
+			    CALCULATE (
+			        AVERAGE ( tail_risk_levels[empirical_level_ha] ),
+			        REMOVEFILTERS ( dim_country ),
+			        dim_country[country_key] = c
+			    )
+		formatString: #,##0
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: e8ea121d-7b7d-566a-ab2f-4a8c7175a3ef
+
+	measure 'Return curve title' =
+			VAR c = [Curve country]
+			VAR nm = CALCULATE ( SELECTEDVALUE ( dim_country[name_en] ), REMOVEFILTERS ( dim_country ), dim_country[country_key] = c )
+			RETURN "Fire size reached once every N years, " & nm & ": fitted, 95 % interval, observed"
+		displayFolder: Models\Q2 Tail risk
+		lineageTag: b34cc1bc-0f56-53b8-8292-7f8cff95354a
+
+	measure 'Burnt area, panel (ha)' = SUM ( attribution_countryyear[burnt_area_ha] )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 55cda239-f9c7-53f8-b243-2d9bb456e110
+
+	measure 'Weather-adjusted area (ha)' = SUM ( attribution_countryyear[adjusted_area_ha] )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: f9f5c5e3-e00e-5f0e-bd65-5ce06bc16dc3
+
+	measure 'Burnt area, balanced panel (ha)' = CALCULATE ( SUM ( attribution_countryyear[burnt_area_ha] ), attribution_countryyear[observed_every_year] = TRUE () )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: f2363fc6-39d0-5869-8e5c-1ee22d9324df
+
+	measure 'Weather-adjusted area, balanced panel (ha)' = CALCULATE ( SUM ( attribution_countryyear[adjusted_area_ha] ), attribution_countryyear[observed_every_year] = TRUE () )
+		formatString: #,##0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 0732f249-69f9-5a38-9ddb-0d2c1ea8a48c
+
+	measure 'Weather effect' =
+			VAR observed = [Burnt area, panel (ha)]
+			VAR adjusted = [Weather-adjusted area (ha)]
+			RETURN IF ( NOT ISBLANK ( adjusted ) && adjusted > 0, DIVIDE ( observed, adjusted ) - 1 )
+		formatString: +0%;-0%;0%
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 28f03640-3237-54b4-ab19-30b165207ce2
+
+	measure 'Weather effect, 2022' = CALCULATE ( [Weather effect], REMOVEFILTERS ( dim_date ), dim_date[year] = 2022 )
+		formatString: +0%;-0%;0%
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 6e3c8168-89be-5649-b47d-b366e11b1ce9
+
+	measure 'Weather share of the swings' = MAX ( attribution_summary[r2_within_weather] )
+		formatString: 0%
+		displayFolder: Models\Q3 Attribution
+		lineageTag: cc3a8757-e7e8-52ff-b20b-545c1f445078
+
+	measure 'Weather share, out of sample' = MAX ( attribution_summary[r2_oos_vs_country_mean] )
+		formatString: 0%
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 15c5ac7c-441e-5caf-b92d-1fd53fcf68aa
+
+	measure 'Burnt area multiplier, high-danger days' = CALCULATE ( MAX ( attribution_coefficients[area_multiplier] ), attribution_coefficients[metric] = "days_high_season" )
+		formatString: "x"0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: ac9d836c-31f1-5a78-afe3-3794887d1a95
+
+	measure 'Burnt area multiplier, spring SPEI' = CALCULATE ( MAX ( attribution_coefficients[area_multiplier] ), attribution_coefficients[metric] = "spei_spring" )
+		formatString: "x"0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 30078596-6bac-51d2-807a-cfb57b7c50c4
+
+	measure 'Coefficient is robust' = IF ( COUNTROWS ( FILTER ( attribution_coefficients, attribution_coefficients[robust] = TRUE () ) ) > 0, 1, 0 )
+		formatString: 0
+		displayFolder: Models\Q3 Attribution
+		lineageTag: b15794b4-d350-5464-8a07-5c2f5ca418c5
+
+	measure Coefficient = AVERAGE ( attribution_coefficients[coef] )
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 7bfe5af2-46fd-50bf-897b-c6e077a97961
+
+	measure 'Coefficient, 95% low' = AVERAGE ( attribution_coefficients[ci_low] )
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: 994ef0d0-61f3-5054-8e96-ec27f2528a86
+
+	measure 'Coefficient, 95% high' = AVERAGE ( attribution_coefficients[ci_high] )
+		formatString: +0.00;-0.00;0.00
+		displayFolder: Models\Q3 Attribution
+		lineageTag: c1fb2c59-5315-596e-ab3c-603697bdb3cf
+
+	measure Verdict = IF ( COUNTROWS ( FILTER ( q1_criterion, q1_criterion[all_pass] = TRUE () ) ) > 0, "GO", "Reduced GO" )
+		displayFolder: Models\Q1 Validation
+		lineageTag: 1deddbe8-b9be-5121-8f04-533a82670de2
+
+	measure 'Brier gain, 2022' = CALCULATE ( AVERAGE ( q1_criterion[Observed] ), q1_criterion[Test year] = 2022, q1_criterion[quantity_key] = "brier_rel_improvement" )
+		formatString: 0.0%
+		displayFolder: Models\Q1 Validation
+		lineageTag: 48753c19-43de-504e-b2b5-74fbb5dba35b
+
+	measure 'Lift over base rate' = AVERAGE ( q1_metrics[lift] )
+		formatString: 0.0
+		displayFolder: Models\Q1 Validation
+		lineageTag: 93e4a923-18e8-5afe-906a-1a9e4a560cdc
+
+	measure 'Lift, full model 2022' = CALCULATE ( [Lift over base rate], q1_metrics[year] = 2022, q1_metrics[model] = "lgbm_full" )
+		formatString: 0
+		displayFolder: Models\Q1 Validation
+		lineageTag: 0f84c6b4-5d30-545c-960f-4ee4f5776e27
+
+	measure PR-AUC = AVERAGE ( q1_metrics[pr_auc] )
+		formatString: 0.000
+		displayFolder: Models\Q1 Validation
+		lineageTag: 6ad50365-585e-5fbf-b27d-15b142317ada
+
+	measure 'Brier score' = AVERAGE ( q1_metrics[brier] )
+		formatString: 0.00000
+		displayFolder: Models\Q1 Validation
+		lineageTag: fef60de1-d7d1-5a2e-8383-33ca6266937a
+
+	measure 'Share of model gain' = SUM ( q1_importance[share] )
+		formatString: 0%
+		displayFolder: Models\Q1 Validation
+		lineageTag: 92572c1f-7e0b-5cef-a61d-95846bae4c74
+
 	column Column
 		isHidden
 		formatString: 0

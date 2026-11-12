@@ -1,17 +1,20 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json",
   "pageOrder": [
-    "pgeuropeoverview0001",
-    "pglivecurrentseason1",
-    "pgcountrydeepdive001",
-    "pgfrancelocaldive001",
-    "pgwhyclimatefwi00001",
-    "pgaboutsourcesnote01",
     "pgcoverintro00000001",
+    "pgeuropeoverview0001",
     "pgwheregeography0001",
     "pgwhenseasonality001",
     "pgseveritypareto0001",
+    "pgwhyclimatefwi00001",
+    "pgcountrydeepdive001",
+    "pgfrancelocaldive001",
+    "pglivecurrentseason1",
+    "pgmodeltailrisk00001",
+    "pgmodelattribution01",
+    "pgmodelvalidation001",
+    "pgaboutsourcesnote01",
     "ttcountryprofile0001"
   ],
-  "activePageName": "pgaboutsourcesnote01"
+  "activePageName": "pgcoverintro00000001"
 }

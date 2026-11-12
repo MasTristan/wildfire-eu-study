@@ -1,6 +1,6 @@
 # 0001. Dagster comme orchestrateur, un asset par table de lake
 
-Statut : proposé le 2026-10-15, à confirmer au verdict du spike Q1.
+Statut : proposé le 2026-10-15, accepté le 2026-11-08 : le verdict du spike laisse la plateforme inchangée (ADR 0009).
 
 ## Contexte
 

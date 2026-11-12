@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d2a505d9ebd1a5bdf6a3",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 12,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "OLS on log burnt area (EFFIS), country fixed effects, metrics in within-country standard deviations (one value for the whole panel), errors clustered by country, 95 % intervals. Robust: a Bayesian fit (95 % HDI) and the variants agree (year effects, linear trend, EU only, Mediterranean only, fires above 100 ha). Multiplier: factor on burnt area per standard deviation. R\u00b2: weather terms, within country, in sample and out of sample. Statistical association, not causation. Line chart: only countries observed in every year.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

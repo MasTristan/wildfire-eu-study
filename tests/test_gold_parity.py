@@ -14,7 +14,7 @@ Three levels, each skipping cleanly when its input is absent:
   3. the reference itself satisfies the contracts, so a drift in the
      contracts cannot hide behind a drift in the data.
 
-This test is the gate of the whole Dagster/dbt migration (PLAN.md, phase 0):
+This test is the gate of the whole Dagster/dbt migration:
 blocking in CI as soon as the reference exists.
 """
 from __future__ import annotations
@@ -52,7 +52,7 @@ def _current(name: str) -> pd.DataFrame:
 def _reference(name: str) -> pd.DataFrame:
     path = REFERENCE / f"{name}.parquet"
     if not path.exists():
-        pytest.skip(f"{path} not downloaded (release asset gold-v1.zip on tag v1.0)")
+        pytest.skip(f"{path} not downloaded (make fetch-data, or scripts/fetch_release_data.py)")
     return pd.read_parquet(path)
 
 

@@ -89,12 +89,33 @@ def test_raw_sources_are_partitioned(defs):
 
 def test_model_output_assets_depend_on_the_gold(defs):
     graph = defs.get_repository_def().asset_graph
-    for name in ("tail_risk_country", "attribution_countryyear"):
+    for name in ("tail_risk_country", "attribution_countryyear", "attribution_bayes"):
         node = graph.get(AssetKey(["gold", name]))
         assert node.group_name == "model_out"
         assert AssetKey(["gold", "fact_fireevent"]) in node.parent_keys
     q1 = graph.get(AssetKey(["gold", "ignition_eval"]))
     assert AssetKey(["gold", "features_daily"]) in q1.parent_keys
+    assert graph.get(AssetKey(["gold", "q1_spike_results"])).group_name == "model_out"
+
+
+def test_q1_spike_results_materialises_without_data(tmp_path, monkeypatch):
+    """The validation page's tables come from committed spike outputs only."""
+    import pandas as pd
+    from dagster import materialize
+
+    from src import lake
+    from src.orchestration.assets import models
+
+    monkeypatch.setattr(lake, "GOLD_MODEL_OUT", tmp_path / "model_out")
+    for attr in ("SILVER", "GOLD_STAR", "GOLD_FEATURES"):
+        monkeypatch.setattr(lake, attr, tmp_path / attr.lower())
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{tmp_path.resolve() / 'mlflow.db'}")
+    monkeypatch.setenv("MLFLOW_ARTIFACT_ROOT", str(tmp_path / "artifacts"))
+    assert materialize([models.q1_spike_results]).success
+    names = sorted(p.stem for p in (tmp_path / "model_out").glob("*.parquet"))
+    assert names == ["q1_criterion", "q1_importance", "q1_metrics", "q1_reliability"]
+    run_ids = {pd.read_parquet(tmp_path / "model_out" / f"{n}.parquet")["run_id"].iloc[0] for n in names}
+    assert len(run_ids) == 1 and next(iter(run_ids))
 
 
 def test_asset_selection_strings_parse_and_resolve(defs):
@@ -138,3 +159,8 @@ def test_group_gold_is_exactly_the_star_schema(defs):
     keys = AssetSelection.from_coercible(["group:gold"]).resolve(graph)
     assert keys == {AssetKey(["gold", n]) for n in contracts.ALL_GOLD_TABLES}
     assert AssetKey(["gold", "features_daily"]) not in keys
+
+
+def test_bayesian_attribution_has_its_sampler_check(defs):
+    check_keys = {(c.asset_key, c.name) for c in defs.get_repository_def().asset_graph.asset_check_keys}
+    assert (AssetKey(["gold", "attribution_bayes"]), "sampler_diagnostics") in check_keys

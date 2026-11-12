@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "d7044a99f8f53e1d125b",
+  "position": {
+    "x": 16.0,
+    "y": 120,
+    "z": 2,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Above a high threshold, fire sizes follow a generalised Pareto tail. At a shape of 1 or more the fitted mean is infinite: no return level is published. An Anderson-Darling test flags where the fitted law fails to describe the episodes: both countries without a level (their shape above 1 is a poor fit at this threshold, not an established property) and one more, which keeps its levels.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#8892A0"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
   "name": "pgcountrydeepdive001",
-  "displayName": "05 Country",
+  "displayName": "06 Country",
   "displayOption": "ActualSize",
   "height": 800,
   "width": 1280,

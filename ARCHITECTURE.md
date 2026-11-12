@@ -1,7 +1,9 @@
 # Architecture
 
 Comment les données traversent le projet, et pourquoi les frontières sont
-placées là. Le détail du modèle sémantique est dans
+placées là. Ce document donne les règles de chaque couche ;
+[docs/platform.md](docs/platform.md) décrit les outils qui les appliquent
+(Dagster, dbt, MLflow). Le détail du modèle sémantique est dans
 [docs/data-model.md](docs/data-model.md), le catalogue des sources dans
 [docs/sources.md](docs/sources.md).
 
@@ -18,19 +20,30 @@ data/raw/                      brut tel que reçu, gitignoré, jamais réécrit
    v
 data/interim/*.csv             tables intermédiaires, une par source
    |
-   |  src/transform/*.py       dimensions conformes, faits, rollups
+   |  src/transform/*.py       dimensions conformes, faits au grain naturel
    v
-data/processed/*.parquet       le contrat, la seule chose que Power BI lit
+data/processed/*.parquet       silver : une table par source, sous contrat pandera
+   |
+   |  dbt/models/gold/*.sql    passages et rollups en SQL, tests de grain
+   v
+data/lake/gold/star/           gold : le schéma en étoile, la seule chose que
+   |                           les pages descriptives lisent
+   |  src/models/*.py          trois modèles, un run MLflow par table
+   v
+data/lake/gold/model_out/      sorties de modèles, lues par trois pages séparées
    |
    |  DataFolder (paramètre M)
    v
-powerbi/WildfireEU.SemanticModel     modèle en étoile, TMDL écrit à la main
+powerbi/WildfireEU.SemanticModel     constellation de faits, TMDL
    |
    v
-powerbi/WildfireEU.Report            rapport, 10 pages
+powerbi/WildfireEU.Report            rapport, 13 pages
 ```
 
-## Les trois couches et leurs règles
+Dagster porte ce graphe : chaque flèche est un asset ou un groupe d'assets,
+et la gold porte les mêmes contrats que les tests.
+
+## Les couches et leurs règles
 
 ### 1. Ingestion, `src/ingest/`
 
@@ -67,10 +80,37 @@ lignes** de `fact_burntarea_countryyear`, avec la surface brûlée nulle. Poser
 des tonnes GFAS sur une ligne EFFIS mélangerait deux mesures indépendantes du
 même phénomène.
 
-### 3. Modèle sémantique, `powerbi/WildfireEU.SemanticModel/`
+### 3. Gold, `dbt/`
 
-TMDL écrit à la main, jamais généré par l'assistant de Desktop. 5 faits,
-6 dimensions conformes, une table de mesures, un groupe de calcul temporel.
+La gold est écrite par dbt sur DuckDB, en Parquet. Neuf tables passent telles
+quelles, trois rollups sont réécrits en SQL, une table est propre à la v2.
+
+- **La migration ne peut pas dériver sans être vue.** `tests/test_gold_parity.py`
+  compare chaque table gold à la référence gelée de la v1, valeur pour valeur.
+  Les deux écarts volontaires (un correctif de fenêtre FIRMS, le drapeau UE de
+  l'Allemagne) sont regelés table par table et notés dans le manifeste.
+- **Un rollup ne mélange jamais deux sources** : c'est un test dbt
+  (`no_source_mixing`), pas une convention.
+
+### 4. Modèles, `src/models/`
+
+La couche inférentielle est séparée de la couche descriptive, dans les deux
+sens : aucun chiffre des dix pages descriptives ne sort d'un modèle, et les
+sorties de modèles vivent dans leur propre dossier, lues par leurs propres
+pages.
+
+- **Chaque table publiée porte le `run_id` MLflow du run qui l'a écrite.**
+- **Une règle de décision s'écrit avant le calcul** : critère du spike Q1,
+  analyses exploratoires, règle `robust` de Q3.
+- **Un résultat que le modèle ne soutient pas n'est pas publié** : pas de
+  niveau de retour quand la forme de la queue atteint 1, pas d'effet annoncé
+  quand l'intervalle contient zéro.
+
+### 5. Modèle sémantique, `powerbi/WildfireEU.SemanticModel/`
+
+TMDL versionné, diffable. 6 faits et 6 dimensions conformes pour la couche
+descriptive, les tables de sorties de modèles à côté, une table de mesures,
+un groupe de calcul temporel.
 
 Toutes les relations sont **1 vers plusieurs, filtre simple**. Aucune
 bidirectionnelle : les faits se croisent uniquement par les dimensions
@@ -78,7 +118,10 @@ partagées, ce qui rend le comportement de filtrage prévisible.
 
 Le chemin des parquets est un paramètre unique, `DataFolder`, dans
 `definition/expressions.tmdl` : après un clone, une seule ligne à modifier
-plutôt que douze partitions à corriger.
+plutôt qu'une partition par table. `tests/test_powerbi_model.py` vérifie que
+chaque colonne déclarée a le type du Parquet qu'elle lit, et garde le modèle
+contre les deux pièges qui font refuser l'ouverture à Desktop (identifiant de
+lignage dupliqué, commentaire entre deux blocs).
 
 ## Ce que les tests vérifient
 
@@ -87,6 +130,17 @@ plutôt que douze partitions à corriger.
   brûlée, le SPEI n'est jamais imputé, la France est présente).
 - Le rollup se compare à un agrégat EFFIS ingéré indépendamment, avec une
   tolérance de 2 %.
+- `tests/test_contracts.py`, `tests/test_gold_parity.py`, `tests/test_dbt_gold.py` :
+  contrats pandera, parité avec la v1, équivalence des rollups SQL et Python
+  sur une silver synthétique.
+- `tests/test_models_*.py` : chaque modèle retrouve des paramètres connus sur
+  des données simulées.
+- `tests/test_published_claims.py` : les chiffres cités en texte dans le
+  rapport et les runs cités dans les cartes de modèle correspondent aux
+  fichiers dont ils viennent.
+
+Les tests qui ont besoin des données réelles se sautent sur un clone neuf ;
+la CI exécute les autres, plus ruff, mypy et la construction stricte du site.
 
 ## Ce qui n'existe pas, et pourquoi
 

@@ -1,0 +1,178 @@
+table attribution_coefficients
+	lineageTag: a3c070ad-b01c-58fe-a89b-9f4a399fb095
+
+	column metric
+		dataType: string
+		isHidden
+		lineageTag: 7300e571-8df2-51c7-bb16-4ccc809358f3
+		summarizeBy: none
+		sourceColumn: metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column metric_name
+		dataType: string
+		lineageTag: fcb1a8e2-778f-50a7-a1b9-f78e72a931a2
+		summarizeBy: none
+		sourceColumn: metric_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column coef
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: ca84bec4-fbf9-5582-ad12-5d9c5d65dce4
+		summarizeBy: none
+		sourceColumn: coef
+
+		annotation SummarizationSetBy = Automatic
+
+	column se
+		dataType: double
+		formatString: 0.00
+		lineageTag: 351886c5-70f2-5243-a95f-50a0e3a4af09
+		summarizeBy: none
+		sourceColumn: se
+
+		annotation SummarizationSetBy = Automatic
+
+	column p_value
+		dataType: double
+		formatString: 0.0000
+		lineageTag: b3edd198-9aa6-521e-b552-2f0a95cd0ab5
+		summarizeBy: none
+		sourceColumn: p_value
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_low
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 05e4f6c0-9c86-5e8c-81cf-66afbb8ef740
+		summarizeBy: none
+		sourceColumn: ci_low
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_high
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: e0d4eecc-488b-51de-bbca-914880477ee8
+		summarizeBy: none
+		sourceColumn: ci_high
+
+		annotation SummarizationSetBy = Automatic
+
+	column area_multiplier
+		dataType: double
+		formatString: 0.00
+		lineageTag: e57feb9a-01f2-596d-ae99-9bb7794a555f
+		summarizeBy: none
+		sourceColumn: area_multiplier
+
+		annotation SummarizationSetBy = Automatic
+
+	column significant
+		dataType: boolean
+		lineageTag: 96abff7d-3cd9-5f47-b51e-c1b914188375
+		summarizeBy: none
+		sourceColumn: significant
+
+		annotation SummarizationSetBy = Automatic
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: e04d35f5-5b21-50b4-9e2f-126751a59d26
+		summarizeBy: none
+		sourceColumn: run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column sd_within
+		dataType: double
+		formatString: 0.00
+		lineageTag: 177c4518-3f1e-5dee-80b5-35dfaabd3af6
+		summarizeBy: none
+		sourceColumn: sd_within
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_size
+		dataType: double
+		formatString: 0.0
+		lineageTag: a8687604-8302-5753-895f-6cd03a84085e
+		summarizeBy: none
+		sourceColumn: unit_size
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_label
+		dataType: string
+		lineageTag: d393154c-00b2-5cf2-aba3-12b1ab19fb16
+		summarizeBy: none
+		sourceColumn: unit_label
+
+		annotation SummarizationSetBy = Automatic
+
+	column coef_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 8eab64e0-6f52-58bc-a7a3-2d2e7dab2619
+		summarizeBy: none
+		sourceColumn: coef_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_low_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: 21f431a5-34d0-5720-8a2f-c37c34dce069
+		summarizeBy: none
+		sourceColumn: ci_low_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column ci_high_per_unit
+		dataType: double
+		formatString: +0.00;-0.00;0.00
+		lineageTag: c3083d9e-1eb5-5d70-a198-4b09e828367e
+		summarizeBy: none
+		sourceColumn: ci_high_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column multiplier_per_unit
+		dataType: double
+		formatString: 0.00
+		lineageTag: a031c9ac-f26f-51d0-97af-8196b832ab4d
+		summarizeBy: none
+		sourceColumn: multiplier_per_unit
+
+		annotation SummarizationSetBy = Automatic
+
+	column robust
+		dataType: boolean
+		lineageTag: e66e5a60-0c66-5a7c-aad2-4dcc658013f6
+		summarizeBy: none
+		sourceColumn: robust
+
+		annotation SummarizationSetBy = Automatic
+
+	column metric_label = SWITCH ( attribution_coefficients[metric], "days_high_season", "High-danger days", "spei_spring", "Spring SPEI", "precip_anom_season", "Summer rainfall anomaly", "temp_season", "Summer temperature", attribution_coefficients[metric] )
+		dataType: string
+		lineageTag: 76f3859a-da6d-516a-ae62-3a706920cafb
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition attribution_coefficients = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(Text.BeforeDelimiter(DataFolder, "\", {0, RelativePosition.FromEnd}) & "\model_out\attribution_coefficients.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

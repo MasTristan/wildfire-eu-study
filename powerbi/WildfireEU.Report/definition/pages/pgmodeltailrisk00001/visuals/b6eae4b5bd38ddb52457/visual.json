@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "b6eae4b5bd38ddb52457",
+  "position": {
+    "x": 16.0,
+    "y": 744,
+    "z": 10,
+    "width": 1248.0,
+    "height": 44
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Fitted on fire episodes above 500 ha (EFFIS, 2016 to 2025; fires within 3 days merged), EU27 countries with enough episodes only; levels stop at twice the observed period. Pick Portugal: its shape falls below 1 at 1 000 ha. Click a country on the map or a table row to draw its curves. Maximum likelihood, year-block bootstrap for 95 % intervals; levels in episodes, observed level read from the record. Not a forecast. Every table carries its MLflow run.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "8pt",
+                      "color": "#5A6472"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
